@@ -1,0 +1,602 @@
+{% extends 'base.html' %}
+
+{% set page_title = 'Calendário Visual' %}
+{% set page_subtitle = 'Mapa visual de reservas por quarto' %}
+
+{% block content %}
+
+<div class="calendar-page">
+
+    <div class="panel calendar-panel">
+
+        <div class="panel-header calendar-header">
+            <div>
+                <span class="page-label">Calendário Visual</span>
+                <h2>Reservas por quarto</h2>
+                <p>Acompanhe reservas, hóspedes, datas de entrada, saída e status de cada quarto.</p>
+            </div>
+
+            <a href="{{ url_for('reservas') }}" class="btn btn-new">
+                + Nova reserva
+            </a>
+        </div>
+
+        <div class="calendar-legend">
+            <span><i class="status-dot reservado"></i> Reservado</span>
+            <span><i class="status-dot confirmado"></i> Confirmado</span>
+            <span><i class="status-dot ocupado"></i> Ocupado</span>
+            <span><i class="status-dot cancelado"></i> Cancelado</span>
+            <span><i class="status-dot finalizado"></i> Finalizado</span>
+        </div>
+
+        {% if quartos %}
+
+            <div class="timeline">
+
+                {% for q in quartos %}
+
+                    {% set reservas_quarto = [] %}
+
+                    {% for r in reservas %}
+                        {% if r.quarto_id == q.id %}
+                            {% set _ = reservas_quarto.append(r) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="timeline-row">
+
+                        <div class="room-info">
+                            <div class="room-icon">
+                                {{ q.numero }}
+                            </div>
+
+                            <div>
+                                <strong>Quarto {{ q.numero }}</strong>
+                                <small>
+                                    {{ q.categoria or 'Sem categoria' }}
+
+                                    {% if q.status %}
+                                        · {{ q.status }}
+                                    {% endif %}
+                                </small>
+
+                                <span class="room-count">
+                                    {{ reservas_quarto|length }} reserva(s)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="room-reservas">
+
+                            {% if reservas_quarto %}
+
+                                {% for r in reservas_quarto %}
+
+                                    {% set status_original = r.status or 'Reservado' %}
+                                    {% set status = status_original|lower|trim %}
+                                    {% set status_class = status
+                                        |replace(' ', '-')
+                                        |replace('á', 'a')
+                                        |replace('à', 'a')
+                                        |replace('ã', 'a')
+                                        |replace('â', 'a')
+                                        |replace('é', 'e')
+                                        |replace('ê', 'e')
+                                        |replace('í', 'i')
+                                        |replace('ó', 'o')
+                                        |replace('ô', 'o')
+                                        |replace('õ', 'o')
+                                        |replace('ú', 'u')
+                                        |replace('ç', 'c')
+                                    %}
+
+                                    <div class="reservation-card {{ status_class }}">
+
+                                        <div class="reservation-top">
+                                            <div>
+                                                <strong>
+                                                    {{ r.hospede.nome if r.hospede else 'Hóspede não informado' }}
+                                                </strong>
+                                                <small>Reserva do quarto {{ q.numero }}</small>
+                                            </div>
+
+                                            <span class="badge {{ status_class }}">
+                                                {{ status_original }}
+                                            </span>
+                                        </div>
+
+                                        <div class="reservation-dates">
+                                            <div>
+                                                <span>Entrada</span>
+                                                <strong>{{ r.data_entrada }}</strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Saída</span>
+                                                <strong>{{ r.data_saida }}</strong>
+                                            </div>
+                                        </div>
+
+                                        {% if r.observacoes %}
+                                            <p class="reservation-note">
+                                                {{ r.observacoes }}
+                                            </p>
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endfor %}
+
+                            {% else %}
+
+                                <div class="empty-reservation">
+                                    <strong>Disponível</strong>
+                                    <span>Nenhuma reserva para este quarto.</span>
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                <div class="empty-icon">🏨</div>
+                <h3>Nenhum quarto cadastrado</h3>
+                <p>Cadastre quartos para visualizar o calendário de reservas.</p>
+
+                <a href="{{ url_for('quartos') }}" class="btn btn-new">
+                    Cadastrar quarto
+                </a>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<style>
+.calendar-page{
+    width:100%;
+}
+
+.calendar-panel{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.12), transparent 35%),
+        #0f172a;
+    color:#f8fafc;
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 25px 70px rgba(2,6,23,.35);
+}
+
+.calendar-panel::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 35%);
+    pointer-events:none;
+}
+
+.calendar-header{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:22px;
+}
+
+.page-label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    color:#bfdbfe;
+    background:rgba(59,130,246,.14);
+    border:1px solid rgba(96,165,250,.25);
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+
+.calendar-header h2{
+    color:#ffffff;
+    font-size:30px;
+    line-height:1.15;
+    margin:0;
+}
+
+.calendar-header p{
+    color:#cbd5e1;
+    margin-top:8px;
+    max-width:720px;
+}
+
+.btn-new{
+    white-space:nowrap;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    color:#fff !important;
+    border:none;
+    border-radius:14px;
+    padding:13px 18px;
+    font-weight:800;
+    text-decoration:none;
+    box-shadow:0 14px 30px rgba(37,99,235,.35);
+    transition:.25s;
+}
+
+.btn-new:hover{
+    transform:translateY(-2px);
+    box-shadow:0 18px 40px rgba(37,99,235,.45);
+}
+
+.calendar-legend{
+    position:relative;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    padding:15px;
+    margin-bottom:24px;
+    border-radius:18px;
+    background:rgba(15,23,42,.72);
+    border:1px solid rgba(148,163,184,.2);
+    backdrop-filter:blur(12px);
+}
+
+.calendar-legend span{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#e2e8f0;
+    font-size:13px;
+    font-weight:800;
+    padding:8px 11px;
+    border-radius:999px;
+    background:rgba(255,255,255,.045);
+}
+
+.status-dot{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    display:inline-block;
+    box-shadow:0 0 0 4px rgba(255,255,255,.06);
+}
+
+.status-dot.reservado{background:#3b82f6;}
+.status-dot.confirmado{background:#22c55e;}
+.status-dot.ocupado{background:#f59e0b;}
+.status-dot.cancelado{background:#ef4444;}
+.status-dot.finalizado{background:#94a3b8;}
+
+.timeline{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.timeline-row{
+    display:grid;
+    grid-template-columns:260px 1fr;
+    gap:18px;
+    background:rgba(30,41,59,.82);
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:22px;
+    padding:18px;
+    transition:.25s ease;
+}
+
+.timeline-row:hover{
+    transform:translateY(-3px);
+    border-color:rgba(96,165,250,.65);
+    box-shadow:0 18px 45px rgba(15,23,42,.45);
+}
+
+.room-info{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-width:0;
+    padding-right:18px;
+    border-right:1px solid rgba(148,163,184,.22);
+}
+
+.room-icon{
+    width:58px;
+    height:58px;
+    flex:0 0 58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:18px;
+    color:#fff;
+    font-size:20px;
+    font-weight:900;
+    background:linear-gradient(135deg, #2563eb, #06b6d4);
+    box-shadow:0 12px 26px rgba(37,99,235,.32);
+}
+
+.room-info strong{
+    display:block;
+    color:#fff;
+    font-size:18px;
+    margin-bottom:4px;
+}
+
+.room-info small{
+    display:block;
+    color:#cbd5e1;
+    font-size:13px;
+}
+
+.room-count{
+    display:inline-flex;
+    margin-top:10px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.07);
+    color:#e2e8f0;
+    font-size:12px;
+    font-weight:800;
+}
+
+.room-reservas{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:stretch;
+}
+
+.reservation-card{
+    position:relative;
+    width:330px;
+    min-height:150px;
+    overflow:hidden;
+    border-radius:20px;
+    padding:16px;
+    color:#fff;
+    background:linear-gradient(135deg, rgba(51,65,85,.95), rgba(30,41,59,.95));
+    border:1px solid rgba(148,163,184,.22);
+    transition:.25s ease;
+    box-shadow:0 14px 28px rgba(2,6,23,.22);
+}
+
+.reservation-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at top right, rgba(255,255,255,.22), transparent 38%);
+    opacity:.55;
+    pointer-events:none;
+}
+
+.reservation-card:hover{
+    transform:translateY(-3px) scale(1.01);
+    box-shadow:0 20px 45px rgba(2,6,23,.32);
+}
+
+.reservation-card.reservado{
+    background:linear-gradient(135deg, #1d4ed8, #2563eb);
+    border-color:#60a5fa;
+}
+
+.reservation-card.confirmado{
+    background:linear-gradient(135deg, #15803d, #16a34a);
+    border-color:#4ade80;
+}
+
+.reservation-card.ocupado{
+    background:linear-gradient(135deg, #b45309, #ea580c);
+    border-color:#fbbf24;
+}
+
+.reservation-card.cancelado{
+    background:linear-gradient(135deg, #991b1b, #dc2626);
+    border-color:#f87171;
+}
+
+.reservation-card.finalizado{
+    background:linear-gradient(135deg, #374151, #4b5563);
+    border-color:#94a3b8;
+}
+
+.reservation-top{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:15px;
+}
+
+.reservation-top strong{
+    color:#fff;
+    font-size:16px;
+    line-height:1.25;
+}
+
+.reservation-top small{
+    display:block;
+    margin-top:4px;
+    color:rgba(255,255,255,.78);
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge{
+    flex:0 0 auto;
+    padding:7px 11px;
+    border-radius:999px;
+    color:#fff;
+    background:rgba(15,23,42,.35);
+    border:1px solid rgba(255,255,255,.24);
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
+.reservation-dates{
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.reservation-dates div{
+    padding:10px;
+    border-radius:14px;
+    background:rgba(15,23,42,.24);
+    border:1px solid rgba(255,255,255,.13);
+}
+
+.reservation-dates span{
+    display:block;
+    margin-bottom:4px;
+    color:rgba(255,255,255,.76);
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+}
+
+.reservation-dates strong{
+    color:#fff;
+    font-size:13px;
+}
+
+.reservation-note{
+    position:relative;
+    margin-top:12px;
+    padding:11px;
+    border-radius:14px;
+    background:rgba(15,23,42,.25);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.empty-reservation{
+    width:100%;
+    min-height:96px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:5px;
+    padding:18px;
+    background:rgba(15,23,42,.62);
+    border:2px dashed rgba(148,163,184,.35);
+    color:#e2e8f0;
+    border-radius:18px;
+}
+
+.empty-reservation strong{
+    color:#86efac;
+    font-size:16px;
+}
+
+.empty-reservation span{
+    color:#cbd5e1;
+    font-size:13px;
+}
+
+.empty-state{
+    position:relative;
+    text-align:center;
+    padding:70px 24px;
+    background:rgba(30,41,59,.75);
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:24px;
+    color:white;
+}
+
+.empty-icon{
+    width:78px;
+    height:78px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 18px;
+    border-radius:24px;
+    background:rgba(59,130,246,.15);
+    border:1px solid rgba(96,165,250,.28);
+    font-size:38px;
+}
+
+.empty-state h3{
+    font-size:24px;
+    margin-bottom:8px;
+}
+
+.empty-state p{
+    color:#cbd5e1;
+    margin-bottom:22px;
+}
+
+@media(max-width:900px){
+    .calendar-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .timeline-row{
+        grid-template-columns:1fr;
+    }
+
+    .room-info{
+        border-right:none;
+        border-bottom:1px solid rgba(148,163,184,.22);
+        padding-right:0;
+        padding-bottom:16px;
+    }
+
+    .reservation-card{
+        width:100%;
+    }
+}
+
+@media(max-width:560px){
+    .calendar-panel{
+        padding:16px;
+        border-radius:18px;
+    }
+
+    .calendar-header h2{
+        font-size:24px;
+    }
+
+    .calendar-legend{
+        gap:8px;
+    }
+
+    .calendar-legend span{
+        width:100%;
+    }
+
+    .room-info{
+        align-items:flex-start;
+    }
+
+    .reservation-dates{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
+{% endblock %}

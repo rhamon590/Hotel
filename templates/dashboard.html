@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% set page_title = "Módulos do sistema" %}
+{% set page_subtitle = "Escolha uma função para acessar e gerenciar." %}
+{% set perfil = (session.get('perfil') or '')|lower %}
+
+{% block extra_css %}
+<style>
+    .dashboard-hero{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:24px;
+        margin-bottom:22px;
+        padding:26px;
+        border-radius:24px;
+        background:
+            radial-gradient(circle at top right,rgba(37,99,235,.22),transparent 35%),
+            var(--surface);
+        border:1px solid var(--border);
+        box-shadow:var(--shadow);
+    }
+
+    .dashboard-hero h2{
+        margin:0;
+        font-size:28px;
+    }
+
+    .dashboard-hero p{
+        margin:8px 0 0;
+        color:var(--muted);
+    }
+
+    .dashboard-user{
+        padding:14px 18px;
+        border-radius:16px;
+        background:rgba(37,99,235,.12);
+        border:1px solid rgba(59,130,246,.22);
+        text-align:right;
+    }
+
+    .dashboard-user strong{display:block}
+    .dashboard-user span{color:var(--muted);font-size:13px}
+
+    .summary-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+        gap:14px;
+        margin-bottom:22px;
+    }
+
+    .summary-card{
+        padding:18px;
+        border-radius:18px;
+        background:var(--surface);
+        border:1px solid var(--border);
+    }
+
+    .summary-card small{
+        color:var(--muted);
+        font-weight:700;
+    }
+
+    .summary-card strong{
+        display:block;
+        margin-top:7px;
+        font-size:25px;
+    }
+
+    .modules-panel{
+        padding:24px;
+        border-radius:24px;
+        background:var(--surface);
+        border:1px solid var(--border);
+        box-shadow:var(--shadow);
+    }
+
+    .modules-panel-header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:18px;
+        margin-bottom:20px;
+    }
+
+    .modules-panel-header h2{
+        margin:0;
+        font-size:21px;
+    }
+
+    .modules-panel-header p{
+        margin:5px 0 0;
+        color:var(--muted);
+        font-size:14px;
+    }
+
+    .modules-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(245px,1fr));
+        gap:16px;
+    }
+
+    .module-card{
+        position:relative;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        min-height:215px;
+        padding:20px;
+        border-radius:20px;
+        background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+        border:1px solid var(--border);
+        transition:.25s;
+    }
+
+    html[data-theme="light"] .module-card{
+        background:linear-gradient(145deg,#fff,#f8fafc);
+    }
+
+    .module-card:hover{
+        transform:translateY(-5px);
+        border-color:rgba(59,130,246,.44);
+        box-shadow:0 18px 40px rgba(0,0,0,.16);
+    }
+
+    .module-card::before{
+        content:"";
+        position:absolute;
+        top:-65px;
+        right:-65px;
+        width:145px;
+        height:145px;
+        border-radius:50%;
+        background:rgba(37,99,235,.10);
+    }
+
+    .module-icon{
+        position:relative;
+        width:52px;
+        height:52px;
+        display:grid;
+        place-items:center;
+        margin-bottom:16px;
+        border-radius:16px;
+        font-size:25px;
+        background:rgba(37,99,235,.14);
+        border:1px solid rgba(59,130,246,.22);
+    }
+
+    .module-card h3{
+        position:relative;
+        margin:0 0 8px;
+        font-size:17px;
+    }
+
+    .module-card p{
+        position:relative;
+        flex:1;
+        margin:0 0 18px;
+        color:var(--muted);
+        font-size:13px;
+        line-height:1.55;
+    }
+
+    .module-card .btn{
+        position:relative;
+        width:100%;
+    }
+
+    @media(max-width:760px){
+        .dashboard-hero{
+            align-items:flex-start;
+            flex-direction:column;
+        }
+
+        .dashboard-user{
+            width:100%;
+            text-align:left;
+        }
+
+        .modules-panel{
+            padding:18px;
+        }
+
+        .modules-grid{grid-template-columns:1fr}
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="dashboard-hero">
+    <div>
+        <h2>Bem-vindo ao Hotel PRO</h2>
+        <p>
+            Selecione abaixo o módulo que deseja acessar.
+            Cada função será aberta em uma página separada.
+        </p>
+    </div>
+
+    <div class="dashboard-user">
+        <strong>{{ session.get('nome') or 'Usuário' }}</strong>
+        <span>{{ session.get('perfil') or 'Perfil' }}</span>
+    </div>
+</section>
+
+{% if cards is defined %}
+<section class="summary-grid">
+    <article class="summary-card">
+        <small>Total de quartos</small>
+        <strong>{{ cards.quartos or 0 }}</strong>
+    </article>
+
+    <article class="summary-card">
+        <small>Quartos livres</small>
+        <strong>{{ cards.livres or 0 }}</strong>
+    </article>
+
+    <article class="summary-card">
+        <small>Quartos ocupados</small>
+        <strong>{{ cards.ocupados or 0 }}</strong>
+    </article>
+
+    <article class="summary-card">
+        <small>Reservas</small>
+        <strong>{{ cards.reservas or 0 }}</strong>
+    </article>
+
+    <article class="summary-card">
+        <small>Check-ins hoje</small>
+        <strong>{{ cards.checkins or 0 }}</strong>
+    </article>
+
+    <article class="summary-card">
+        <small>Check-outs hoje</small>
+        <strong>{{ cards.checkouts or 0 }}</strong>
+    </article>
+</section>
+{% endif %}
+
+<section class="modules-panel">
+
+    <div class="modules-panel-header">
+        <div>
+            <h2>🧩 Módulos do sistema</h2>
+            <p>Clique em acessar para abrir a função escolhida.</p>
+        </div>
+    </div>
+
+    <div class="modules-grid">
+
+        {% if perfil in ['administrador', 'rh'] %}
+        <article class="module-card">
+            <div class="module-icon">👥</div>
+            <h3>Hóspedes</h3>
+            <p>Cadastre hóspedes e consulte CPF, telefone, empresa, endereço e histórico.</p>
+            <a href="{{ url_for('hospedes') }}" class="btn">Acessar hóspedes</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">🛏️</div>
+            <h3>Quartos</h3>
+            <p>Controle disponibilidade, categoria, capacidade, diária e situação dos quartos.</p>
+            <a href="{{ url_for('quartos') }}" class="btn">Acessar quartos</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">📅</div>
+            <h3>Reservas</h3>
+            <p>Registre reservas, entradas, saídas, valores, descontos e status da hospedagem.</p>
+            <a href="{{ url_for('reservas') }}" class="btn">Acessar reservas</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">🧹</div>
+            <h3>Governança</h3>
+            <p>Controle limpeza, responsáveis, checklist, inspeção e liberação dos quartos.</p>
+            <a href="{{ url_for('limpeza') }}" class="btn">Acessar governança</a>
+        </article>
+        {% endif %}
+
+        {% if perfil in ['administrador', 'porteiro'] %}
+        <article class="module-card">
+            <div class="module-icon">🗓️</div>
+            <h3>Calendário</h3>
+            <p>Visualize as reservas por período e acompanhe entradas e saídas dos quartos.</p>
+            <a href="{{ url_for('calendario') }}" class="btn">Abrir calendário</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">💳</div>
+            <h3>Controle de cartões</h3>
+            <p>Cadastre, entregue e receba cartões com rastreabilidade completa das movimentações.</p>
+            <a href="{{ url_for('cartoes') }}" class="btn">Acessar cartões</a>
+        </article>
+        {% endif %}
+
+        {% if perfil == 'administrador' %}
+        <article class="module-card">
+            <div class="module-icon">🛠️</div>
+            <h3>Manutenção</h3>
+            <p>Registre problemas, prioridade, responsáveis, custos e andamento dos serviços.</p>
+            <a href="{{ url_for('manutencao') }}" class="btn">Acessar manutenção</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">👔</div>
+            <h3>Funcionários</h3>
+            <p>Gerencie funcionários, cargos, setores, contatos e situação cadastral.</p>
+            <a href="{{ url_for('funcionarios') }}" class="btn">Acessar funcionários</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">🏢</div>
+            <h3>Empresas e agências</h3>
+            <p>Cadastre empresas parceiras, contatos, CNPJ e tarifas especiais.</p>
+            <a href="{{ url_for('empresas') }}" class="btn">Acessar empresas</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">📊</div>
+            <h3>Relatórios</h3>
+            <p>Consulte resultados financeiros, despesas, consumos e dados gerenciais.</p>
+            <a href="{{ url_for('relatorios') }}" class="btn">Acessar relatórios</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">🔎</div>
+            <h3>Auditoria</h3>
+            <p>Consulte ações dos usuários, registros alterados, datas, detalhes e IP.</p>
+            <a href="{{ url_for('auditoria') }}" class="btn">Acessar auditoria</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">🔐</div>
+            <h3>Usuários</h3>
+            <p>Crie contas, defina perfis de acesso e controle permissões do sistema.</p>
+            <a href="{{ url_for('usuarios') }}" class="btn">Acessar usuários</a>
+        </article>
+
+        <article class="module-card">
+            <div class="module-icon">💾</div>
+            <h3>Backup</h3>
+            <p>Gere uma cópia de segurança do banco de dados do sistema.</p>
+            <a href="{{ url_for('backup') }}" class="btn">Gerar backup</a>
+        </article>
+        {% endif %}
+
+        {% if perfil not in ['administrador', 'rh', 'porteiro'] %}
+        <article class="module-card module-card-empty">
+            <div class="module-icon">🔒</div>
+            <h3>Perfil sem acesso</h3>
+            <p>Este usuário não possui módulos liberados. Solicite ao administrador a correção do perfil.</p>
+        </article>
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

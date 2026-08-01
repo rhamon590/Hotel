@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% block title %}Controle de Cartões{% endblock %}
+
+{% block content %}
+<style>
+.cartoes-page{padding:24px}.page-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:22px}.page-head h1{margin:0;color:#0f172a}.page-head p{margin:5px 0 0;color:#64748b}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px}.btn-primary{background:#0f172a;color:white}.btn-success{background:#15803d;color:white}.btn-warning{background:#d97706;color:white}.btn-danger{background:#b91c1c;color:white}.btn-light{background:#e2e8f0;color:#0f172a}.cards{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-bottom:20px}.card{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:16px;box-shadow:0 4px 14px rgba(15,23,42,.05)}.card small{color:#64748b;font-weight:700}.card strong{display:block;font-size:25px;margin-top:7px;color:#0f172a}.panel{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:18px;margin-bottom:20px}.panel h2{margin:0 0 15px;color:#0f172a;font-size:18px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group.full{grid-column:1/-1}label{font-weight:700;color:#334155;font-size:13px}input,select,textarea{border:1px solid #cbd5e1;border-radius:9px;padding:10px;background:#fff;color:#0f172a}textarea{min-height:75px;resize:vertical}.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.filters input{min-width:230px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:11px 10px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:13px}th{background:#f8fafc;color:#334155}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.b-disponivel{background:#dcfce7;color:#166534}.b-uso{background:#dbeafe;color:#1d4ed8}.b-perdido{background:#fee2e2;color:#991b1b}.b-danificado{background:#ffedd5;color:#9a3412}.b-bloqueado{background:#e2e8f0;color:#334155}.row-actions{display:flex;gap:6px;flex-wrap:wrap}.mini{padding:7px 9px;font-size:12px}.timeline{display:grid;gap:10px}.event{border-left:4px solid #0f172a;padding:10px 12px;background:#f8fafc;border-radius:0 9px 9px 0}.event strong{color:#0f172a}.event small{display:block;color:#64748b;margin-top:4px}.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:1000;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-card{background:white;border-radius:14px;padding:20px;width:min(540px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.modal-head h3{margin:0}.close{border:0;background:#e2e8f0;border-radius:8px;padding:7px 10px;cursor:pointer}@media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.cards,.form-grid{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.cartoes-page{padding:14px}}
+
+.resultado-busca-colaborador{
+    display:none;
+    max-height:250px;
+    overflow-y:auto;
+    margin-top:7px;
+    border-radius:10px;
+    background:#fff;
+    border:1px solid #cbd5e1;
+    box-shadow:0 14px 35px rgba(15,23,42,.16);
+}
+.resultado-busca-colaborador.aberto{display:block}
+.item-colaborador{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:12px 13px;
+    border:0;
+    border-bottom:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-align:left;
+    cursor:pointer;
+}
+.item-colaborador:last-child{border-bottom:0}
+.item-colaborador:hover{background:#eff6ff}
+.item-colaborador strong{display:block;font-size:13px}
+.item-colaborador small{display:block;margin-top:3px;color:#64748b;font-size:11px}
+.quarto-badge{
+    flex-shrink:0;
+    padding:7px 10px;
+    border-radius:999px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:11px;
+    font-weight:800;
+}
+.colaborador-selecionado{
+    display:none;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    padding:12px;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #dbe4f0;
+}
+.colaborador-selecionado div{
+    padding:10px;
+    border-radius:9px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+}
+.colaborador-selecionado small{
+    display:block;
+    margin-bottom:4px;
+    color:#64748b;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+}
+.colaborador-selecionado strong{
+    color:#0f172a;
+    font-size:13px;
+}
+.aviso-cartao{
+    margin-top:4px;
+    color:#b45309 !important;
+    font-weight:800;
+}
+.busca-status{
+    padding:12px;
+    color:#64748b;
+    font-size:13px;
+}
+.busca-status.erro{color:#b91c1c}
+@media(max-width:600px){
+    .colaborador-selecionado{grid-template-columns:1fr}
+}
+
+</style>
+
+<div class="cartoes-page">
+  <div class="page-head">
+    <div>
+      <h1>Controle de Cartões</h1>
+      <p>Entrega, devolução, ocorrências e rastreabilidade completa.</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-light" href="{{ url_for('exportar_cartoes_excel') }}">Exportar Excel</a>
+      <button class="btn btn-primary" onclick="abrirModal('modalCadastro')">+ Novo cartão</button>
+      <button class="btn btn-success" onclick="abrirModal('modalEntrega')">Entregar cartão</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><small>Total</small><strong>{{ cards.total }}</strong></div>
+    <div class="card"><small>Disponíveis</small><strong>{{ cards.disponiveis }}</strong></div>
+    <div class="card"><small>Em uso</small><strong>{{ cards.em_uso }}</strong></div>
+    <div class="card"><small>Perdidos</small><strong>{{ cards.perdidos }}</strong></div>
+    <div class="card"><small>Danificados</small><strong>{{ cards.danificados }}</strong></div>
+    <div class="card"><small>Bloqueados</small><strong>{{ cards.bloqueados }}</strong></div>
+  </div>
+
+  <div class="panel">
+    <h2>Cartões cadastrados</h2>
+    <form class="filters" method="get">
+      <input name="q" value="{{ q }}" placeholder="Buscar código ou descrição">
+      <select name="status">
+        <option value="">Todos os status</option>
+        {% for s in ['Disponível','Em uso','Perdido','Danificado','Bloqueado'] %}
+          <option value="{{ s }}" {% if status_filtro == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-primary" type="submit">Filtrar</button>
+      <a class="btn btn-light" href="{{ url_for('cartoes') }}">Limpar</a>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Código</th><th>Descrição</th><th>Status</th><th>Colaborador atual</th><th>Quarto</th><th>Cadastrado por</th><th>Ações</th></tr></thead>
+        <tbody>
+        {% for c in dados %}
+          {% set ultima = c.movimentacoes[0] if c.movimentacoes else none %}
+          <tr>
+            <td><strong>{{ c.codigo }}</strong></td>
+            <td>{{ c.descricao or '-' }}</td>
+            <td>
+              {% set cls = {'Disponível':'b-disponivel','Em uso':'b-uso','Perdido':'b-perdido','Danificado':'b-danificado','Bloqueado':'b-bloqueado'}.get(c.status,'b-bloqueado') %}
+              <span class="badge {{ cls }}">{{ c.status }}</span>
+            </td>
+            <td>{{ ultima.hospede.nome if c.status == 'Em uso' and ultima and ultima.hospede else '-' }}</td>
+            <td>{{ ultima.quarto.numero if c.status == 'Em uso' and ultima and ultima.quarto else '-' }}</td>
+            <td>{{ c.criado_por }}</td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-light mini" href="{{ url_for('historico_cartao', cartao_id=c.id) }}">Histórico</a>
+                {% if c.status == 'Em uso' %}
+                  <button class="btn btn-success mini" onclick="prepararDevolucao({{ c.id }}, '{{ c.codigo }}')">Devolver</button>
+                {% endif %}
+                <button class="btn btn-warning mini" onclick="prepararOcorrencia({{ c.id }}, '{{ c.codigo }}')">Ocorrência</button>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">Nenhum cartão encontrado.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Últimas movimentações</h2>
+    <div class="timeline">
+      {% for m in ultimas_movimentacoes %}
+      <div class="event">
+        <strong>{{ m.cartao.codigo }} — {{ m.tipo }}</strong>
+        <div>{{ m.hospede.nome if m.hospede else 'Sem colaborador' }}{% if m.quarto %} • Quarto {{ m.quarto.numero }}{% endif %}</div>
+        <small>{{ m.data_evento.strftime('%d/%m/%Y %H:%M') }} • {{ m.usuario_responsavel }}{% if m.observacoes %} • {{ m.observacoes }}{% endif %}</small>
+      </div>
+      {% else %}<p>Nenhuma movimentação registrada.</p>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalCadastro"><div class="modal-card">
+  <div class="modal-head"><h3>Cadastrar cartão</h3><button class="close" onclick="fecharModal('modalCadastro')">X</button></div>
+  <form method="post" action="{{ url_for('cartoes') }}" class="form-grid">
+    <div class="form-group"><label>Código *</label><input name="codigo" required placeholder="Ex.: CART-001"></div>
+    <div class="form-group"><label>Descrição</label><input name="descricao" placeholder="Ex.: Cartão do bloco A"></div>
+    <div class="form-group full"><label>Observações</label><textarea name="observacoes"></textarea></div>
+    <div class="form-group full"><button class="btn btn-primary" type="submit">Salvar cartão</button></div>
+  </form>
+</div></div>
+
+<div class="modal" id="modalEntrega"><div class="modal-card">
+  <div class="modal-head">
+    <h3>Entregar cartão</h3>
+    <button type="button" class="close" onclick="fecharModal('modalEntrega')">X</button>
+  </div>
+
+  <form method="post" action="{{ url_for('entregar_cartao') }}" class="form-grid" id="formEntregaCartao">
+
+    <div class="form-group full">
+      <label>Buscar colaborador por nome ou CPF *</label>
+      <input
+        type="text"
+        id="buscaColaboradorCartao"
+        placeholder="Digite o nome ou CPF do colaborador"
+        autocomplete="off"
+      >
+      <div id="resultadoBuscaColaborador" class="resultado-busca-colaborador"></div>
+    </div>
+
+    <input type="hidden" name="reserva_id" id="reservaIdCartao" required>
+
+    <div id="colaboradorSelecionado" class="colaborador-selecionado form-group full">
+      <div>
+        <small>Colaborador</small>
+        <strong id="dadosNomeColaborador">-</strong>
+      </div>
+
+      <div>
+        <small>CPF</small>
+        <strong id="dadosCpfColaborador">-</strong>
+      </div>
+
+      <div>
+        <small>Quarto</small>
+        <strong id="dadosQuartoColaborador">-</strong>
+      </div>
+
+      <div>
+        <small>Reserva</small>
+        <strong id="dadosReservaColaborador">-</strong>
+      </div>
+
+      <div>
+        <small>Status da reserva</small>
+        <strong id="dadosStatusColaborador">-</strong>
+      </div>
+
+      <div>
+        <small>Cartão atual</small>
+        <strong id="dadosCartaoAtual">Nenhum</strong>
+      </div>
+    </div>
+
+    <div class="form-group full">
+      <label>Cartão disponível *</label>
+      <select name="cartao_id" id="cartaoIdEntrega" required>
+        <option value="">Selecione</option>
+        {% for c in dados if c.status == 'Disponível' %}
+          <option value="{{ c.id }}">
+            {{ c.codigo }} — {{ c.descricao or 'Sem descrição' }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group full">
+      <label>Observações</label>
+      <textarea
+        name="observacoes"
+        placeholder="Condição do cartão, responsável presencial etc."
+      ></textarea>
+    </div>
+
+    <div class="form-group full">
+      <button class="btn btn-success" type="submit">
+        Confirmar entrega
+      </button>
+    </div>
+
+  </form>
+</div></div>
+
+<div class="modal" id="modalDevolucao"><div class="modal-card">
+  <div class="modal-head"><h3 id="tituloDevolucao">Devolver cartão</h3><button class="close" onclick="fecharModal('modalDevolucao')">X</button></div>
+  <form method="post" id="formDevolucao" class="form-grid">
+    <div class="form-group full"><label>Observações</label><textarea name="observacoes" placeholder="Informe a condição em que o cartão foi devolvido."></textarea></div>
+    <div class="form-group full"><button class="btn btn-success" type="submit">Registrar devolução</button></div>
+  </form>
+</div></div>
+
+<div class="modal" id="modalOcorrencia"><div class="modal-card">
+  <div class="modal-head"><h3 id="tituloOcorrencia">Ocorrência</h3><button class="close" onclick="fecharModal('modalOcorrencia')">X</button></div>
+  <form method="post" id="formOcorrencia" class="form-grid">
+    <div class="form-group full"><label>Tipo *</label><select name="tipo" required><option value="Perda">Perda</option><option value="Dano">Dano</option><option value="Bloqueio">Bloqueio</option><option value="Liberar">Liberar novamente</option></select></div>
+    <div class="form-group full"><label>Observações *</label><textarea name="observacoes" required placeholder="Descreva o que aconteceu."></textarea></div>
+    <div class="form-group full"><button class="btn btn-warning" type="submit">Registrar ocorrência</button></div>
+  </form>
+</div></div>
+
+<script>
+function abrirModal(id){
+    document.getElementById(id).classList.add('open');
+
+    if(id === 'modalEntrega'){
+        setTimeout(() => {
+            const campo = document.getElementById('buscaColaboradorCartao');
+            if(campo) campo.focus();
+        }, 100);
+    }
+}
+
+function fecharModal(id){
+    document.getElementById(id).classList.remove('open');
+
+    if(id === 'modalEntrega'){
+        limparSelecaoColaborador();
+    }
+}
+
+function prepararDevolucao(id,codigo){
+    document.getElementById('tituloDevolucao').textContent =
+        'Devolver cartão ' + codigo;
+
+    document.getElementById('formDevolucao').action =
+        '/cartoes/' + id + '/devolver';
+
+    abrirModal('modalDevolucao');
+}
+
+function prepararOcorrencia(id,codigo){
+    document.getElementById('tituloOcorrencia').textContent =
+        'Ocorrência no cartão ' + codigo;
+
+    document.getElementById('formOcorrencia').action =
+        '/cartoes/' + id + '/ocorrencia';
+
+    abrirModal('modalOcorrencia');
+}
+
+const campoBuscaColaborador =
+    document.getElementById('buscaColaboradorCartao');
+
+const resultadoBuscaColaborador =
+    document.getElementById('resultadoBuscaColaborador');
+
+const reservaIdCartao =
+    document.getElementById('reservaIdCartao');
+
+const colaboradorSelecionado =
+    document.getElementById('colaboradorSelecionado');
+
+let timerBuscaColaborador = null;
+
+if(campoBuscaColaborador){
+    campoBuscaColaborador.addEventListener('input', function(){
+        clearTimeout(timerBuscaColaborador);
+
+        const termo = this.value.trim();
+
+        reservaIdCartao.value = '';
+        colaboradorSelecionado.style.display = 'none';
+
+        if(termo.length < 2){
+            resultadoBuscaColaborador.innerHTML = '';
+            resultadoBuscaColaborador.classList.remove('aberto');
+            return;
+        }
+
+        timerBuscaColaborador = setTimeout(function(){
+            buscarColaboradorCartao(termo);
+        }, 350);
+    });
+}
+
+function buscarColaboradorCartao(termo){
+    resultadoBuscaColaborador.innerHTML =
+        '<div class="busca-status">Buscando colaborador...</div>';
+
+    resultadoBuscaColaborador.classList.add('aberto');
+
+    fetch(
+        "{{ url_for('buscar_colaborador_cartao') }}?q=" +
+        encodeURIComponent(termo)
+    )
+    .then(response => {
+        if(!response.ok){
+            throw new Error('Erro na busca');
+        }
+
+        return response.json();
+    })
+    .then(dados => {
+        if(!dados.length){
+            resultadoBuscaColaborador.innerHTML =
+                '<div class="busca-status">Nenhuma reserva ativa encontrada.</div>';
+            return;
+        }
+
+        resultadoBuscaColaborador.innerHTML = '';
+
+        dados.forEach(item => {
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.className = 'item-colaborador';
+
+            const dadosPessoa = document.createElement('span');
+
+            const nome = document.createElement('strong');
+            nome.textContent = item.nome;
+            dadosPessoa.appendChild(nome);
+
+            const cpf = document.createElement('small');
+            cpf.textContent = 'CPF: ' + (item.cpf || 'Não informado');
+            dadosPessoa.appendChild(cpf);
+
+            const reserva = document.createElement('small');
+            reserva.textContent =
+                'Reserva #' + item.reserva_id +
+                ' — ' + item.status_reserva;
+            dadosPessoa.appendChild(reserva);
+
+            if(item.cartao_atual){
+                const aviso = document.createElement('small');
+                aviso.className = 'aviso-cartao';
+                aviso.textContent =
+                    'Já possui o cartão ' + item.cartao_atual;
+                dadosPessoa.appendChild(aviso);
+            }
+
+            const quarto = document.createElement('span');
+            quarto.className = 'quarto-badge';
+            quarto.textContent = 'Quarto ' + item.quarto;
+
+            botao.appendChild(dadosPessoa);
+            botao.appendChild(quarto);
+
+            botao.addEventListener('click', function(){
+                selecionarColaboradorCartao(item);
+            });
+
+            resultadoBuscaColaborador.appendChild(botao);
+        });
+    })
+    .catch(() => {
+        resultadoBuscaColaborador.innerHTML =
+            '<div class="busca-status erro">Erro ao buscar colaborador.</div>';
+    });
+}
+
+function selecionarColaboradorCartao(item){
+    campoBuscaColaborador.value =
+        item.nome + ' — CPF ' + (item.cpf || 'não informado');
+
+    reservaIdCartao.value = item.reserva_id;
+
+    document.getElementById('dadosNomeColaborador').textContent =
+        item.nome;
+
+    document.getElementById('dadosCpfColaborador').textContent =
+        item.cpf || 'Não informado';
+
+    document.getElementById('dadosQuartoColaborador').textContent =
+        'Quarto ' + item.quarto;
+
+    document.getElementById('dadosReservaColaborador').textContent =
+        '#' + item.reserva_id;
+
+    document.getElementById('dadosStatusColaborador').textContent =
+        item.status_reserva;
+
+    document.getElementById('dadosCartaoAtual').textContent =
+        item.cartao_atual || 'Nenhum';
+
+    colaboradorSelecionado.style.display = 'grid';
+    resultadoBuscaColaborador.classList.remove('aberto');
+}
+
+function limparSelecaoColaborador(){
+    if(campoBuscaColaborador){
+        campoBuscaColaborador.value = '';
+    }
+
+    if(reservaIdCartao){
+        reservaIdCartao.value = '';
+    }
+
+    if(resultadoBuscaColaborador){
+        resultadoBuscaColaborador.innerHTML = '';
+        resultadoBuscaColaborador.classList.remove('aberto');
+    }
+
+    if(colaboradorSelecionado){
+        colaboradorSelecionado.style.display = 'none';
+    }
+}
+
+const formEntregaCartao =
+    document.getElementById('formEntregaCartao');
+
+if(formEntregaCartao){
+    formEntregaCartao.addEventListener('submit', function(event){
+        if(!reservaIdCartao.value){
+            event.preventDefault();
+            alert('Pesquise e selecione um colaborador antes de confirmar.');
+            campoBuscaColaborador.focus();
+        }
+    });
+}
+
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', event => {
+        if(event.target === modal){
+            fecharModal(modal.id);
+        }
+    });
+});
+
+document.addEventListener('click', function(event){
+    if(
+        resultadoBuscaColaborador &&
+        campoBuscaColaborador &&
+        !resultadoBuscaColaborador.contains(event.target) &&
+        event.target !== campoBuscaColaborador
+    ){
+        resultadoBuscaColaborador.classList.remove('aberto');
+    }
+});
+
+document.addEventListener('keydown', function(event){
+    if(event.key === 'Escape'){
+        document.querySelectorAll('.modal.open').forEach(modal => {
+            fecharModal(modal.id);
+        });
+    }
+});
+</script>
+{% endblock %}

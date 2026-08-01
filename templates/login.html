@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Acesso seguro ao sistema profissional de gestão hoteleira Hotel Pro.">
+    <meta name="theme-color" content="#0f172a">
+
+    <title>Login | Hotel Pro System</title>
+
+    <style>
+        :root {
+            --bg: #eef3f8;
+            --surface: rgba(255, 255, 255, 0.94);
+            --surface-strong: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #dbe4ef;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-soft: #dbeafe;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+            --radius-xl: 28px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            color-scheme: light;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.16), transparent 34%),
+                radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.12), transparent 30%),
+                linear-gradient(135deg, #f8fafc 0%, var(--bg) 100%);
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            border-radius: 999px;
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 280px;
+            height: 280px;
+            top: -90px;
+            right: -80px;
+            background: rgba(37, 99, 235, 0.11);
+        }
+
+        body::after {
+            width: 220px;
+            height: 220px;
+            bottom: -80px;
+            left: -60px;
+            background: rgba(14, 165, 233, 0.10);
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .login-page {
+            display: grid;
+            place-items: center;
+            padding: 32px 20px;
+        }
+
+        .login-shell {
+            width: min(1040px, 100%);
+        }
+
+        .login-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(390px, 0.95fr);
+            min-height: 650px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .login-showcase {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 52px;
+            overflow: hidden;
+            color: #ffffff;
+            background:
+                linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.90)),
+                radial-gradient(circle at top right, rgba(96, 165, 250, 0.55), transparent 42%);
+        }
+
+        .login-showcase::before {
+            content: "";
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            top: -190px;
+            right: -160px;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 50%;
+            box-shadow:
+                0 0 0 55px rgba(255, 255, 255, 0.035),
+                0 0 0 110px rgba(255, 255, 255, 0.025);
+        }
+
+        .showcase-brand,
+        .showcase-content,
+        .showcase-status {
+            position: relative;
+            z-index: 1;
+        }
+
+        .showcase-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-mark,
+        .login-logo,
+        .loading-logo {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            color: #ffffff;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.32);
+        }
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 15px;
+            font-size: 21px;
+        }
+
+        .showcase-brand strong {
+            display: block;
+            font-size: 17px;
+        }
+
+        .showcase-brand span {
+            display: block;
+            margin-top: 3px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .showcase-content {
+            max-width: 480px;
+        }
+
+        .showcase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+            padding: 9px 13px;
+            border: 1px solid rgba(255, 255, 255, 0.17);
+            border-radius: 999px;
+            color: rgba(255, 255, 255, 0.84);
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .showcase-badge::before,
+        .status-dot {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 5px rgba(74, 222, 128, 0.14);
+        }
+
+        .showcase-content h2 {
+            margin: 0;
+            font-size: clamp(35px, 4.2vw, 55px);
+            line-height: 1.04;
+            letter-spacing: -0.045em;
+        }
+
+        .showcase-content p {
+            max-width: 440px;
+            margin: 22px 0 0;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 16px;
+            line-height: 1.75;
+        }
+
+        .showcase-features {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.07);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .feature-item svg,
+        .showcase-status svg,
+        .login-security svg {
+            width: 19px;
+            height: 19px;
+            flex: 0 0 auto;
+        }
+
+        .showcase-status {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            color: rgba(255, 255, 255, 0.66);
+            font-size: 13px;
+        }
+
+        .login-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 50px 48px;
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        .login-header {
+            margin-bottom: 28px;
+        }
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .login-logo {
+            width: 47px;
+            height: 47px;
+            border-radius: 15px;
+            font-size: 21px;
+        }
+
+        .login-title-area h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: -0.035em;
+        }
+
+        .login-title-area span {
+            display: block;
+            margin-top: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .login-description {
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .flash-container {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .flash {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 13px;
+            border: 1px solid #fecaca;
+            border-radius: 13px;
+            color: #991b1b;
+            background: #fef2f2;
+            animation: flashEnter 0.35s ease both;
+        }
+
+        .flash.success {
+            border-color: #bbf7d0;
+            color: #166534;
+            background: #f0fdf4;
+        }
+
+        .flash.warning {
+            border-color: #fde68a;
+            color: #92400e;
+            background: #fffbeb;
+        }
+
+        .flash-icon {
+            display: grid;
+            place-items: center;
+            width: 25px;
+            height: 25px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 900;
+            background: rgba(255, 255, 255, 0.65);
+        }
+
+        .flash-text {
+            font-size: 13px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .flash-close {
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 0;
+            border-radius: 8px;
+            color: currentColor;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .flash-close:hover {
+            background: rgba(15, 23, 42, 0.06);
+        }
+
+        .flash-exit {
+            animation: flashExit 0.25s ease forwards;
+        }
+
+        .login-form {
+            display: grid;
+            gap: 19px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box input {
+            width: 100%;
+            height: 54px;
+            padding: 0 50px 0 48px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            outline: none;
+            color: var(--text);
+            background: rgba(248, 250, 252, 0.82);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .input-box input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input-box input:hover {
+            border-color: #c6d2e1;
+            background: #ffffff;
+        }
+
+        .input-box input:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+        }
+
+        .input-icon,
+        .password-toggle {
+            position: absolute;
+            z-index: 1;
+            color: #64748b;
+        }
+
+        .input-icon {
+            left: 16px;
+            display: grid;
+            place-items: center;
+            pointer-events: none;
+        }
+
+        .input-icon svg,
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .password-toggle {
+            right: 10px;
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .password-toggle:focus-visible,
+        .flash-close:focus-visible,
+        .login-button:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.25);
+            outline-offset: 2px;
+        }
+
+        .login-button {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 55px;
+            margin-top: 4px;
+            padding: 0 22px;
+            border: 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.26);
+            cursor: pointer;
+            font-weight: 800;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .login-button::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.18) 45%, transparent 65%);
+            transform: translateX(-120%);
+            transition: transform 0.65s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(37, 99, 235, 0.32);
+        }
+
+        .login-button:hover::before {
+            transform: translateX(120%);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            cursor: wait;
+            opacity: 0.8;
+        }
+
+        .login-button-arrow {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .login-button:hover .login-button-arrow {
+            transform: translateX(3px);
+        }
+
+        .login-button.is-loading .login-button-arrow {
+            animation: arrowPulse 0.9s ease-in-out infinite alternate;
+        }
+
+        .login-security {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .login-security svg {
+            color: var(--success);
+        }
+
+        .login-footer {
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .login-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            visibility: hidden;
+            opacity: 0;
+            background:
+                radial-gradient(circle at center, rgba(37, 99, 235, 0.17), transparent 35%),
+                rgba(2, 6, 23, 0.93);
+            backdrop-filter: blur(13px);
+            transition: opacity 0.28s ease, visibility 0.28s ease;
+        }
+
+        .login-loading.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .loading-content {
+            width: min(390px, 100%);
+            padding: 38px 34px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 25px;
+            color: #ffffff;
+            background: rgba(15, 23, 42, 0.72);
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+            text-align: center;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.3s ease;
+        }
+
+        .login-loading.active .loading-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .loading-logo {
+            width: 62px;
+            height: 62px;
+            margin: 0 auto 22px;
+            border-radius: 20px;
+            font-size: 27px;
+            animation: logoFloat 1.8s ease-in-out infinite;
+        }
+
+        .loading-spinner {
+            position: relative;
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(255, 255, 255, 0.13);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.85s linear infinite;
+        }
+
+        .loading-spinner span {
+            position: absolute;
+            inset: 8px;
+            border: 3px solid transparent;
+            border-bottom-color: #bfdbfe;
+            border-radius: 50%;
+            animation: spinReverse 1.2s linear infinite;
+        }
+
+        .loading-content h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -0.025em;
+        }
+
+        .loading-content p {
+            margin: 10px 0 24px;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .loading-progress {
+            height: 6px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        .loading-progress span {
+            display: block;
+            width: 45%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #3b82f6, #93c5fd);
+            animation: progress 1.25s ease-in-out infinite;
+        }
+
+        body.loading-active {
+            overflow: hidden;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes spinReverse {
+            to { transform: rotate(-360deg); }
+        }
+
+        @keyframes progress {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(330%); }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @keyframes arrowPulse {
+            from { transform: translateX(0); }
+            to { transform: translateX(4px); }
+        }
+
+        @keyframes flashEnter {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes flashExit {
+            to { opacity: 0; transform: translateY(-7px); }
+        }
+
+        @media (max-width: 860px) {
+            .login-panel {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .login-showcase {
+                display: none;
+            }
+
+            .login-area {
+                padding: 42px;
+            }
+
+            .mobile-brand {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .login-page {
+                align-items: start;
+                padding: 18px 12px;
+            }
+
+            .login-panel {
+                border-radius: 22px;
+            }
+
+            .login-area {
+                padding: 32px 22px;
+            }
+
+            .login-title-area h1 {
+                font-size: 27px;
+            }
+
+            .input-box input {
+                height: 52px;
+            }
+
+            .login-footer {
+                padding-inline: 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="login-page">
+    <main class="login-shell">
+        <section class="login-panel" aria-labelledby="loginTitle">
+            <aside class="login-showcase" aria-label="Apresentação do sistema">
+                <div class="showcase-brand">
+                    <div class="brand-mark" aria-hidden="true">H</div>
+                    <div>
+                        <strong>Hotel Pro</strong>
+                        <span>Management System</span>
+                    </div>
+                </div>
+
+                <div class="showcase-content">
+                    <div class="showcase-badge">Sistema online</div>
+                    <h2>Gestão hoteleira simples, segura e eficiente.</h2>
+                    <p>
+                        Controle reservas, hóspedes, quartos, consumos, limpeza e indicadores
+                        em uma única plataforma profissional.
+                    </p>
+
+                    <div class="showcase-features">
+                        <div class="feature-item">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 19V9.5L12 4L20 9.5V19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 19V13H16V19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Controle de quartos
+                        </div>
+
+                        <div class="feature-item">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M7 3V6M17 3V6M4 9H20M5 5H19C19.6 5 20 5.4 20 6V20H4V6C4 5.4 4.4 5 5 5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Reservas organizadas
+                        </div>
+
+                        <div class="feature-item">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M5 20V10M12 20V4M19 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                            Indicadores em tempo real
+                        </div>
+
+                        <div class="feature-item">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M12 21C12 21 19 17.5 19 12V5.5L12 3L5 5.5V12C5 17.5 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Acesso protegido
+                        </div>
+                    </div>
+                </div>
+
+                <div class="showcase-status">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    Ambiente operacional e pronto para acesso
+                </div>
+            </aside>
+
+            <div class="login-area">
+                <div class="mobile-brand" aria-hidden="true">
+                    <div class="login-logo">H</div>
+                    <div class="login-title-area">
+                        <h1>Hotel Pro</h1>
+                        <span>Management System</span>
+                    </div>
+                </div>
+
+                <header class="login-header">
+                    <div class="login-title-area">
+                        <h1 id="loginTitle">Bem-vindo de volta</h1>
+                    </div>
+                    <p class="login-description">
+                        Informe suas credenciais para entrar no painel administrativo.
+                    </p>
+                </header>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container" aria-live="polite">
+                            {% for categoria, mensagem in messages %}
+                                <div class="flash {{ categoria }}" role="alert">
+                                    <span class="flash-icon" aria-hidden="true">
+                                        {% if categoria == 'success' %}
+                                            ✓
+                                        {% elif categoria == 'warning' %}
+                                            !
+                                        {% else %}
+                                            ×
+                                        {% endif %}
+                                    </span>
+
+                                    <span class="flash-text">{{ mensagem }}</span>
+
+                                    <button
+                                        type="button"
+                                        class="flash-close"
+                                        aria-label="Fechar mensagem"
+                                    >×</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for('login') }}"
+                    class="login-form"
+                    id="loginForm"
+                    autocomplete="on"
+                >
+                    <div class="form-group">
+                        <label for="usuario">Usuário</label>
+                        <div class="input-box">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M4.5 20C4.5 16.7 7.4 14 12 14C16.6 14 19.5 16.7 19.5 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+
+                            <input
+                                type="text"
+                                id="usuario"
+                                name="usuario"
+                                placeholder="Digite seu usuário"
+                                autocomplete="username"
+                                maxlength="80"
+                                required
+                                autofocus
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="senha">Senha</label>
+                        <div class="input-box">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M8 10V7.5C8 5.3 9.8 3.5 12 3.5C14.2 3.5 16 5.3 16 7.5V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+
+                            <input
+                                type="password"
+                                id="senha"
+                                name="senha"
+                                placeholder="Digite sua senha"
+                                autocomplete="current-password"
+                                maxlength="120"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="passwordToggle"
+                                aria-label="Mostrar senha"
+                                title="Mostrar senha"
+                            >
+                                <svg class="eye-show" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M2.5 12C4.4 8.4 7.8 6 12 6C16.2 6 19.6 8.4 21.5 12C19.6 15.6 16.2 18 12 18C7.8 18 4.4 15.6 2.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+
+                                <svg class="eye-hide" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
+                                    <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M10.6 10.6C10.2 11 10 11.5 10 12C10 13.1 10.9 14 12 14C12.5 14 13 13.8 13.4 13.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M9.8 6.3C10.5 6.1 11.2 6 12 6C16.2 6 19.6 8.4 21.5 12C20.8 13.3 19.9 14.4 18.8 15.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M6.2 7.2C4.6 8.4 3.4 10 2.5 12C4.4 15.6 7.8 18 12 18C13.4 18 14.7 17.7 15.8 17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-button" id="loginButton">
+                        <span class="login-button-text">Entrar no sistema</span>
+                        <svg class="login-button-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M14 7L19 12L14 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="login-security">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21C12 21 19 17.5 19 12V5.5L12 3L5 5.5V12C5 17.5 12 21 12 21Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Acesso seguro e monitorado</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="login-footer">
+            © 2026 Hotel Pro System. Todos os direitos reservados.
+        </footer>
+    </main>
+
+    <div
+        class="login-loading"
+        id="loginLoading"
+        role="status"
+        aria-live="polite"
+        aria-hidden="true"
+    >
+        <div class="loading-content">
+            <div class="loading-logo" aria-hidden="true">H</div>
+            <div class="loading-spinner" aria-hidden="true"><span></span></div>
+            <h2>Acessando o sistema</h2>
+            <p>Aguarde enquanto validamos suas informações e preparamos o painel.</p>
+            <div class="loading-progress" aria-hidden="true"><span></span></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const loginForm = document.getElementById("loginForm");
+            const loginButton = document.getElementById("loginButton");
+            const loginButtonText = loginButton.querySelector(".login-button-text");
+            const loginLoading = document.getElementById("loginLoading");
+            const passwordInput = document.getElementById("senha");
+            const passwordToggle = document.getElementById("passwordToggle");
+            const eyeShow = passwordToggle.querySelector(".eye-show");
+            const eyeHide = passwordToggle.querySelector(".eye-hide");
+            const flashMessages = document.querySelectorAll(".flash");
+            const flashCloseButtons = document.querySelectorAll(".flash-close");
+
+            function resetLoadingState() {
+                loginButton.disabled = false;
+                loginButton.classList.remove("is-loading");
+                loginButtonText.textContent = "Entrar no sistema";
+                loginLoading.classList.remove("active");
+                loginLoading.setAttribute("aria-hidden", "true");
+                document.body.classList.remove("loading-active");
+            }
+
+            passwordToggle.addEventListener("click", function () {
+                const passwordIsVisible = passwordInput.type === "text";
+
+                passwordInput.type = passwordIsVisible ? "password" : "text";
+                eyeShow.hidden = !passwordIsVisible;
+                eyeHide.hidden = passwordIsVisible;
+
+                const buttonText = passwordIsVisible ? "Mostrar senha" : "Ocultar senha";
+                passwordToggle.setAttribute("aria-label", buttonText);
+                passwordToggle.setAttribute("title", buttonText);
+
+                passwordInput.focus();
+                const passwordLength = passwordInput.value.length;
+                passwordInput.setSelectionRange(passwordLength, passwordLength);
+            });
+
+            loginForm.addEventListener("submit", function () {
+                if (!loginForm.checkValidity()) {
+                    return;
+                }
+
+                loginButton.disabled = true;
+                loginButton.classList.add("is-loading");
+                loginButtonText.textContent = "Entrando...";
+                loginLoading.classList.add("active");
+                loginLoading.setAttribute("aria-hidden", "false");
+                document.body.classList.add("loading-active");
+            });
+
+            flashCloseButtons.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    const flash = button.closest(".flash");
+
+                    if (!flash) {
+                        return;
+                    }
+
+                    flash.classList.add("flash-exit");
+                    setTimeout(function () {
+                        flash.remove();
+                    }, 250);
+                });
+            });
+
+            flashMessages.forEach(function (flash) {
+                setTimeout(function () {
+                    if (!flash.isConnected) {
+                        return;
+                    }
+
+                    flash.classList.add("flash-exit");
+                    setTimeout(function () {
+                        flash.remove();
+                    }, 250);
+                }, 6000);
+            });
+
+            window.addEventListener("pageshow", resetLoadingState);
+        });
+    </script>
+</body>
+</html>

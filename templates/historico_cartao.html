@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Histórico do Cartão{% endblock %}
+{% block content %}
+<style>
+.hist{padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.btn{background:#0f172a;color:white;text-decoration:none;padding:10px 14px;border-radius:9px;font-weight:700}.summary{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:18px;margin-bottom:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.summary small{color:#64748b}.summary strong{display:block;margin-top:5px}.timeline{position:relative;margin-left:12px;border-left:3px solid #cbd5e1;padding-left:22px}.item{position:relative;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px}.item:before{content:'';position:absolute;left:-31px;top:20px;width:14px;height:14px;border-radius:50%;background:#0f172a;border:3px solid white}.item h3{margin:0 0 8px}.meta{color:#64748b;font-size:13px}.obs{margin-top:10px;background:#f8fafc;padding:10px;border-radius:8px}@media(max-width:700px){.summary{grid-template-columns:1fr 1fr}.hist{padding:14px}}
+</style>
+<div class="hist">
+  <div class="top"><div><h1>Histórico do cartão {{ cartao.codigo }}</h1><p>Rastreabilidade completa de todas as movimentações.</p></div><a class="btn" href="{{ url_for('cartoes') }}">Voltar</a></div>
+  <div class="summary">
+    <div><small>Código</small><strong>{{ cartao.codigo }}</strong></div>
+    <div><small>Status atual</small><strong>{{ cartao.status }}</strong></div>
+    <div><small>Cadastrado por</small><strong>{{ cartao.criado_por }}</strong></div>
+    <div><small>Data de cadastro</small><strong>{{ cartao.criado_em.strftime('%d/%m/%Y %H:%M') }}</strong></div>
+  </div>
+  <div class="timeline">
+    {% for m in movimentacoes %}
+    <div class="item">
+      <h3>{{ m.tipo }} → {{ m.status_resultante }}</h3>
+      <div class="meta">{{ m.data_evento.strftime('%d/%m/%Y às %H:%M') }} • Responsável: {{ m.usuario_responsavel }}</div>
+      <div class="meta">Colaborador: {{ m.hospede.nome if m.hospede else '-' }} • Quarto: {{ m.quarto.numero if m.quarto else '-' }} • Reserva: {{ '#'+m.reserva.id|string if m.reserva else '-' }}</div>
+      {% if m.observacoes %}<div class="obs">{{ m.observacoes }}</div>{% endif %}
+    </div>
+    {% else %}<p>Nenhuma movimentação registrada.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,565 @@
+{% extends 'base.html' %}
+
+{% set page_title = 'Hóspedes' %}
+{% set page_subtitle = 'Cadastro, consulta e importação de hóspedes' %}
+
+{% block content %}
+
+<div class="hospedes-page">
+
+    <div class="panel guest-form-panel">
+
+        <div class="panel-header">
+            <div>
+                <span class="page-label">Cadastro</span>
+                <h2>Novo hóspede</h2>
+                <p>Preencha os dados do hóspede para registrar no sistema.</p>
+            </div>
+        </div>
+
+        <form method="post" class="form-grid guest-form">
+
+            <div class="form-group span-2">
+                <label>Nome completo</label>
+                <input name="nome" placeholder="Digite o nome completo" required>
+            </div>
+
+            <div class="form-group">
+                <label>CPF</label>
+                <input name="cpf" placeholder="000.000.000-00">
+            </div>
+
+            <div class="form-group">
+                <label>RG</label>
+                <input name="rg" placeholder="RG">
+            </div>
+
+            <div class="form-group">
+                <label>Passaporte</label>
+                <input name="passaporte" placeholder="Passaporte">
+            </div>
+
+            <div class="form-group">
+                <label>Nascimento</label>
+                <input name="nascimento" type="date">
+            </div>
+
+            <div class="form-group">
+                <label>Telefone</label>
+                <input name="telefone" placeholder="(00) 0000-0000">
+            </div>
+
+            <div class="form-group">
+                <label>WhatsApp</label>
+                <input name="whatsapp" placeholder="(00) 00000-0000">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input name="email" type="email" placeholder="email@exemplo.com">
+            </div>
+
+            <div class="form-group">
+                <label>Nacionalidade</label>
+                <input name="nacionalidade" placeholder="Brasileira">
+            </div>
+
+            <div class="form-group span-2">
+                <label>Endereço</label>
+                <input name="endereco" placeholder="Rua, número, bairro">
+            </div>
+
+            <div class="form-group">
+                <label>Cidade</label>
+                <input name="cidade" placeholder="Cidade">
+            </div>
+
+            <div class="form-group">
+                <label>UF</label>
+                <input name="estado" placeholder="UF" maxlength="2">
+            </div>
+
+            <div class="form-group">
+                <label>CEP</label>
+                <input name="cep" placeholder="00000-000">
+            </div>
+
+            <div class="form-group">
+                <label>Profissão</label>
+                <input name="profissao" placeholder="Profissão">
+            </div>
+
+            <div class="form-group span-2">
+                <label>Empresa</label>
+                <input name="empresa" placeholder="Empresa">
+            </div>
+
+            <div class="form-group span-2">
+                <label>Observações</label>
+                <textarea name="observacoes" placeholder="Observações importantes sobre o hóspede"></textarea>
+            </div>
+
+            <div class="form-actions span-2">
+                <button class="btn primary">
+                    Salvar hóspede
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="panel guest-list-panel">
+
+        <div class="list-header">
+            <div>
+                <span class="page-label">Consulta</span>
+                <h2>Hóspedes cadastrados</h2>
+                <p>Busque, importe, exporte e visualize os hóspedes cadastrados.</p>
+            </div>
+        </div>
+
+        <div class="toolbar guest-toolbar">
+
+            <form method="get" class="search-form">
+                <input name="q" value="{{ q or '' }}" placeholder="Buscar por nome, CPF, telefone ou cidade...">
+                <button class="btn">Buscar</button>
+            </form>
+
+            <div class="export-actions">
+                <a class="btn" href="{{ url_for('exportar', modelo='hospedes', tipo='excel') }}">
+                    Excel
+                </a>
+
+                <a class="btn" href="{{ url_for('exportar', modelo='hospedes', tipo='pdf') }}">
+                    PDF
+                </a>
+            </div>
+
+        </div>
+
+        <form action="{{ url_for('importar', modelo='hospedes') }}" method="post" enctype="multipart/form-data" class="import-box">
+            <div>
+                <strong>Importar hóspedes</strong>
+                <span>Selecione uma planilha Excel nos formatos .xlsx ou .xls.</span>
+            </div>
+
+            <div class="import-actions">
+                <input type="file" name="arquivo" accept=".xlsx,.xls">
+                <button class="btn">Importar Excel</button>
+            </div>
+        </form>
+
+        <div class="table-wrap">
+
+            <table class="guest-table">
+                <thead>
+                    <tr>
+                        <th>Hóspede</th>
+                        <th>CPF</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th>Cidade</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for h in dados %}
+                        <tr>
+                            <td>
+                                <div class="guest-name">
+                                    <span class="avatar">
+                                        {{ h.nome[0]|upper if h.nome else '?' }}
+                                    </span>
+
+                                    <div>
+                                        <strong>{{ h.nome or 'Sem nome' }}</strong>
+                                        <small>{{ h.nacionalidade or 'Nacionalidade não informada' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>{{ h.cpf or '-' }}</td>
+                            <td>{{ h.telefone or h.whatsapp or '-' }}</td>
+                            <td>{{ h.email or '-' }}</td>
+                            <td>
+                                {% if h.cidade or h.estado %}
+                                    {{ h.cidade or '-' }}{% if h.estado %}/{{ h.estado }}{% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-table">
+                                    <strong>Nenhum hóspede encontrado</strong>
+                                    <span>Cadastre um novo hóspede ou ajuste sua busca.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+.hospedes-page{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.guest-form-panel,
+.guest-list-panel{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.10), transparent 34%),
+        #0f172a;
+    color:#f8fafc;
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 24px 60px rgba(2,6,23,.35);
+}
+
+.guest-form-panel::before,
+.guest-list-panel::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 38%);
+    pointer-events:none;
+}
+
+.panel-header,
+.list-header{
+    position:relative;
+    margin-bottom:22px;
+}
+
+.page-label{
+    display:inline-flex;
+    align-items:center;
+    margin-bottom:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    color:#bfdbfe;
+    background:rgba(59,130,246,.14);
+    border:1px solid rgba(96,165,250,.25);
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+
+.panel-header h2,
+.list-header h2{
+    margin:0;
+    color:#fff;
+    font-size:28px;
+    line-height:1.2;
+}
+
+.panel-header p,
+.list-header p{
+    margin-top:8px;
+    color:#cbd5e1;
+}
+
+.guest-form{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.form-group label{
+    color:#e2e8f0;
+    font-size:13px;
+    font-weight:800;
+}
+
+.form-group input,
+.form-group textarea,
+.search-form input{
+    width:100%;
+    border:none;
+    outline:none;
+    color:#f8fafc;
+    background:rgba(15,23,42,.86);
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:14px;
+    padding:13px 14px;
+    font-size:14px;
+    transition:.22s ease;
+}
+
+.form-group textarea{
+    min-height:110px;
+    resize:vertical;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder,
+.search-form input::placeholder{
+    color:#94a3b8;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.search-form input:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 4px rgba(59,130,246,.16);
+}
+
+.span-2{
+    grid-column:span 2;
+}
+
+.form-actions{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:none;
+    cursor:pointer;
+    text-decoration:none;
+    color:#e2e8f0;
+    background:rgba(30,41,59,.92);
+    border:1px solid rgba(148,163,184,.24);
+    border-radius:14px;
+    padding:12px 16px;
+    font-weight:900;
+    transition:.22s ease;
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+    border-color:#60a5fa;
+    color:#fff;
+    box-shadow:0 14px 30px rgba(15,23,42,.35);
+}
+
+.btn.primary{
+    color:#fff;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+    border-color:rgba(96,165,250,.55);
+    box-shadow:0 14px 30px rgba(37,99,235,.32);
+}
+
+.guest-toolbar{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:16px;
+}
+
+.search-form{
+    flex:1;
+    display:flex;
+    gap:10px;
+}
+
+.export-actions{
+    display:flex;
+    gap:10px;
+}
+
+.import-box{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
+    padding:16px;
+    border-radius:18px;
+    background:rgba(15,23,42,.68);
+    border:1px dashed rgba(148,163,184,.32);
+}
+
+.import-box strong{
+    display:block;
+    color:#fff;
+    margin-bottom:4px;
+}
+
+.import-box span{
+    color:#cbd5e1;
+    font-size:13px;
+}
+
+.import-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.import-actions input[type="file"]{
+    color:#cbd5e1;
+    max-width:260px;
+}
+
+.table-wrap{
+    position:relative;
+    overflow:auto;
+    border-radius:18px;
+    border:1px solid rgba(148,163,184,.18);
+}
+
+.guest-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:850px;
+    background:rgba(15,23,42,.76);
+}
+
+.guest-table thead{
+    background:rgba(30,41,59,.95);
+}
+
+.guest-table th{
+    color:#cbd5e1;
+    font-size:12px;
+    text-align:left;
+    padding:15px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    border-bottom:1px solid rgba(148,163,184,.18);
+}
+
+.guest-table td{
+    color:#e5e7eb;
+    padding:15px;
+    border-bottom:1px solid rgba(148,163,184,.13);
+    font-size:14px;
+}
+
+.guest-table tr:hover td{
+    background:rgba(59,130,246,.08);
+}
+
+.guest-name{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.avatar{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    color:#fff;
+    background:linear-gradient(135deg, #2563eb, #06b6d4);
+    font-weight:900;
+    box-shadow:0 10px 22px rgba(37,99,235,.28);
+}
+
+.guest-name strong{
+    display:block;
+    color:#fff;
+    margin-bottom:3px;
+}
+
+.guest-name small{
+    color:#94a3b8;
+    font-size:12px;
+}
+
+.empty-table{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    padding:32px;
+    text-align:center;
+}
+
+.empty-table strong{
+    color:#fff;
+    font-size:17px;
+}
+
+.empty-table span{
+    color:#cbd5e1;
+}
+
+@media(max-width:900px){
+    .guest-toolbar,
+    .import-box{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .search-form,
+    .export-actions,
+    .import-actions{
+        width:100%;
+    }
+
+    .search-form{
+        flex-direction:column;
+    }
+
+    .export-actions .btn,
+    .import-actions .btn{
+        flex:1;
+    }
+}
+
+@media(max-width:650px){
+    .guest-form{
+        grid-template-columns:1fr;
+    }
+
+    .span-2{
+        grid-column:span 1;
+    }
+
+    .guest-form-panel,
+    .guest-list-panel{
+        padding:16px;
+        border-radius:18px;
+    }
+
+    .panel-header h2,
+    .list-header h2{
+        font-size:24px;
+    }
+
+    .form-actions{
+        justify-content:stretch;
+    }
+
+    .form-actions .btn{
+        width:100%;
+    }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,565 @@
+{% extends 'base.html' %}
+{% set page_title='Reservas' %}
+{% set page_subtitle='Cadastro, pesquisa e controle das reservas' %}
+
+{% block content %}
+
+<div class="panel">
+    <div class="toolbar">
+        <div>
+            <h2>Nova reserva</h2>
+            <p class="subtitle">
+                Cadastre uma reserva com entrada, saída, valor da diária e cálculo automático.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" class="form-grid">
+
+        <select name="hospede_id" required>
+            <option value="">Selecione o hóspede</option>
+
+            {% for h in hospedes %}
+                <option value="{{ h.id }}">
+                    {{ h.nome }}
+                    {% if h.cpf %} — CPF {{ h.cpf }}{% endif %}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="quarto_id" required>
+            <option value="">Selecione o quarto</option>
+
+            {% for q in quartos %}
+                {% set lotacao = ocupacoes.get(q.id, {}) %}
+
+                <option
+                    value="{{ q.id }}"
+                    {% if lotacao.get('vagas', q.capacidade or 0) <= 0 %}disabled{% endif %}
+                >
+                    Quarto {{ q.numero }}
+                    — {{ q.categoria }}
+                    — {{ q.status }}
+                    — {{ lotacao.get('vagas', q.capacidade or 0) }} vaga(s)
+                </option>
+            {% endfor %}
+        </select>
+
+        <input
+            type="datetime-local"
+            name="data_entrada"
+            id="data_entrada"
+            required
+        >
+
+        <input
+            type="datetime-local"
+            name="data_saida"
+            id="data_saida"
+            required
+        >
+
+        <input
+            name="valor_diaria"
+            id="valor_diaria"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Valor da diária"
+            required
+        >
+
+        <input
+            name="desconto"
+            id="desconto"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Desconto"
+            value="0"
+        >
+
+        <div class="calc-box">
+            <strong>Resumo automático</strong>
+            <span id="resumo_reserva">
+                Informe entrada, saída e diária.
+            </span>
+        </div>
+
+        <textarea
+            name="observacoes"
+            placeholder="Observações da reserva"
+        ></textarea>
+
+        <button class="btn primary" type="submit">
+            Criar reserva
+        </button>
+
+    </form>
+</div>
+
+<div class="panel">
+
+    <div class="toolbar">
+        <div>
+            <h2>Reservas</h2>
+            <p class="subtitle">
+                Controle de reservas, check-in, check-out e recibos.
+            </p>
+        </div>
+
+        <div class="toolbar-actions">
+            <a
+                class="btn"
+                href="{{ url_for('exportar', modelo='reservas', tipo='excel') }}"
+            >
+                Excel
+            </a>
+
+            <a
+                class="btn"
+                href="{{ url_for('exportar', modelo='reservas', tipo='pdf') }}"
+            >
+                PDF
+            </a>
+        </div>
+    </div>
+
+    <form method="get" class="pesquisa-reservas">
+
+        <div class="campo-pesquisa">
+            <span class="icone-pesquisa">🔎</span>
+
+            <input
+                type="text"
+                name="q"
+                value="{{ q or '' }}"
+                placeholder="Pesquisar colaborador por nome ou CPF"
+                autocomplete="off"
+            >
+        </div>
+
+        <button class="btn primary" type="submit">
+            Pesquisar
+        </button>
+
+        {% if q %}
+            <a class="btn" href="{{ url_for('reservas') }}">
+                Limpar
+            </a>
+        {% endif %}
+
+    </form>
+
+    {% if q %}
+        <div class="resultado-pesquisa">
+            Resultado da pesquisa por:
+            <strong>{{ q }}</strong>
+
+            <span>
+                {{ dados|length }} reserva(s) encontrada(s)
+            </span>
+        </div>
+    {% endif %}
+
+    <form
+        action="{{ url_for('importar', modelo='reservas') }}"
+        method="post"
+        enctype="multipart/form-data"
+        class="import"
+    >
+        <input
+            type="file"
+            name="arquivo"
+            accept=".xlsx,.xls"
+        >
+
+        <button class="btn" type="submit">
+            Importar Excel
+        </button>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Hóspede</th>
+                    <th>CPF</th>
+                    <th>Quarto</th>
+                    <th>Entrada</th>
+                    <th>Saída</th>
+                    <th>Diária</th>
+                    <th>Desconto</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in dados %}
+                <tr>
+                    <td>#{{ r.id }}</td>
+
+                    <td>
+                        <strong>{{ r.hospede.nome }}</strong>
+                    </td>
+
+                    <td>
+                        {{ r.hospede.cpf or '-' }}
+                    </td>
+
+                    <td>
+                        Quarto {{ r.quarto.numero }}
+                    </td>
+
+                    <td>
+                        {{ r.data_entrada }}
+                    </td>
+
+                    <td>
+                        {{ r.data_saida }}
+                    </td>
+
+                    <td>
+                        R$ {{ "%.2f"|format(r.valor_diaria or 0) }}
+                    </td>
+
+                    <td>
+                        R$ {{ "%.2f"|format(r.desconto or 0) }}
+                    </td>
+
+                    <td>
+                        {% set status_class = {
+                            'Reservado':'status-reservado',
+                            'Hospedado':'status-hospedado',
+                            'Finalizado':'status-finalizado',
+                            'Cancelado':'status-cancelado'
+                        }.get(r.status, 'status-padrao') %}
+
+                        <span class="badge {{ status_class }}">
+                            {{ r.status }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="acoes-reserva">
+
+                            {% if r.status == 'Reservado' %}
+                                <a
+                                    class="btn small"
+                                    href="{{ url_for('checkin', id=r.id) }}"
+                                >
+                                    Check-in
+                                </a>
+                            {% endif %}
+
+                            {% if r.status == 'Hospedado' %}
+                                <a
+                                    class="btn small primary"
+                                    href="{{ url_for('checkout', id=r.id) }}"
+                                >
+                                    Check-out
+                                </a>
+                            {% endif %}
+
+                            <a
+                                class="btn small"
+                                href="{{ url_for('recibo', id=r.id) }}"
+                            >
+                                Recibo
+                            </a>
+
+                        </div>
+                    </td>
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td
+                        colspan="10"
+                        class="sem-resultados"
+                    >
+                        {% if q %}
+                            Nenhuma reserva encontrada para
+                            “{{ q }}”.
+                        {% else %}
+                            Nenhuma reserva cadastrada.
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<style>
+.subtitle{
+    color:#64748b;
+    font-size:13px;
+    margin-top:4px;
+}
+
+.toolbar-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.pesquisa-reservas{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:16px 0;
+}
+
+.campo-pesquisa{
+    position:relative;
+    flex:1;
+}
+
+.campo-pesquisa input{
+    width:100%;
+    min-height:44px;
+    padding:11px 14px 11px 42px;
+    border:1px solid #cbd5e1;
+    border-radius:12px;
+    background:#fff;
+    color:#0f172a;
+    outline:none;
+    font-size:14px;
+}
+
+.campo-pesquisa input:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.icone-pesquisa{
+    position:absolute;
+    left:14px;
+    top:50%;
+    transform:translateY(-50%);
+    pointer-events:none;
+}
+
+.resultado-pesquisa{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:15px;
+    padding:12px 14px;
+    border-radius:11px;
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    color:#1e3a8a;
+    font-size:13px;
+}
+
+.resultado-pesquisa span{
+    margin-left:auto;
+    color:#475569;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    min-width:1100px;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    padding:12px 10px;
+    border-bottom:1px solid #e2e8f0;
+    text-align:left;
+    font-size:13px;
+}
+
+th{
+    background:#f8fafc;
+    color:#334155;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:.03em;
+}
+
+td{
+    color:#334155;
+}
+
+.acoes-reserva{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+}
+
+.status-reservado{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.status-hospedado{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.status-finalizado{
+    background:#e2e8f0;
+    color:#475569;
+}
+
+.status-cancelado{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.status-padrao{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.sem-resultados{
+    text-align:center;
+    color:#64748b;
+    padding:26px;
+}
+
+.calc-box{
+    background:#f1f5f9;
+    border:1px solid #dbe3ef;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    color:#0f172a;
+}
+
+.calc-box strong{
+    font-size:13px;
+    font-weight:800;
+}
+
+.calc-box span{
+    font-size:13px;
+    color:#475569;
+}
+
+body.dark .calc-box{
+    background:rgba(15,23,42,.85);
+    border-color:rgba(255,255,255,.08);
+    color:#f8fafc;
+}
+
+body.dark .calc-box span{
+    color:#cbd5e1;
+}
+
+@media(max-width:800px){
+    .pesquisa-reservas{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .pesquisa-reservas .btn{
+        width:100%;
+    }
+
+    .resultado-pesquisa span{
+        width:100%;
+        margin-left:0;
+    }
+}
+</style>
+
+<script>
+function calcularReserva(){
+    const entrada =
+        document.getElementById('data_entrada').value;
+
+    const saida =
+        document.getElementById('data_saida').value;
+
+    const diaria = parseFloat(
+        document.getElementById('valor_diaria').value || 0
+    );
+
+    const desconto = parseFloat(
+        document.getElementById('desconto').value || 0
+    );
+
+    const resumo =
+        document.getElementById('resumo_reserva');
+
+    if(!entrada || !saida || diaria <= 0){
+        resumo.innerText =
+            'Informe entrada, saída e diária.';
+        return;
+    }
+
+    const dtEntrada = new Date(entrada);
+    const dtSaida = new Date(saida);
+
+    if(dtSaida <= dtEntrada){
+        resumo.innerText =
+            'A saída precisa ser maior que a entrada.';
+        return;
+    }
+
+    const diffMs = dtSaida - dtEntrada;
+    const horas = diffMs / (1000 * 60 * 60);
+    const diarias = Math.max(
+        1,
+        Math.ceil(horas / 24)
+    );
+
+    const total = Math.max(
+        0,
+        (diarias * diaria) - desconto
+    );
+
+    resumo.innerText =
+        horas.toFixed(1) + ' horas | ' +
+        diarias + ' diária(s) | Total R$ ' +
+        total.toFixed(2);
+}
+
+document
+    .getElementById('data_entrada')
+    .addEventListener('change', calcularReserva);
+
+document
+    .getElementById('data_saida')
+    .addEventListener('change', calcularReserva);
+
+document
+    .getElementById('valor_diaria')
+    .addEventListener('input', calcularReserva);
+
+document
+    .getElementById('desconto')
+    .addEventListener('input', calcularReserva);
+</script>
+
+{% endblock %}

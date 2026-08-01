@@ -1,0 +1,1071 @@
+{% extends 'base.html' %}
+
+{% set page_title = 'Quartos' %}
+{% set page_subtitle = 'Cadastro, mapa visual e histórico de uso dos quartos' %}
+
+{% block content %}
+
+<div class="quartos-page">
+
+    <div class="panel room-form-panel">
+
+        <div class="panel-header">
+            <div>
+                <span class="page-label">Cadastro</span>
+                <h2>Novo quarto</h2>
+                <p>Cadastre quartos, categorias, capacidade, valores e status operacional.</p>
+            </div>
+        </div>
+
+        <form method="post" class="room-form">
+
+            <div class="form-group">
+                <label>Número</label>
+                <input name="numero" placeholder="Ex: 101" required>
+            </div>
+
+            <div class="form-group">
+                <label>Andar</label>
+                <input name="andar" placeholder="Ex: 1º andar">
+            </div>
+
+            <div class="form-group">
+                <label>Categoria</label>
+                <select name="categoria">
+                    <option>Standard</option>
+                    <option>Luxo</option>
+                    <option>Premium</option>
+                    <option>Suíte</option>
+                    <option>Presidencial</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Capacidade</label>
+                <input name="capacidade" type="number" min="1" placeholder="Ex: 2">
+            </div>
+
+            <div class="form-group">
+                <label>Valor diária</label>
+                <input name="valor_diaria" type="number" step="0.01" min="0" placeholder="Ex: 250.00">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option>Livre</option>
+                    <option>Reservado</option>
+                    <option>Parcialmente ocupado</option>
+                    <option>Lotado</option>
+                    <option>Em limpeza</option>
+                    <option>Limpo</option>
+                    <option>Em manutenção</option>
+                    <option>Bloqueado</option>
+                </select>
+            </div>
+
+            <div class="form-group span-2">
+                <label>Descrição</label>
+                <textarea name="descricao" placeholder="Descrição do quarto"></textarea>
+            </div>
+
+            <div class="form-group span-2">
+                <label>Amenidades</label>
+                <textarea name="amenidades" placeholder="Ex: Ar-condicionado, TV, frigobar, Wi-Fi"></textarea>
+            </div>
+
+            <div class="form-actions span-2">
+                <button class="btn primary" type="submit">Salvar quarto</button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="panel room-map-panel">
+
+        <div class="map-header">
+            <div>
+                <span class="page-label">Mapa</span>
+                <h2>Mapa de quartos</h2>
+                <p>Visualize os quartos cadastrados por status, categoria e valor da diária.</p>
+            </div>
+
+            <div class="export-actions">
+                <a class="btn" href="{{ url_for('exportar', modelo='quartos', tipo='excel') }}">Excel</a>
+                <a class="btn" href="{{ url_for('exportar', modelo='quartos', tipo='pdf') }}">PDF</a>
+
+                {% if (session.get('perfil') or '')|lower == 'administrador' %}
+                <form
+                    method="post"
+                    action="{{ url_for('excluir_todos_quartos') }}"
+                    class="delete-all-form"
+                    onsubmit="return confirmarExclusaoTotal();"
+                >
+                    <button class="btn danger" type="submit">
+                        🗑️ Excluir todos
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="room-legend">
+            <span><i class="dot livre"></i> Livre</span>
+            <span><i class="dot reservado"></i> Reservado</span>
+            <span><i class="dot parcialmente-ocupado"></i> Parcial</span>
+            <span><i class="dot lotado"></i> Lotado</span>
+            <span><i class="dot em-limpeza"></i> Em limpeza</span>
+            <span><i class="dot limpo"></i> Limpo</span>
+            <span><i class="dot em-manutencao"></i> Manutenção</span>
+            <span><i class="dot bloqueado"></i> Bloqueado</span>
+        </div>
+
+        <form action="{{ url_for('importar', modelo='quartos') }}" method="post" enctype="multipart/form-data" class="import-box">
+            <div>
+                <strong>Importar quartos</strong>
+                <span>Selecione uma planilha Excel nos formatos .xlsx ou .xls.</span>
+            </div>
+
+            <div class="import-actions">
+                <input type="file" name="arquivo" accept=".xlsx,.xls">
+                <button class="btn" type="submit">Importar Excel</button>
+            </div>
+        </form>
+
+        <div class="room-grid">
+
+            {% for q in dados %}
+
+                {% set lotacao = ocupacoes.get(q.id, {}) %}
+                {% set status_original = q.status or 'Livre' %}
+                {% set status = status_original|lower|trim %}
+                {% set status_class = status
+                    |replace(' ', '-')
+                    |replace('á', 'a')
+                    |replace('à', 'a')
+                    |replace('ã', 'a')
+                    |replace('â', 'a')
+                    |replace('é', 'e')
+                    |replace('ê', 'e')
+                    |replace('í', 'i')
+                    |replace('ó', 'o')
+                    |replace('ô', 'o')
+                    |replace('õ', 'o')
+                    |replace('ú', 'u')
+                    |replace('ç', 'c')
+                %}
+
+                <div class="room-card {{ status_class }}"
+                     onclick="abrirQuarto(this)"
+                     data-id="{{ q.id }}"
+                     data-numero="{{ q.numero }}"
+                     data-andar="{{ q.andar or '-' }}"
+                     data-categoria="{{ q.categoria or '-' }}"
+                     data-capacidade="{{ lotacao.get('capacidade', q.capacidade or 0) }}"
+                     data-ocupados="{{ lotacao.get('ocupados', 0) }}"
+                     data-reservados="{{ lotacao.get('reservados', 0) }}"
+                     data-vagas="{{ lotacao.get('vagas', q.capacidade or 0) }}"
+                     data-status="{{ q.status or 'Livre' }}"
+                     data-valor="{{ '%.2f'|format(q.valor_diaria or 0) }}"
+                     data-descricao="{{ q.descricao or '-' }}"
+                     data-amenidades="{{ q.amenidades or '-' }}">
+
+                    <div class="room-card-top">
+                        <span class="room-number">{{ q.numero }}</span>
+                        <span class="room-status {{ status_class }}">{{ status_original }}</span>
+                    </div>
+
+                    <div class="room-card-body">
+                        <strong>{{ q.categoria or 'Sem categoria' }}</strong>
+                        <small>{{ q.andar or 'Andar não informado' }}</small>
+                    </div>
+
+                    <div class="room-occupancy">
+                        <div>
+                            <small>Hospedados</small>
+                            <strong>{{ lotacao.get('ocupados', 0) }}</strong>
+                        </div>
+
+                        <div>
+                            <small>Reservados</small>
+                            <strong>{{ lotacao.get('reservados', 0) }}</strong>
+                        </div>
+
+                        <div class="vacancy-highlight">
+                            <small>Vagas</small>
+                            <strong>{{ lotacao.get('vagas', q.capacidade or 0) }}</strong>
+                        </div>
+
+                        <div>
+                            <small>Capacidade</small>
+                            <strong>{{ lotacao.get('capacidade', q.capacidade or 0) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="room-card-footer">
+                        <span>
+                            {{ lotacao.get('ocupados', 0) + lotacao.get('reservados', 0) }}
+                            vaga(s) comprometida(s)
+                        </span>
+                        <b>R$ {{ '%.2f'|format(q.valor_diaria or 0) }}</b>
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="empty-icon">🛏️</div>
+                    <h3>Nenhum quarto cadastrado</h3>
+                    <p>Cadastre um quarto para visualizar no mapa.</p>
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="modalQuarto" class="modal-quarto">
+    <div class="modal-box">
+
+        <button class="modal-close" type="button" onclick="fecharQuarto()">×</button>
+
+        <div class="modal-title">
+            <span id="mqStatusBadge">Status</span>
+            <h2 id="mqNumero">Quarto</h2>
+            <p>Informações completas, bloqueio e histórico de reservas deste quarto.</p>
+        </div>
+
+        <div class="modal-info">
+            <div>
+                <small>Categoria</small>
+                <strong id="mqCategoria"></strong>
+            </div>
+
+            <div>
+                <small>Status</small>
+                <strong id="mqStatus"></strong>
+            </div>
+
+            <div>
+                <small>Andar</small>
+                <strong id="mqAndar"></strong>
+            </div>
+
+            <div>
+                <small>Capacidade</small>
+                <strong id="mqCapacidade"></strong>
+            </div>
+
+            <div>
+                <small>Hospedados</small>
+                <strong id="mqOcupados"></strong>
+            </div>
+
+            <div>
+                <small>Reservados</small>
+                <strong id="mqReservados"></strong>
+            </div>
+
+            <div>
+                <small>Vagas disponíveis</small>
+                <strong id="mqVagas"></strong>
+            </div>
+
+            <div>
+                <small>Valor diária</small>
+                <strong>R$ <span id="mqValor"></span></strong>
+            </div>
+
+            <div>
+                <small>Amenidades</small>
+                <strong id="mqAmenidades"></strong>
+            </div>
+        </div>
+
+        <div class="modal-description">
+            <small>Descrição</small>
+            <p id="mqDescricao"></p>
+        </div>
+
+        <div class="modal-actions">
+
+            <form id="formBloquearQuarto" method="post">
+                <button class="btn danger" type="submit">
+                    🔒 Bloquear quarto
+                </button>
+            </form>
+
+            <form id="formLiberarQuarto" method="post">
+                <button class="btn success" type="submit">
+                    ✅ Liberar quarto
+                </button>
+            </form>
+
+            <form id="formLimpezaQuarto" method="post">
+                <button class="btn warning" type="submit">
+                    🧹 Em limpeza
+                </button>
+            </form>
+
+            <form id="formManutencaoQuarto" method="post">
+                <button class="btn purple" type="submit">
+                    🛠️ Manutenção
+                </button>
+            </form>
+
+        </div>
+
+        <div class="history-header">
+            <h3>Quem usou este quarto</h3>
+        </div>
+
+        <div class="historico-box" id="historicoQuarto">
+            <p class="empty">Carregando histórico...</p>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.quartos-page{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.room-form-panel,
+.room-map-panel{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.10), transparent 34%),
+        #0f172a;
+    color:#f8fafc;
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 24px 60px rgba(2,6,23,.35);
+}
+
+.room-form-panel::before,
+.room-map-panel::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 38%);
+    pointer-events:none;
+}
+
+.panel-header,
+.map-header,
+.room-form,
+.import-box,
+.room-grid,
+.room-legend{
+    position:relative;
+}
+
+.panel-header,
+.map-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.page-label{
+    display:inline-flex;
+    align-items:center;
+    margin-bottom:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    color:#bfdbfe;
+    background:rgba(59,130,246,.14);
+    border:1px solid rgba(96,165,250,.25);
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+}
+
+.panel-header h2,
+.map-header h2{
+    margin:0;
+    color:#fff;
+    font-size:28px;
+    line-height:1.2;
+}
+
+.panel-header p,
+.map-header p{
+    margin-top:8px;
+    color:#cbd5e1;
+}
+
+.room-form{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+.form-group label{
+    color:#e2e8f0;
+    font-size:13px;
+    font-weight:800;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+    width:100%;
+    border:none;
+    outline:none;
+    color:#f8fafc;
+    background:rgba(15,23,42,.86);
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:14px;
+    padding:13px 14px;
+    font-size:14px;
+    transition:.22s ease;
+}
+
+.form-group textarea{
+    min-height:105px;
+    resize:vertical;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder{
+    color:#94a3b8;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 4px rgba(59,130,246,.16);
+}
+
+.span-2{
+    grid-column:span 2;
+}
+
+.form-actions{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:none;
+    cursor:pointer;
+    text-decoration:none;
+    color:#e2e8f0;
+    background:rgba(30,41,59,.92);
+    border:1px solid rgba(148,163,184,.24);
+    border-radius:14px;
+    padding:12px 16px;
+    font-weight:900;
+    transition:.22s ease;
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+    border-color:#60a5fa;
+    color:#fff;
+    box-shadow:0 14px 30px rgba(15,23,42,.35);
+}
+
+.btn.primary{
+    color:#fff;
+    background:linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.btn.danger{
+    color:#fff;
+    background:linear-gradient(135deg, #991b1b, #ef4444);
+}
+
+.btn.success{
+    color:#fff;
+    background:linear-gradient(135deg, #15803d, #22c55e);
+}
+
+.btn.warning{
+    color:#fff;
+    background:linear-gradient(135deg, #b45309, #f59e0b);
+}
+
+.btn.purple{
+    color:#fff;
+    background:linear-gradient(135deg, #6d28d9, #a855f7);
+}
+
+.export-actions{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+}
+
+.delete-all-form{
+    margin:0;
+}
+
+.room-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:16px;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(15,23,42,.62);
+    border:1px solid rgba(148,163,184,.18);
+}
+
+.room-legend span{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 11px;
+    border-radius:999px;
+    color:#e2e8f0;
+    background:rgba(255,255,255,.045);
+    font-size:12px;
+    font-weight:900;
+}
+
+.dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+}
+
+.dot.livre{background:#22c55e;}
+.dot.reservado{background:#3b82f6;}
+.dot.parcialmente-ocupado{background:#f59e0b;}
+.dot.lotado{background:#ef4444;}
+.dot.em-limpeza{background:#06b6d4;}
+.dot.limpo{background:#14b8a6;}
+.dot.em-manutencao{background:#a855f7;}
+.dot.bloqueado{background:#ef4444;}
+
+.import-box{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:20px;
+    padding:16px;
+    border-radius:18px;
+    background:rgba(15,23,42,.68);
+    border:1px dashed rgba(148,163,184,.32);
+}
+
+.import-box strong{
+    display:block;
+    color:#fff;
+    margin-bottom:4px;
+}
+
+.import-box span{
+    color:#cbd5e1;
+    font-size:13px;
+}
+
+.import-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.import-actions input[type="file"]{
+    color:#cbd5e1;
+    max-width:270px;
+}
+
+.room-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:16px;
+}
+
+.room-card{
+    position:relative;
+    overflow:hidden;
+    cursor:pointer;
+    min-height:175px;
+    border-radius:22px;
+    padding:16px;
+    background:linear-gradient(135deg, rgba(51,65,85,.95), rgba(30,41,59,.95));
+    border:1px solid rgba(148,163,184,.22);
+    color:#fff;
+    box-shadow:0 14px 30px rgba(2,6,23,.24);
+    transition:.25s ease;
+}
+
+.room-card:hover{
+    transform:translateY(-5px) scale(1.01);
+}
+
+.room-card.livre{background:linear-gradient(135deg, #15803d, #22c55e);}
+.room-card.reservado{background:linear-gradient(135deg, #1d4ed8, #3b82f6);}
+.room-card.parcialmente-ocupado{background:linear-gradient(135deg, #b45309, #f59e0b);}
+.room-card.lotado{background:linear-gradient(135deg, #991b1b, #ef4444);}
+.room-card.em-limpeza{background:linear-gradient(135deg, #0e7490, #06b6d4);}
+.room-card.limpo{background:linear-gradient(135deg, #0f766e, #14b8a6);}
+.room-card.em-manutencao{background:linear-gradient(135deg, #6d28d9, #a855f7);}
+.room-card.bloqueado{background:linear-gradient(135deg, #991b1b, #ef4444);}
+
+.room-card-top{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.room-number{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:58px;
+    height:58px;
+    border-radius:18px;
+    background:rgba(15,23,42,.28);
+    color:#fff;
+    font-size:23px;
+    font-weight:900;
+}
+
+.room-status{
+    align-self:flex-start;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(15,23,42,.28);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+
+.room-card-body strong{
+    display:block;
+    font-size:18px;
+    margin-bottom:5px;
+}
+
+.room-card-body small{
+    color:rgba(255,255,255,.78);
+    font-weight:700;
+}
+
+.room-occupancy{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    margin-top:15px;
+}
+
+.room-occupancy div{
+    min-width:0;
+    padding:9px 7px;
+    border-radius:13px;
+    text-align:center;
+    background:rgba(15,23,42,.24);
+    border:1px solid rgba(255,255,255,.12);
+}
+
+.room-occupancy small{
+    display:block;
+    margin-bottom:4px;
+    color:rgba(255,255,255,.78);
+    font-size:8px;
+    font-weight:900;
+    text-transform:uppercase;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.room-occupancy strong{
+    color:#fff;
+    font-size:18px;
+    line-height:1;
+}
+
+.room-occupancy .vacancy-highlight{
+    background:rgba(255,255,255,.20);
+    border-color:rgba(255,255,255,.30);
+}
+
+.room-card.lotado .vacancy-highlight strong{
+    color:#fee2e2;
+}
+
+.room-card-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-top:20px;
+    padding-top:14px;
+    border-top:1px solid rgba(255,255,255,.18);
+}
+
+.room-card-footer span{
+    color:rgba(255,255,255,.84);
+    font-size:13px;
+    font-weight:800;
+}
+
+.empty-state{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:55px 20px;
+    border-radius:22px;
+    background:rgba(15,23,42,.62);
+    border:1px dashed rgba(148,163,184,.32);
+}
+
+.modal-quarto{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+    padding:22px;
+    background:rgba(2,6,23,.76);
+    backdrop-filter:blur(10px);
+}
+
+.modal-box{
+    position:relative;
+    width:900px;
+    max-width:100%;
+    max-height:90vh;
+    overflow-y:auto;
+    color:#f8fafc;
+    background:
+        radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 35%),
+        #0f172a;
+    border:1px solid rgba(148,163,184,.24);
+    border-radius:26px;
+    padding:26px;
+    box-shadow:0 30px 90px rgba(0,0,0,.45);
+}
+
+.modal-close{
+    position:absolute;
+    right:18px;
+    top:18px;
+    border:none;
+    cursor:pointer;
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background:#ef4444;
+    color:#fff;
+    font-size:25px;
+}
+
+.modal-title{
+    padding-right:50px;
+    margin-bottom:20px;
+}
+
+.modal-title span{
+    display:inline-flex;
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(59,130,246,.16);
+    color:#bfdbfe;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+
+.modal-title h2{
+    margin:10px 0 6px;
+    font-size:30px;
+    color:#fff;
+}
+
+.modal-title p{
+    color:#cbd5e1;
+    margin:0;
+}
+
+.modal-info{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.modal-info div,
+.modal-description{
+    background:rgba(15,23,42,.72);
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:18px;
+    padding:14px;
+}
+
+.modal-info small,
+.modal-description small{
+    display:block;
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    margin-bottom:7px;
+}
+
+.modal-info strong,
+.modal-description p{
+    color:#fff;
+    font-size:14px;
+    margin:0;
+}
+
+.modal-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:18px 0;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(15,23,42,.58);
+    border:1px solid rgba(148,163,184,.18);
+}
+
+.modal-actions form{
+    margin:0;
+}
+
+.history-header{
+    margin:22px 0 12px;
+}
+
+.history-header h3{
+    color:#fff;
+    font-size:20px;
+    margin:0;
+}
+
+.historico-box{
+    background:rgba(15,23,42,.58);
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:18px;
+    padding:14px;
+}
+
+.linha-historico{
+    background:rgba(30,41,59,.78);
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:10px;
+    color:#f8fafc;
+}
+
+.linha-historico b{
+    display:block;
+    font-size:15px;
+    margin-bottom:8px;
+    color:#fff;
+}
+
+.linha-historico span{
+    display:inline-block;
+    margin-right:12px;
+    margin-top:5px;
+    font-size:12px;
+    color:#cbd5e1;
+}
+
+.empty{
+    color:#cbd5e1;
+    margin:0;
+}
+
+@media(max-width:900px){
+    .panel-header,
+    .map-header,
+    .import-box{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .room-form{
+        grid-template-columns:1fr;
+    }
+
+    .span-2{
+        grid-column:span 1;
+    }
+
+    .modal-actions .btn{
+        width:100%;
+    }
+}
+
+@media(max-width:700px){
+    .room-occupancy{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .room-form-panel,
+    .room-map-panel{
+        padding:16px;
+        border-radius:18px;
+    }
+
+    .modal-info{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
+<script>
+function confirmarExclusaoTotal() {
+    const primeiraConfirmacao = window.confirm(
+        'ATENÇÃO: esta ação apagará todos os quartos e também os dados vinculados, ' +
+        'como reservas, pagamentos, consumos, limpezas, manutenções e movimentações relacionadas. ' +
+        'Deseja continuar?'
+    );
+
+    if (!primeiraConfirmacao) {
+        return false;
+    }
+
+    const textoDigitado = window.prompt(
+        'Para confirmar, digite exatamente: EXCLUIR TODOS'
+    );
+
+    if (textoDigitado !== 'EXCLUIR TODOS') {
+        window.alert('Exclusão cancelada. O texto de confirmação está incorreto.');
+        return false;
+    }
+
+    return window.confirm(
+        'Última confirmação: deseja realmente apagar todos os quartos e seus vínculos?'
+    );
+}
+
+function normalizarStatusClasse(status) {
+    return String(status || 'livre')
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ç/g, 'c')
+        .replace(/\s+/g, '-');
+}
+
+function textoSeguro(valor) {
+    return valor && valor !== 'None' ? valor : '-';
+}
+
+function abrirQuarto(el) {
+    const quartoId = el.dataset.id;
+    const statusTexto = textoSeguro(el.dataset.status);
+    const statusClasse = normalizarStatusClasse(statusTexto);
+
+    document.getElementById('mqNumero').innerText = 'Quarto ' + textoSeguro(el.dataset.numero);
+    document.getElementById('mqCategoria').innerText = textoSeguro(el.dataset.categoria);
+    document.getElementById('mqStatus').innerText = statusTexto;
+    document.getElementById('mqAndar').innerText = textoSeguro(el.dataset.andar);
+    document.getElementById('mqCapacidade').innerText = textoSeguro(el.dataset.capacidade);
+    document.getElementById('mqOcupados').innerText = textoSeguro(el.dataset.ocupados);
+    document.getElementById('mqReservados').innerText = textoSeguro(el.dataset.reservados);
+    document.getElementById('mqVagas').innerText = textoSeguro(el.dataset.vagas);
+    document.getElementById('mqValor').innerText = textoSeguro(el.dataset.valor);
+    document.getElementById('mqDescricao').innerText = textoSeguro(el.dataset.descricao);
+    document.getElementById('mqAmenidades').innerText = textoSeguro(el.dataset.amenidades);
+
+    document.getElementById('formBloquearQuarto').action = '/quarto_status/' + quartoId + '/Bloqueado';
+    document.getElementById('formLiberarQuarto').action = '/quarto_status/' + quartoId + '/Livre';
+    document.getElementById('formLimpezaQuarto').action = '/quarto_status/' + quartoId + '/Em limpeza';
+    document.getElementById('formManutencaoQuarto').action = '/quarto_status/' + quartoId + '/Em manutenção';
+
+    const badge = document.getElementById('mqStatusBadge');
+    badge.innerText = statusTexto;
+    badge.className = '';
+    badge.classList.add(statusClasse);
+
+    document.getElementById('historicoQuarto').innerHTML =
+        '<p class="empty">Carregando histórico...</p>';
+
+    document.getElementById('modalQuarto').style.display = 'flex';
+
+    fetch('/quarto_historico/' + quartoId)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar histórico');
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            let html = '';
+
+            if (!data.historico || data.historico.length === 0) {
+                html = '<p class="empty">Nenhuma reserva encontrada para este quarto.</p>';
+            } else {
+                data.historico.forEach(item => {
+                    html += `
+                        <div class="linha-historico">
+                            <b>${item.hospede || 'Hóspede não informado'}</b>
+                            <span><strong>Entrada:</strong> ${item.entrada || '-'}</span>
+                            <span><strong>Saída:</strong> ${item.saida || '-'}</span>
+                            <span><strong>Diária:</strong> R$ ${item.diaria || '0.00'}</span>
+                            <span><strong>Status:</strong> ${item.status || '-'}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('historicoQuarto').innerHTML = html;
+        })
+        .catch(() => {
+            document.getElementById('historicoQuarto').innerHTML =
+                '<p class="empty">Erro ao carregar histórico do quarto.</p>';
+        });
+}
+
+function fecharQuarto() {
+    document.getElementById('modalQuarto').style.display = 'none';
+}
+
+document.getElementById('modalQuarto').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fecharQuarto();
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharQuarto();
+    }
+});
+</script>
+
+{% endblock %}

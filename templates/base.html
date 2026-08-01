@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{ page_title or title or 'Hotel PRO' }}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        :root{
+            --bg:#020617;
+            --surface:#0f172a;
+            --surface-2:#111c31;
+            --border:rgba(255,255,255,.08);
+            --text:#f8fafc;
+            --muted:#94a3b8;
+            --primary:#2563eb;
+            --danger:#dc2626;
+            --success:#16a34a;
+            --shadow:0 20px 50px rgba(0,0,0,.22);
+        }
+
+        html[data-theme="light"]{
+            --bg:#f1f5f9;
+            --surface:#ffffff;
+            --surface-2:#f8fafc;
+            --border:rgba(15,23,42,.10);
+            --text:#0f172a;
+            --muted:#64748b;
+            --shadow:0 20px 50px rgba(15,23,42,.08);
+        }
+
+        *{box-sizing:border-box}
+
+        body{
+            margin:0;
+            min-height:100vh;
+            background:var(--bg);
+            color:var(--text);
+            font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+        }
+
+        button,input,select,textarea{font:inherit}
+
+        .layout{
+            display:block !important;
+            width:100% !important;
+            min-height:100vh;
+        }
+
+        .main-header{
+            width:100% !important;
+            min-height:80px;
+            position:sticky;
+            top:0;
+            left:0;
+            right:0;
+            z-index:1000;
+
+            display:grid !important;
+            grid-template-columns:minmax(220px,260px) 1fr auto;
+            align-items:center;
+            gap:20px;
+
+            padding:14px 28px;
+            background:rgba(2,6,23,.92);
+            border-bottom:1px solid var(--border);
+            backdrop-filter:blur(18px);
+        }
+
+        html[data-theme="light"] .main-header{
+            background:rgba(255,255,255,.92);
+        }
+
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            text-decoration:none;
+            color:inherit;
+        }
+
+        .brand-logo{
+            width:48px;
+            height:48px;
+            border-radius:16px;
+            display:grid;
+            place-items:center;
+            background:linear-gradient(135deg,#2563eb,#06b6d4);
+            color:#fff;
+            font-size:25px;
+            font-weight:900;
+            box-shadow:0 10px 30px rgba(37,99,235,.35);
+        }
+
+        .brand-text strong{
+            display:block;
+            font-size:18px;
+            letter-spacing:.5px;
+        }
+
+        .brand-text small{color:var(--muted)}
+
+        .header-center{
+            min-width:0;
+            text-align:center;
+        }
+
+        .header-center h1{
+            margin:0;
+            font-size:23px;
+            font-weight:850;
+        }
+
+        .header-center p{
+            margin:5px 0 0;
+            color:var(--muted);
+            font-size:13px;
+        }
+
+        .userbox{
+            min-width:max-content;
+            display:flex;
+            align-items:center;
+            justify-content:flex-end;
+            gap:10px;
+        }
+
+        .user-info{
+            display:flex;
+            flex-direction:column;
+            align-items:flex-end;
+            line-height:1.25;
+        }
+
+        .user-info span{font-weight:800}
+        .user-info small{color:var(--muted)}
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            min-height:42px;
+            padding:10px 15px;
+            border:none;
+            border-radius:12px;
+            background:var(--primary);
+            color:#fff;
+            text-decoration:none;
+            font-weight:800;
+            cursor:pointer;
+            transition:.2s;
+        }
+
+        .btn:hover{
+            transform:translateY(-2px);
+            filter:brightness(1.08);
+        }
+
+        .btn.ghost{
+            background:rgba(255,255,255,.07);
+            border:1px solid var(--border);
+            color:var(--text);
+        }
+
+        html[data-theme="light"] .btn.ghost{background:#f1f5f9}
+        .btn.danger{background:var(--danger)}
+
+        .main{
+            width:min(1600px,100%) !important;
+            margin:0 auto !important;
+            padding:28px !important;
+            display:block !important;
+            flex:none !important;
+        }
+
+        .page-heading{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:18px;
+            margin-bottom:22px;
+            padding:20px 22px;
+            border-radius:20px;
+            background:var(--surface);
+            border:1px solid var(--border);
+            box-shadow:var(--shadow);
+        }
+
+        .page-heading h2{
+            margin:0;
+            font-size:24px;
+        }
+
+        .page-heading p{
+            margin:6px 0 0;
+            color:var(--muted);
+        }
+
+        .flashwrap{
+            display:grid;
+            gap:12px;
+            margin-bottom:22px;
+        }
+
+        .flash{
+            padding:15px 17px;
+            border-radius:14px;
+            font-weight:700;
+            border:1px solid var(--border);
+        }
+
+        .flash.success{background:rgba(34,197,94,.14);color:#86efac}
+        .flash.danger,.flash.error{background:rgba(239,68,68,.14);color:#fca5a5}
+        .flash.warning{background:rgba(245,158,11,.14);color:#fde68a}
+        .flash.info{background:rgba(59,130,246,.14);color:#93c5fd}
+
+        html[data-theme="light"] .flash.success{color:#166534}
+        html[data-theme="light"] .flash.danger,
+        html[data-theme="light"] .flash.error{color:#991b1b}
+        html[data-theme="light"] .flash.warning{color:#92400e}
+        html[data-theme="light"] .flash.info{color:#1d4ed8}
+
+        @media(max-width:1000px){
+            .main-header{
+                grid-template-columns:minmax(190px,220px) 1fr auto;
+            }
+
+            .header-center h1{
+                font-size:19px;
+            }
+
+            .header-center p{
+                display:none;
+            }
+        }
+
+        @media(max-width:760px){
+            .main-header{
+                position:relative;
+                grid-template-columns:1fr auto;
+                padding:14px 16px;
+            }
+
+            .header-center{
+                display:none;
+            }
+
+            .brand-text small,
+            .user-info{
+                display:none;
+            }
+
+            .main{
+                padding:15px !important;
+            }
+
+            .page-heading{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+
+            .page-heading .btn{
+                width:100%;
+            }
+        }
+
+        @media(max-width:520px){
+            .brand-text{
+                display:none;
+            }
+
+            .userbox{
+                gap:7px;
+            }
+        }
+
+        @media(max-width:480px){
+            .brand-logo{
+                width:42px;
+                height:42px;
+                border-radius:14px;
+            }
+
+            .brand-text strong{font-size:15px}
+
+            .userbox .btn{
+                min-height:39px;
+                padding:9px 11px;
+                font-size:12px;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+{% set perfil = (session.get('perfil') or '')|lower|trim %}
+{% set endpoint = request.endpoint or '' %}
+
+<div class="layout">
+
+    <header class="main-header">
+
+        <a href="{{ url_for('dashboard') }}" class="brand">
+            <span class="brand-logo">H</span>
+
+            <div class="brand-text">
+                <strong>HOTEL PRO</strong>
+                <small>ERP Hoteleiro</small>
+            </div>
+        </a>
+
+        <div class="header-center">
+            <h1>{{ page_title or 'Hotel PRO' }}</h1>
+            <p>{{ page_subtitle or 'Sistema de Gestão Hoteleira' }}</p>
+        </div>
+
+        <div class="userbox">
+
+            {% if endpoint != 'dashboard' %}
+                <a href="{{ url_for('dashboard') }}" class="btn ghost">
+                    ← Módulos
+                </a>
+            {% endif %}
+
+            <button type="button" onclick="toggleTheme()" class="btn ghost">
+                <span id="themeIcon">🌙</span>
+                Tema
+            </button>
+
+            <div class="user-info">
+                <span>{{ session.get('nome') or 'Usuário' }}</span>
+                <small>{{ session.get('perfil') or 'Perfil' }}</small>
+            </div>
+
+            <a href="{{ url_for('logout') }}" class="btn danger">
+                Sair
+            </a>
+
+        </div>
+
+    </header>
+
+    <main class="main">
+
+        {% if endpoint != 'dashboard' %}
+            <section class="page-heading">
+                <div>
+                    <h2>{{ page_title or 'Hotel PRO' }}</h2>
+                    <p>{{ page_subtitle or 'Gerencie as informações desta área.' }}</p>
+                </div>
+
+                <a href="{{ url_for('dashboard') }}" class="btn ghost">
+                    ← Voltar aos módulos
+                </a>
+            </section>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashwrap">
+                    {% for cat,msg in messages %}
+                        <div class="flash {{ cat }}">{{ msg }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<script>
+    function toggleTheme(){
+        const html = document.documentElement;
+        const current = html.getAttribute("data-theme") || "dark";
+        const next = current === "dark" ? "light" : "dark";
+
+        html.setAttribute("data-theme", next);
+        localStorage.setItem("hotelpro-theme", next);
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon(){
+        const theme = document.documentElement.getAttribute("data-theme") || "dark";
+        const icon = document.getElementById("themeIcon");
+
+        if(icon){
+            icon.textContent = theme === "dark" ? "🌙" : "☀️";
+        }
+    }
+
+    const savedTheme = localStorage.getItem("hotelpro-theme");
+
+    if(savedTheme){
+        document.documentElement.setAttribute("data-theme", savedTheme);
+    }
+
+    document.addEventListener("DOMContentLoaded", updateThemeIcon);
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>
