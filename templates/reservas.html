@@ -27,7 +27,7 @@
             {% endfor %}
         </select>
 
-        <select name="quarto_id" required>
+        <select name="quarto_id" id="quarto_id" required>
             <option value="">Selecione o quarto</option>
 
             {% for q in quartos %}
@@ -35,7 +35,7 @@
 
                 <option
                     value="{{ q.id }}"
-                    {% if lotacao.get('vagas', q.capacidade or 0) <= 0 %}disabled{% endif %}
+                    {% if q.status in ['Bloqueado', 'Em manutenção', 'Em limpeza'] %}disabled{% endif %}
                 >
                     Quarto {{ q.numero }}
                     — {{ q.categoria }}
@@ -96,6 +96,48 @@
         </button>
 
     </form>
+</div>
+
+<div class="agenda-modal" id="agenda_modal" aria-hidden="true">
+    <div class="agenda-modal__backdrop" data-fechar-agenda></div>
+
+    <section
+        class="agenda-modal__card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="agenda_titulo"
+    >
+        <button
+            type="button"
+            class="agenda-modal__fechar"
+            data-fechar-agenda
+            aria-label="Fechar aviso"
+        >×</button>
+
+        <div class="agenda-modal__icone">📅</div>
+
+        <div class="agenda-modal__cabecalho">
+            <span class="agenda-modal__etiqueta">AGENDA DO QUARTO</span>
+            <h3 id="agenda_titulo">Reserva já programada</h3>
+            <p id="agenda_subtitulo">
+                Confira as datas antes de continuar.
+            </p>
+        </div>
+
+        <div class="agenda-modal__lista" id="agenda_lista"></div>
+
+        <div class="agenda-modal__aviso">
+            <span>ℹ️</span>
+            <p>
+                Você ainda pode selecionar este quarto para outro período.
+                O sistema impedirá datas que entrem em conflito.
+            </p>
+        </div>
+
+        <button type="button" class="btn primary agenda-modal__botao" data-fechar-agenda>
+            Entendi, continuar
+        </button>
+    </section>
 </div>
 
 <div class="panel">
@@ -466,6 +508,173 @@ td{
     color:#475569;
 }
 
+.agenda-modal{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.agenda-modal.aberto{
+    display:flex;
+}
+
+.agenda-modal__backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(15,23,42,.68);
+    backdrop-filter:blur(5px);
+}
+
+.agenda-modal__card{
+    position:relative;
+    width:min(560px, 100%);
+    max-height:90vh;
+    overflow-y:auto;
+    border:1px solid rgba(148,163,184,.28);
+    border-radius:22px;
+    padding:28px;
+    background:#fff;
+    box-shadow:0 30px 80px rgba(15,23,42,.28);
+    animation:agendaEntrada .22s ease-out;
+}
+
+@keyframes agendaEntrada{
+    from{opacity:0; transform:translateY(12px) scale(.98)}
+    to{opacity:1; transform:translateY(0) scale(1)}
+}
+
+.agenda-modal__fechar{
+    position:absolute;
+    top:16px;
+    right:16px;
+    width:36px;
+    height:36px;
+    border:0;
+    border-radius:10px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+}
+
+.agenda-modal__icone{
+    width:54px;
+    height:54px;
+    display:grid;
+    place-items:center;
+    border-radius:16px;
+    margin-bottom:16px;
+    background:linear-gradient(135deg,#dbeafe,#eff6ff);
+    font-size:27px;
+}
+
+.agenda-modal__etiqueta{
+    color:#2563eb;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.11em;
+}
+
+.agenda-modal__cabecalho h3{
+    margin:5px 42px 6px 0;
+    color:#0f172a;
+    font-size:22px;
+}
+
+.agenda-modal__cabecalho p{
+    margin:0;
+    color:#64748b;
+    font-size:14px;
+}
+
+.agenda-modal__lista{
+    display:grid;
+    gap:10px;
+    margin:20px 0 16px;
+}
+
+.agenda-item{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px 16px;
+    padding:15px;
+    border:1px solid #dbeafe;
+    border-radius:14px;
+    background:#f8fbff;
+}
+
+.agenda-item__nome{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:800;
+}
+
+.agenda-item__status{
+    align-self:start;
+    padding:5px 9px;
+    border-radius:999px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+
+.agenda-item__datas{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    color:#475569;
+    font-size:12px;
+}
+
+.agenda-item__datas strong{
+    display:block;
+    margin-bottom:3px;
+    color:#94a3b8;
+    font-size:10px;
+    text-transform:uppercase;
+}
+
+.agenda-modal__aviso{
+    display:flex;
+    gap:10px;
+    padding:12px 14px;
+    border-radius:12px;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:12px;
+    line-height:1.5;
+}
+
+.agenda-modal__aviso p{margin:0}
+
+.agenda-modal__botao{
+    width:100%;
+    margin-top:18px;
+}
+
+body.dark .agenda-modal__card{
+    background:#111827;
+    border-color:rgba(255,255,255,.1);
+}
+
+body.dark .agenda-modal__cabecalho h3,
+body.dark .agenda-item__nome{color:#f8fafc}
+
+body.dark .agenda-modal__cabecalho p{color:#94a3b8}
+
+body.dark .agenda-item{
+    background:rgba(30,41,59,.8);
+    border-color:rgba(59,130,246,.25);
+}
+
 body.dark .calc-box{
     background:rgba(15,23,42,.85);
     border-color:rgba(255,255,255,.08);
@@ -494,6 +703,70 @@ body.dark .calc-box span{
 </style>
 
 <script>
+const agendaQuartos = {{ agenda_quartos|tojson }};
+const seletorQuarto = document.getElementById('quarto_id');
+const agendaModal = document.getElementById('agenda_modal');
+const agendaLista = document.getElementById('agenda_lista');
+const agendaTitulo = document.getElementById('agenda_titulo');
+
+function formatarDataAgenda(valor){
+    const data = new Date(valor);
+    if(Number.isNaN(data.getTime())) return valor;
+
+    return new Intl.DateTimeFormat('pt-BR', {
+        day:'2-digit', month:'2-digit', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+    }).format(data);
+}
+
+function fecharAgenda(){
+    agendaModal.classList.remove('aberto');
+    agendaModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
+
+function abrirAgenda(quartoId){
+    const reservas = agendaQuartos[String(quartoId)] || [];
+    if(!reservas.length) return;
+
+    const opcao = seletorQuarto.options[seletorQuarto.selectedIndex];
+    const numero = (opcao.textContent.match(/Quarto\s+([^—]+)/) || [,''])[1].trim();
+    agendaTitulo.textContent = 'Quarto ' + numero + ' possui reserva agendada';
+
+    agendaLista.innerHTML = reservas.map(reserva => `
+        <article class="agenda-item">
+            <span class="agenda-item__nome">${escaparHtml(reserva.hospede)}</span>
+            <span class="agenda-item__status">${escaparHtml(reserva.status)}</span>
+            <div class="agenda-item__datas">
+                <span><strong>Entrada</strong>${formatarDataAgenda(reserva.entrada)}</span>
+                <span><strong>Saída</strong>${formatarDataAgenda(reserva.saida)}</span>
+            </div>
+        </article>
+    `).join('');
+
+    agendaModal.classList.add('aberto');
+    agendaModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function escaparHtml(valor){
+    const elemento = document.createElement('div');
+    elemento.textContent = valor || '';
+    return elemento.innerHTML;
+}
+
+seletorQuarto.addEventListener('change', function(){
+    if(this.value) abrirAgenda(this.value);
+});
+
+document.querySelectorAll('[data-fechar-agenda]').forEach(elemento => {
+    elemento.addEventListener('click', fecharAgenda);
+});
+
+document.addEventListener('keydown', evento => {
+    if(evento.key === 'Escape') fecharAgenda();
+});
+
 function calcularReserva(){
     const entrada =
         document.getElementById('data_entrada').value;
