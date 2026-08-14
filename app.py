@@ -18,14 +18,32 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.units import mm
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
-BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
+
+# No Railway será /app/data. No computador continuará usando a pasta local.
+DATA_DIR = os.environ.get(
+    'RAILWAY_VOLUME_MOUNT_PATH',
+    BASE_DIR
+)
+
+UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
+BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
+DATABASE_PATH = os.path.join(DATA_DIR, 'hotel.db')
+
+os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'troque-essa-chave-em-producao'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'hotel.db')
+
+app.config['SECRET_KEY'] = os.environ.get(
+    'SECRET_KEY',
+    'troque-essa-chave-em-producao'
+)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    'sqlite:///' + DATABASE_PATH
+)
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = UPLOAD_DIR
 
@@ -2772,8 +2790,52 @@ def recibo(id):
         mimetype='application/pdf'
     )
 
+def seed():
+    admin = Usuario.query.filter_by(usuario='admin').first()
+
+    if not admin:
+        admin = Usuario(
+            nome='Administrador',
+            usuario='admin',
+            senha_hash=generate_password_hash('admin123'),
+            perfil='Administrador',
+            ativo=True
+        )
+
+        db.session.add(admin)
+
+    if Quarto.query.count() == 0:
+        for numero in range(101, 111):
+            db.session.add(
+                Quarto(
+                    numero=str(numero),
+                    andar='1',
+                    categoria='Standard',
+                    capacidade=2,
+                    valor_diaria=180,
+                    status='Livre'
+                )
+            )
+
+        for numero in range(201, 206):
+            db.session.add(
+                Quarto(
+                    numero=str(numero),
+                    andar='2',
+                    categoria='Luxo',
+                    capacidade=3,
+                    valor_diaria=260,
+                    status='Livre'
+                )
+            )
+
+    db.session.commit()
+
+
 with app.app_context():
-    db.create_all();
+    db.create_all()
+    seed()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
