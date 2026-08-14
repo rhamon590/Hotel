@@ -19,7 +19,7 @@ from reportlab.lib.units import mm
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# No Railway será /app/data. No computador continuará usando a pasta local.
+# No Railway serÃ¡ /app/data. No computador continuarÃ¡ usando a pasta local.
 DATA_DIR = os.environ.get(
     'RAILWAY_VOLUME_MOUNT_PATH',
     BASE_DIR
@@ -139,7 +139,7 @@ class Manutencao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quarto_id = db.Column(db.Integer, db.ForeignKey('quarto.id'))
     problema = db.Column(db.String(200), nullable=False)
-    prioridade = db.Column(db.String(40), default='Média')
+    prioridade = db.Column(db.String(40), default='MÃ©dia')
     status = db.Column(db.String(40), default='Aberto')
     responsavel = db.Column(db.String(120))
     custo = db.Column(db.Float, default=0)
@@ -194,6 +194,9 @@ class Cartao(db.Model):
     criado_por = db.Column(db.String(80), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.now, nullable=False)
     observacoes = db.Column(db.Text)
+    # VÃ­nculo fixo e opcional do cartÃ£o com um quarto.
+    quarto_id = db.Column(db.Integer, db.ForeignKey('quarto.id'), index=True)
+    quarto_vinculado = db.relationship('Quarto', foreign_keys=[quarto_id])
 
     movimentacoes = db.relationship(
         'MovimentacaoCartao',
@@ -223,12 +226,12 @@ class MovimentacaoCartao(db.Model):
 
 
 # ========================= HELPERS =========================
-# Perfis disponíveis no sistema.
+# Perfis disponÃ­veis no sistema.
 PERFIS_DISPONIVEIS = ('Administrador', 'RH', 'Porteiro')
 
-# Módulos liberados para cada perfil.
-# Os valores são mantidos em minúsculas porque o perfil salvo na sessão
-# também é normalizado no momento do login.
+# MÃ³dulos liberados para cada perfil.
+# Os valores sÃ£o mantidos em minÃºsculas porque o perfil salvo na sessÃ£o
+# tambÃ©m Ã© normalizado no momento do login.
 PERMISSOES_PERFIL = {
     'administrador': {
         'dashboard', 'hospedes', 'quartos', 'reservas', 'calendario',
@@ -246,12 +249,12 @@ PERMISSOES_PERFIL = {
 
 
 def perfil_atual():
-    """Retorna o perfil da sessão já normalizado."""
+    """Retorna o perfil da sessÃ£o jÃ¡ normalizado."""
     return (session.get('perfil') or '').strip().lower()
 
 
 def usuario_tem_acesso(modulo):
-    """Verifica se o usuário logado pode acessar determinado módulo."""
+    """Verifica se o usuÃ¡rio logado pode acessar determinado mÃ³dulo."""
     return modulo in PERMISSOES_PERFIL.get(perfil_atual(), set())
 
 
@@ -259,23 +262,23 @@ def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if 'usuario' not in session:
-            flash('Faça login para acessar o sistema.', 'warning')
+            flash('FaÃ§a login para acessar o sistema.', 'warning')
             return redirect(url_for('login'))
         return func(*args, **kwargs)
     return wrapper
 
 
 def permissao_necessaria(modulo):
-    """Protege a rota também contra acesso direto pela URL."""
+    """Protege a rota tambÃ©m contra acesso direto pela URL."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if 'usuario' not in session:
-                flash('Faça login para acessar o sistema.', 'warning')
+                flash('FaÃ§a login para acessar o sistema.', 'warning')
                 return redirect(url_for('login'))
 
             if not usuario_tem_acesso(modulo):
-                flash('Você não possui permissão para acessar este módulo.', 'danger')
+                flash('VocÃª nÃ£o possui permissÃ£o para acessar este mÃ³dulo.', 'danger')
                 return redirect(url_for('dashboard'))
 
             return func(*args, **kwargs)
@@ -312,9 +315,9 @@ def reservas_ativas_quarto(quarto_id):
 
 
 def lotacao_quarto(quarto):
-    """Retorna a ocupação do quarto neste momento.
+    """Retorna a ocupaÃ§Ã£o do quarto neste momento.
 
-    Reservas futuras continuam garantidas no período delas, mas não reduzem
+    Reservas futuras continuam garantidas no perÃ­odo delas, mas nÃ£o reduzem
     as vagas atuais nem alteram antecipadamente o status do quarto.
     """
     agora = datetime.now()
@@ -326,7 +329,7 @@ def lotacao_quarto(quarto):
             entrada = datetime.fromisoformat(reserva.data_entrada)
             saida = datetime.fromisoformat(reserva.data_saida)
         except (TypeError, ValueError):
-            # Registro antigo com data inválida não deve bloquear o quarto.
+            # Registro antigo com data invÃ¡lida nÃ£o deve bloquear o quarto.
             continue
 
         if reserva.status == 'Hospedado':
@@ -348,7 +351,7 @@ def lotacao_quarto(quarto):
 
 
 def vagas_no_periodo(quarto, entrada, saida, ignorar_id=None):
-    """Calcula vagas considerando reservas que se sobrepõem ao período."""
+    """Calcula vagas considerando reservas que se sobrepÃµem ao perÃ­odo."""
     query = reservas_ativas_quarto(quarto.id)
 
     ocupadas_no_periodo = 0
@@ -363,8 +366,8 @@ def vagas_no_periodo(quarto, entrada, saida, ignorar_id=None):
 
 
 def atualizar_status_quarto(quarto):
-    """Atualiza o status conforme reservas e ocupação, preservando bloqueios operacionais."""
-    if quarto.status in ['Em limpeza', 'Em manutenção', 'Bloqueado']:
+    """Atualiza o status conforme reservas e ocupaÃ§Ã£o, preservando bloqueios operacionais."""
+    if quarto.status in ['Em limpeza', 'Em manutenÃ§Ã£o', 'Bloqueado']:
         return quarto.status
 
     lotacao = lotacao_quarto(quarto)
@@ -382,7 +385,7 @@ def atualizar_status_quarto(quarto):
 
 
 def gerar_limpeza_se_necessario(quarto, observacao):
-    """Envia o quarto para limpeza somente quando não restar reserva ativa."""
+    """Envia o quarto para limpeza somente quando nÃ£o restar reserva ativa."""
     if reservas_ativas_quarto(quarto.id).count() > 0:
         atualizar_status_quarto(quarto)
         return False
@@ -449,13 +452,13 @@ def export_pdf(title, headers, rows, filename):
 
     elements = []
 
-    # Cabeçalho profissional
+    # CabeÃ§alho profissional
     header_data = [
         [
             Paragraph('<b>HOTEL PRO</b><br/><font size="8">ERP Hoteleiro Profissional</font>', styles['Normal']),
             Paragraph(
                 f'<b>{title}</b><br/>'
-                f'<font size="8">Gerado em {datetime.now().strftime("%d/%m/%Y às %H:%M")}</font>',
+                f'<font size="8">Gerado em {datetime.now().strftime("%d/%m/%Y Ã s %H:%M")}</font>',
                 styles['Normal']
             )
         ]
@@ -483,9 +486,9 @@ def export_pdf(title, headers, rows, filename):
     resumo_data = [
         [
             Paragraph('<b>Total de registros</b><br/><font size="16">%s</font>' % total_registros, styles['Normal']),
-            Paragraph('<b>Relatório</b><br/><font size="10">%s</font>' % title, styles['Normal']),
+            Paragraph('<b>RelatÃ³rio</b><br/><font size="10">%s</font>' % title, styles['Normal']),
             Paragraph('<b>Sistema</b><br/><font size="10">Hotel Pro</font>', styles['Normal']),
-            Paragraph('<b>Usuário</b><br/><font size="10">Administrador</font>', styles['Normal'])
+            Paragraph('<b>UsuÃ¡rio</b><br/><font size="10">Administrador</font>', styles['Normal'])
         ]
     ]
 
@@ -505,9 +508,9 @@ def export_pdf(title, headers, rows, filename):
     elements.append(resumo_table)
     elements.append(Spacer(1, 14))
 
-    # Caso não tenha dados
+    # Caso nÃ£o tenha dados
     if not rows:
-        elements.append(Paragraph('Nenhum registro encontrado para este relatório.', small_style))
+        elements.append(Paragraph('Nenhum registro encontrado para este relatÃ³rio.', small_style))
         doc.build(elements)
         output.seek(0)
         return send_file(
@@ -517,7 +520,7 @@ def export_pdf(title, headers, rows, filename):
             mimetype='application/pdf'
         )
 
-    # Limita textos grandes para não quebrar o PDF
+    # Limita textos grandes para nÃ£o quebrar o PDF
     def limpar_texto(valor, limite=35):
         valor = '' if valor is None else str(valor)
         valor = valor.replace('\n', ' ').replace('\r', ' ')
@@ -533,7 +536,7 @@ def export_pdf(title, headers, rows, filename):
 
     data = [headers_limpos] + rows_limpas
 
-    # Largura automática das colunas
+    # Largura automÃ¡tica das colunas
     largura_total = 790
     qtd_colunas = max(1, len(headers_limpos))
     largura_coluna = largura_total / qtd_colunas
@@ -590,13 +593,13 @@ def export_pdf(title, headers, rows, filename):
         canvas.drawString(
             24,
             18,
-            f'Hotel Pro ERP Hoteleiro • Gerado em {datetime.now().strftime("%d/%m/%Y %H:%M")}'
+            f'Hotel Pro ERP Hoteleiro â€¢ Gerado em {datetime.now().strftime("%d/%m/%Y %H:%M")}'
         )
 
         canvas.drawRightString(
             largura - 24,
             18,
-            f'Página {doc.page}'
+            f'PÃ¡gina {doc.page}'
         )
 
         canvas.restoreState()
@@ -627,7 +630,7 @@ def login():
         senha = request.form.get('senha', '')
 
         if not usuario or not senha:
-            flash('Informe o usuário e a senha.', 'warning')
+            flash('Informe o usuÃ¡rio e a senha.', 'warning')
             return render_template('login.html')
 
         user = Usuario.query.filter_by(
@@ -650,7 +653,7 @@ def login():
                     'Login',
                     'usuarios',
                     user.id,
-                    'Usuário acessou o sistema'
+                    'UsuÃ¡rio acessou o sistema'
                 )
             except Exception as erro:
                 app.logger.error(
@@ -659,7 +662,7 @@ def login():
 
             return redirect(url_for('dashboard'))
 
-        flash('Usuário ou senha inválidos.', 'danger')
+        flash('UsuÃ¡rio ou senha invÃ¡lidos.', 'danger')
 
     return render_template('login.html')
     
@@ -683,7 +686,7 @@ def dashboard():
     ).count()
     reservados = Quarto.query.filter_by(status='Reservado').count()
     limpeza = Quarto.query.filter_by(status='Em limpeza').count()
-    manutencao = Quarto.query.filter_by(status='Em manutenção').count()
+    manutencao = Quarto.query.filter_by(status='Em manutenÃ§Ã£o').count()
 
     checkins = Reserva.query.filter(
         db.func.date(Reserva.data_entrada) == hoje
@@ -736,7 +739,7 @@ def dashboard():
 def hospedes():
     if request.method == 'POST':
         h = Hospede(**{k: request.form.get(k) for k in ['nome','cpf','rg','passaporte','nascimento','telefone','whatsapp','email','nacionalidade','endereco','cidade','estado','cep','profissao','empresa','observacoes']})
-        db.session.add(h); db.session.commit(); auditar('Criou hóspede','hospedes',h.id,h.nome); flash('Hóspede salvo.', 'success'); return redirect(url_for('hospedes'))
+        db.session.add(h); db.session.commit(); auditar('Criou hÃ³spede','hospedes',h.id,h.nome); flash('HÃ³spede salvo.', 'success'); return redirect(url_for('hospedes'))
     q = request.args.get('q','')
     dados = Hospede.query.filter(Hospede.nome.contains(q)).order_by(Hospede.nome).all() if q else Hospede.query.order_by(Hospede.nome).all()
     return render_template('hospedes.html', dados=dados, q=q)
@@ -781,7 +784,7 @@ def excluir_todos_quartos():
         ]
 
         if not quartos_ids:
-            flash('Não existem quartos cadastrados para excluir.', 'warning')
+            flash('NÃ£o existem quartos cadastrados para excluir.', 'warning')
             return redirect(url_for('quartos'))
 
         if reservas_ids:
@@ -825,11 +828,11 @@ def excluir_todos_quartos():
             )
         except Exception as erro_auditoria:
             app.logger.error(
-                f'Erro ao registrar auditoria da exclusão total: {erro_auditoria}'
+                f'Erro ao registrar auditoria da exclusÃ£o total: {erro_auditoria}'
             )
 
         flash(
-            f'{len(quartos_ids)} quarto(s) e seus registros vinculados foram excluídos.',
+            f'{len(quartos_ids)} quarto(s) e seus registros vinculados foram excluÃ­dos.',
             'success'
         )
 
@@ -837,7 +840,7 @@ def excluir_todos_quartos():
         db.session.rollback()
         app.logger.exception('Erro ao excluir todos os quartos.')
         flash(
-            f'Não foi possível excluir os quartos: {erro}',
+            f'NÃ£o foi possÃ­vel excluir os quartos: {erro}',
             'danger'
         )
 
@@ -866,7 +869,7 @@ def reservas():
 
         if not entrada or not saida:
             flash(
-                'Informe a data e hora de entrada e saída.',
+                'Informe a data e hora de entrada e saÃ­da.',
                 'danger'
             )
             return redirect(url_for('reservas'))
@@ -877,14 +880,14 @@ def reservas():
 
         except ValueError:
             flash(
-                'Data de entrada ou saída inválida.',
+                'Data de entrada ou saÃ­da invÃ¡lida.',
                 'danger'
             )
             return redirect(url_for('reservas'))
 
         if dt_saida <= dt_entrada:
             flash(
-                'A saída deve ser maior que a entrada.',
+                'A saÃ­da deve ser maior que a entrada.',
                 'danger'
             )
             return redirect(url_for('reservas'))
@@ -893,13 +896,13 @@ def reservas():
         hospede = Hospede.query.get_or_404(hospede_id)
 
         if quarto.status in [
-            'Em manutenção',
+            'Em manutenÃ§Ã£o',
             'Bloqueado',
             'Em limpeza'
         ]:
             flash(
                 (
-                    f'O quarto {quarto.numero} está indisponível: '
+                    f'O quarto {quarto.numero} estÃ¡ indisponÃ­vel: '
                     f'{quarto.status}.'
                 ),
                 'danger'
@@ -915,8 +918,8 @@ def reservas():
         if vagas_periodo <= 0:
             flash(
                 (
-                    f'O quarto {quarto.numero} está lotado '
-                    'nesse período.'
+                    f'O quarto {quarto.numero} estÃ¡ lotado '
+                    'nesse perÃ­odo.'
                 ),
                 'danger'
             )
@@ -938,7 +941,7 @@ def reservas():
         if reserva_ativa_colaborador:
             flash(
                 (
-                    f'O colaborador {hospede.nome} já possui uma '
+                    f'O colaborador {hospede.nome} jÃ¡ possui uma '
                     f'reserva ativa no quarto '
                     f'{reserva_ativa_colaborador.quarto.numero}.'
                 ),
@@ -957,14 +960,14 @@ def reservas():
 
         except ValueError:
             flash(
-                'Valor da diária ou desconto inválido.',
+                'Valor da diÃ¡ria ou desconto invÃ¡lido.',
                 'danger'
             )
             return redirect(url_for('reservas'))
 
         if valor_diaria < 0 or desconto < 0:
             flash(
-                'O valor da diária e o desconto não podem ser negativos.',
+                'O valor da diÃ¡ria e o desconto nÃ£o podem ser negativos.',
                 'danger'
             )
             return redirect(url_for('reservas'))
@@ -989,8 +992,8 @@ def reservas():
         ).strip()
 
         calculo_automatico = (
-            f'Cálculo automático: {horas:.1f} horas | '
-            f'{diarias} diária(s) | '
+            f'CÃ¡lculo automÃ¡tico: {horas:.1f} horas | '
+            f'{diarias} diÃ¡ria(s) | '
             f'Total R$ {valor_total:.2f}'
         )
 
@@ -1040,7 +1043,7 @@ def reservas():
             (
                 f'Colaborador {hospede.nome} | '
                 f'Quarto {quarto.numero} | '
-                f'{diarias} diária(s) | '
+                f'{diarias} diÃ¡ria(s) | '
                 f'R$ {valor_total:.2f} | '
                 f'{vagas_restantes} vaga(s) restante(s)'
             )
@@ -1051,7 +1054,7 @@ def reservas():
                 f'Reserva criada para {hospede.nome} '
                 f'no quarto {quarto.numero}. '
                 f'Agora restam {vagas_restantes} '
-                'vaga(s) nesse período.'
+                'vaga(s) nesse perÃ­odo.'
             ),
             'success'
         )
@@ -1122,8 +1125,8 @@ def reservas():
         .all()
     )
 
-    # Recalcula a situação atual antes de montar a lista. Assim, uma reserva
-    # futura não deixa o quarto como Lotado antes da data de entrada.
+    # Recalcula a situaÃ§Ã£o atual antes de montar a lista. Assim, uma reserva
+    # futura nÃ£o deixa o quarto como Lotado antes da data de entrada.
     for quarto in quartos_lista:
         atualizar_status_quarto(quarto)
 
@@ -1135,7 +1138,7 @@ def reservas():
     }
 
     # Agenda ativa por quarto para o aviso exibido ao selecionar um quarto.
-    # Inclui hospedagens em andamento e reservas que ainda não terminaram.
+    # Inclui hospedagens em andamento e reservas que ainda nÃ£o terminaram.
     agora_iso = datetime.now().isoformat(timespec='minutes')
     agenda_quartos = {str(quarto.id): [] for quarto in quartos_lista}
 
@@ -1188,7 +1191,7 @@ def checkin(id):
     reserva = Reserva.query.get_or_404(id)
 
     if reserva.status != 'Reservado':
-        flash('Esta reserva não está disponível para check-in.', 'warning')
+        flash('Esta reserva nÃ£o estÃ¡ disponÃ­vel para check-in.', 'warning')
         return redirect(url_for('reservas'))
 
     reserva.status = 'Hospedado'
@@ -1227,9 +1230,9 @@ def checkout(id):
         if pendencia_cartao:
             flash(
                 (
-                    'Não foi possível finalizar o check-out: o cartão '
-                    f'{pendencia_cartao.cartao.codigo} ainda está em uso. '
-                    'Registre a devolução, perda ou dano.'
+                    'NÃ£o foi possÃ­vel finalizar o check-out: o cartÃ£o '
+                    f'{pendencia_cartao.cartao.codigo} ainda estÃ¡ em uso. '
+                    'Registre a devoluÃ§Ã£o, perda ou dano.'
                 ),
                 'danger'
             )
@@ -1250,7 +1253,7 @@ def checkout(id):
 
         foi_para_limpeza = gerar_limpeza_se_necessario(
             reserva.quarto,
-            'Gerado automaticamente após a saída do último colaborador.'
+            'Gerado automaticamente apÃ³s a saÃ­da do Ãºltimo colaborador.'
         )
 
         db.session.commit()
@@ -1300,7 +1303,7 @@ def checkout(id):
 def consumos():
     if request.method == 'POST':
         c = Consumo(reserva_id=int(request.form.get('reserva_id')), produto=request.form.get('produto'), quantidade=int(request.form.get('quantidade') or 1), valor_unitario=float(request.form.get('valor_unitario') or 0), setor=request.form.get('setor'))
-        db.session.add(c); db.session.commit(); auditar('Lançou consumo','consumos',c.id,c.produto); flash('Consumo lançado.', 'success'); return redirect(url_for('consumos'))
+        db.session.add(c); db.session.commit(); auditar('LanÃ§ou consumo','consumos',c.id,c.produto); flash('Consumo lanÃ§ado.', 'success'); return redirect(url_for('consumos'))
     return render_template('consumos.html', dados=Consumo.query.order_by(Consumo.data.desc()).all(), reservas=Reserva.query.filter_by(status='Hospedado').all())
 
 @app.route('/quarto_detalhes/<int:id>')
@@ -1407,12 +1410,12 @@ def quarto_status(id, status):
         'Lotado',
         'Em limpeza',
         'Limpo',
-        'Em manutenção',
+        'Em manutenÃ§Ã£o',
         'Bloqueado'
     ]
 
     if status not in status_permitidos:
-        flash('Status inválido.', 'danger')
+        flash('Status invÃ¡lido.', 'danger')
         return redirect(url_for('quartos'))
 
     quarto.status = status
@@ -1505,8 +1508,8 @@ def limpeza():
 def manutencao():
     if request.method == 'POST':
         m = Manutencao(quarto_id=int(request.form.get('quarto_id')), problema=request.form.get('problema'), prioridade=request.form.get('prioridade'), status=request.form.get('status'), responsavel=request.form.get('responsavel'), custo=float(request.form.get('custo') or 0), observacoes=request.form.get('observacoes'))
-        quarto = Quarto.query.get(m.quarto_id); quarto.status = 'Em manutenção' if m.status != 'Finalizado' else 'Livre'
-        db.session.add(m); db.session.commit(); auditar('Registrou manutenção','manutencao',m.id,m.problema); flash('Manutenção registrada.', 'success'); return redirect(url_for('manutencao'))
+        quarto = Quarto.query.get(m.quarto_id); quarto.status = 'Em manutenÃ§Ã£o' if m.status != 'Finalizado' else 'Livre'
+        db.session.add(m); db.session.commit(); auditar('Registrou manutenÃ§Ã£o','manutencao',m.id,m.problema); flash('ManutenÃ§Ã£o registrada.', 'success'); return redirect(url_for('manutencao'))
     return render_template('manutencao.html', dados=Manutencao.query.order_by(Manutencao.data.desc()).all(), quartos=Quarto.query.order_by(Quarto.numero).all())
 
 @app.route('/produtos', methods=['GET','POST'])
@@ -1524,7 +1527,7 @@ def produtos():
 def funcionarios():
     if request.method == 'POST':
         f = Funcionario(nome=request.form.get('nome'), cpf=request.form.get('cpf'), cargo=request.form.get('cargo'), setor=request.form.get('setor'), telefone=request.form.get('telefone'), email=request.form.get('email'), status=request.form.get('status'))
-        db.session.add(f); db.session.commit(); flash('Funcionário salvo.', 'success'); return redirect(url_for('funcionarios'))
+        db.session.add(f); db.session.commit(); flash('FuncionÃ¡rio salvo.', 'success'); return redirect(url_for('funcionarios'))
     return render_template('funcionarios.html', dados=Funcionario.query.order_by(Funcionario.nome).all())
 
 @app.route('/empresas', methods=['GET','POST'])
@@ -1533,7 +1536,7 @@ def funcionarios():
 def empresas():
     if request.method == 'POST':
         e = Empresa(nome=request.form.get('nome'), cnpj=request.form.get('cnpj'), contato=request.form.get('contato'), telefone=request.form.get('telefone'), email=request.form.get('email'), tarifa_especial=float(request.form.get('tarifa_especial') or 0))
-        db.session.add(e); db.session.commit(); flash('Empresa/agência salva.', 'success'); return redirect(url_for('empresas'))
+        db.session.add(e); db.session.commit(); flash('Empresa/agÃªncia salva.', 'success'); return redirect(url_for('empresas'))
     return render_template('empresas.html', dados=Empresa.query.order_by(Empresa.nome).all())
 
 @app.route('/relatorios')
@@ -1562,17 +1565,17 @@ def usuarios():
         perfil = (request.form.get('perfil') or '').strip()
 
         if not nome or not nome_usuario or not senha:
-            flash('Preencha nome, usuário e senha.', 'warning')
+            flash('Preencha nome, usuÃ¡rio e senha.', 'warning')
             return redirect(url_for('usuarios'))
 
         if perfil not in PERFIS_DISPONIVEIS:
-            flash('Selecione um perfil válido: Administrador, RH ou Porteiro.', 'danger')
+            flash('Selecione um perfil vÃ¡lido: Administrador, RH ou Porteiro.', 'danger')
             return redirect(url_for('usuarios'))
 
         if Usuario.query.filter(
             db.func.lower(Usuario.usuario) == nome_usuario.lower()
         ).first():
-            flash('Este nome de usuário já está cadastrado.', 'danger')
+            flash('Este nome de usuÃ¡rio jÃ¡ estÃ¡ cadastrado.', 'danger')
             return redirect(url_for('usuarios'))
 
         novo_usuario = Usuario(
@@ -1586,12 +1589,12 @@ def usuarios():
         db.session.add(novo_usuario)
         db.session.commit()
         auditar(
-            'Criou usuário',
+            'Criou usuÃ¡rio',
             'usuarios',
             novo_usuario.id,
             f'{novo_usuario.nome} - perfil {novo_usuario.perfil}'
         )
-        flash('Usuário criado com sucesso.', 'success')
+        flash('UsuÃ¡rio criado com sucesso.', 'success')
         return redirect(url_for('usuarios'))
 
     return render_template(
@@ -1602,7 +1605,7 @@ def usuarios():
 
 
 
-# ========================= CONTROLE DE CARTÕES =========================
+# ========================= CONTROLE DE CARTÃ•ES =========================
 def movimentacao_ativa_cartao(cartao_id):
     return (
         MovimentacaoCartao.query
@@ -1633,13 +1636,19 @@ def cartoes():
         codigo = (request.form.get('codigo') or '').strip().upper()
         descricao = (request.form.get('descricao') or '').strip()
         observacoes = (request.form.get('observacoes') or '').strip()
+        quarto_id = request.form.get('quarto_id', type=int)
 
         if not codigo:
-            flash('Informe o código do cartão.', 'danger')
+            flash('Informe o cÃ³digo do cartÃ£o.', 'danger')
             return redirect(url_for('cartoes'))
 
         if Cartao.query.filter(db.func.lower(Cartao.codigo) == codigo.lower()).first():
-            flash(f'O cartão {codigo} já está cadastrado.', 'danger')
+            flash(f'O cartÃ£o {codigo} jÃ¡ estÃ¡ cadastrado.', 'danger')
+            return redirect(url_for('cartoes'))
+
+        quarto = Quarto.query.get(quarto_id) if quarto_id else None
+        if quarto_id and not quarto:
+            flash('O quarto selecionado nÃ£o foi encontrado.', 'danger')
             return redirect(url_for('cartoes'))
 
         cartao = Cartao(
@@ -1647,7 +1656,8 @@ def cartoes():
             descricao=descricao,
             status='Disponível',
             criado_por=session.get('nome') or session.get('usuario', 'sistema'),
-            observacoes=observacoes
+            observacoes=observacoes,
+            quarto_id=quarto.id if quarto else None
         )
         db.session.add(cartao)
         db.session.flush()
@@ -1657,12 +1667,19 @@ def cartoes():
             tipo='Cadastro',
             status_resultante='Disponível',
             usuario_responsavel=session.get('nome') or session.get('usuario', 'sistema'),
-            observacoes=observacoes or 'Cartão cadastrado no sistema.'
+            quarto_id=quarto.id if quarto else None,
+            observacoes=(
+                observacoes
+                or (
+                    f'CartÃ£o cadastrado e vinculado ao quarto {quarto.numero}.'
+                    if quarto else 'CartÃ£o cadastrado no sistema.'
+                )
+            )
         ))
         db.session.commit()
 
-        auditar('Cadastrou cartão', 'cartoes', cartao.id, f'Cartão {cartao.codigo}')
-        flash(f'Cartão {cartao.codigo} cadastrado com sucesso.', 'success')
+        auditar('Cadastrou cartÃ£o', 'cartoes', cartao.id, f'CartÃ£o {cartao.codigo}')
+        flash(f'CartÃ£o {cartao.codigo} cadastrado com sucesso.', 'success')
         return redirect(url_for('cartoes'))
 
     busca = (request.args.get('q') or '').strip()
@@ -1679,6 +1696,7 @@ def cartoes():
         query = query.filter(Cartao.status == status)
 
     dados = query.order_by(Cartao.codigo.asc()).all()
+    quartos = Quarto.query.order_by(Quarto.numero.asc()).all()
     reservas_ativas = (
         Reserva.query
         .filter(Reserva.status.in_(['Reservado', 'Hospedado']))
@@ -1705,6 +1723,7 @@ def cartoes():
     return render_template(
         'cartoes.html',
         dados=dados,
+        quartos=quartos,
         reservas=reservas_ativas,
         cards=cards,
         ultimas_movimentacoes=ultimas_movimentacoes,
@@ -1727,15 +1746,15 @@ def devolver_cartao(cartao_id):
     )
 
     if not ultima_movimentacao:
-        flash('Este cartão não possui movimentação registrada.', 'warning')
+        flash('Este cartÃ£o nÃ£o possui movimentaÃ§Ã£o registrada.', 'warning')
         return redirect(url_for('cartoes'))
 
     if cartao.status != 'Em uso':
-        flash(f'O cartão {cartao.codigo} não está em uso.', 'warning')
+        flash(f'O cartÃ£o {cartao.codigo} nÃ£o estÃ¡ em uso.', 'warning')
         return redirect(url_for('cartoes'))
 
     if ultima_movimentacao.tipo != 'Entrega':
-        flash('A última movimentação deste cartão não é uma entrega.', 'warning')
+        flash('A Ãºltima movimentaÃ§Ã£o deste cartÃ£o nÃ£o Ã© uma entrega.', 'warning')
         return redirect(url_for('cartoes'))
 
     usuario_atual = (
@@ -1746,7 +1765,7 @@ def devolver_cartao(cartao_id):
 
     observacoes = (
         request.form.get('observacoes')
-        or 'Cartão devolvido em bom estado.'
+        or 'CartÃ£o devolvido em bom estado.'
     ).strip()
 
     reserva = ultima_movimentacao.reserva
@@ -1760,7 +1779,7 @@ def devolver_cartao(cartao_id):
         reserva_id=ultima_movimentacao.reserva_id,
         hospede_id=ultima_movimentacao.hospede_id,
         quarto_id=ultima_movimentacao.quarto_id,
-        tipo='Devolução',
+        tipo='DevoluÃ§Ã£o',
         status_resultante='Disponível',
         usuario_responsavel=usuario_atual,
         data_evento=datetime.now(),
@@ -1769,7 +1788,7 @@ def devolver_cartao(cartao_id):
 
     foi_para_limpeza = False
 
-    # Na operação do hotel, devolver o cartão significa check-out.
+    # Na operaÃ§Ã£o do hotel, devolver o cartÃ£o significa check-out.
     if reserva and reserva.status in ['Reservado', 'Hospedado']:
         reserva.status = 'Finalizado'
         db.session.flush()
@@ -1778,8 +1797,8 @@ def devolver_cartao(cartao_id):
             foi_para_limpeza = gerar_limpeza_se_necessario(
                 quarto,
                 (
-                    'Limpeza gerada automaticamente após a saída do '
-                    f'último colaborador. Cartão {cartao.codigo}.'
+                    'Limpeza gerada automaticamente apÃ³s a saÃ­da do '
+                    f'Ãºltimo colaborador. CartÃ£o {cartao.codigo}.'
                 )
             )
 
@@ -1789,11 +1808,11 @@ def devolver_cartao(cartao_id):
     numero_quarto = quarto.numero if quarto else 'Sem quarto'
 
     auditar(
-        'Devolveu cartão e realizou check-out',
+        'Devolveu cartÃ£o e realizou check-out',
         'cartoes',
         cartao.id,
         (
-            f'Cartão {cartao.codigo} devolvido por {nome_hospede}. '
+            f'CartÃ£o {cartao.codigo} devolvido por {nome_hospede}. '
             f'Quarto {numero_quarto}. Reserva finalizada automaticamente.'
         )
     )
@@ -1802,7 +1821,7 @@ def devolver_cartao(cartao_id):
         lotacao = lotacao_quarto(quarto)
         flash(
             (
-                f'Cartão {cartao.codigo} devolvido e check-out realizado. '
+                f'CartÃ£o {cartao.codigo} devolvido e check-out realizado. '
                 f'O quarto {quarto.numero} continua com '
                 f'{lotacao["ocupados"]} ocupado(s), '
                 f'{lotacao["reservados"]} reservado(s) e '
@@ -1813,8 +1832,8 @@ def devolver_cartao(cartao_id):
     else:
         flash(
             (
-                f'Cartão {cartao.codigo} devolvido e check-out realizado. '
-                'Como não restaram colaboradores, o quarto foi enviado '
+                f'CartÃ£o {cartao.codigo} devolvido e check-out realizado. '
+                'Como nÃ£o restaram colaboradores, o quarto foi enviado '
                 'para limpeza.'
             ),
             'success'
@@ -1839,11 +1858,11 @@ def ocorrencia_cartao(cartao_id):
     }
 
     if tipo not in mapa_status:
-        flash('Tipo de ocorrência inválido.', 'danger')
+        flash('Tipo de ocorrÃªncia invÃ¡lido.', 'danger')
         return redirect(url_for('cartoes'))
 
     if tipo in ('Perda', 'Dano', 'Bloqueio') and not observacoes:
-        flash('Informe uma observação para registrar a ocorrência.', 'danger')
+        flash('Informe uma observaÃ§Ã£o para registrar a ocorrÃªncia.', 'danger')
         return redirect(url_for('cartoes'))
 
     ultima = movimentacao_ativa_cartao(cartao.id)
@@ -1862,8 +1881,8 @@ def ocorrencia_cartao(cartao_id):
     ))
     db.session.commit()
 
-    auditar(f'Registrou {tipo.lower()} de cartão', 'cartoes', cartao.id, f'{cartao.codigo}: {observacoes}')
-    flash(f'Cartão {cartao.codigo} atualizado para {novo_status}.', 'success')
+    auditar(f'Registrou {tipo.lower()} de cartÃ£o', 'cartoes', cartao.id, f'{cartao.codigo}: {observacoes}')
+    flash(f'CartÃ£o {cartao.codigo} atualizado para {novo_status}.', 'success')
     return redirect(url_for('cartoes'))
 
 
@@ -1958,6 +1977,7 @@ def buscar_colaborador_cartao():
             'nome': reserva.hospede.nome,
             'cpf': reserva.hospede.cpf or '',
             'quarto': reserva.quarto.numero,
+            'quarto_id': reserva.quarto_id,
             'status_reserva': reserva.status,
             'cartao_atual': (
                 cartao_em_uso.cartao.codigo
@@ -1971,7 +1991,7 @@ def buscar_colaborador_cartao():
 
 # ============================================================
 # ROTA DE ENTREGA CORRIGIDA
-# Substitua sua função entregar_cartao() por esta
+# Substitua sua funÃ§Ã£o entregar_cartao() por esta
 # ============================================================
 
 @app.route('/cartoes/entregar', methods=['POST'])
@@ -1983,7 +2003,7 @@ def entregar_cartao():
     observacoes = (request.form.get('observacoes') or '').strip()
 
     if not cartao_id:
-        flash('Selecione um cartão disponível.', 'danger')
+        flash('Selecione um cartÃ£o disponÃ­vel.', 'danger')
         return redirect(url_for('cartoes'))
 
     if not reserva_id:
@@ -1999,7 +2019,7 @@ def entregar_cartao():
     if cartao.status != 'Disponível':
         flash(
             (
-                f'O cartão {cartao.codigo} não está disponível. '
+                f'O cartÃ£o {cartao.codigo} nÃ£o estÃ¡ disponÃ­vel. '
                 f'Status atual: {cartao.status}.'
             ),
             'danger'
@@ -2008,7 +2028,18 @@ def entregar_cartao():
 
     if reserva.status not in ['Reservado', 'Hospedado']:
         flash(
-            'A reserva selecionada não está ativa.',
+            'A reserva selecionada nÃ£o estÃ¡ ativa.',
+            'danger'
+        )
+        return redirect(url_for('cartoes'))
+
+    if cartao.quarto_id and cartao.quarto_id != reserva.quarto_id:
+        flash(
+            (
+                f'O cartÃ£o {cartao.codigo} estÃ¡ vinculado ao quarto '
+                f'{cartao.quarto_vinculado.numero} e nÃ£o pode ser entregue '
+                f'para a reserva do quarto {reserva.quarto.numero}.'
+            ),
             'danger'
         )
         return redirect(url_for('cartoes'))
@@ -2032,7 +2063,7 @@ def entregar_cartao():
     if cartao_ja_entregue:
         flash(
             (
-                f'O colaborador já está com o cartão '
+                f'O colaborador jÃ¡ estÃ¡ com o cartÃ£o '
                 f'{cartao_ja_entregue.cartao.codigo}.'
             ),
             'warning'
@@ -2061,13 +2092,13 @@ def entregar_cartao():
     db.session.commit()
 
     auditar(
-        'Entregou cartão',
+        'Entregou cartÃ£o',
         'cartoes',
         cartao.id,
         (
-            f'Cartão {cartao.codigo} entregue para '
+            f'CartÃ£o {cartao.codigo} entregue para '
             f'{reserva.hospede.nome}, '
-            f'CPF {reserva.hospede.cpf or "não informado"}, '
+            f'CPF {reserva.hospede.cpf or "nÃ£o informado"}, '
             f'quarto {reserva.quarto.numero}, '
             f'reserva #{reserva.id}.'
         )
@@ -2075,7 +2106,7 @@ def entregar_cartao():
 
     flash(
         (
-            f'Cartão {cartao.codigo} entregue para '
+            f'CartÃ£o {cartao.codigo} entregue para '
             f'{reserva.hospede.nome}, '
             f'quarto {reserva.quarto.numero}.'
         ),
@@ -2092,16 +2123,17 @@ def exportar_cartoes_excel():
     for cartao in Cartao.query.order_by(Cartao.codigo).all():
         ultima = cartao.movimentacoes[0] if cartao.movimentacoes else None
         dados.append({
-            'Código': cartao.codigo,
-            'Descrição': cartao.descricao or '',
+            'CÃ³digo': cartao.codigo,
+            'DescriÃ§Ã£o': cartao.descricao or '',
+            'Quarto vinculado': cartao.quarto_vinculado.numero if cartao.quarto_vinculado else '',
             'Status': cartao.status,
             'Criado por': cartao.criado_por,
             'Criado em': cartao.criado_em.strftime('%d/%m/%Y %H:%M'),
-            'Última movimentação': ultima.tipo if ultima else '',
-            'Último responsável': ultima.usuario_responsavel if ultima else '',
-            'Último colaborador': ultima.hospede.nome if ultima and ultima.hospede else '',
-            'Último quarto': ultima.quarto.numero if ultima and ultima.quarto else '',
-            'Data da última movimentação': ultima.data_evento.strftime('%d/%m/%Y %H:%M') if ultima else '',
+            'Ãšltima movimentaÃ§Ã£o': ultima.tipo if ultima else '',
+            'Ãšltimo responsÃ¡vel': ultima.usuario_responsavel if ultima else '',
+            'Ãšltimo colaborador': ultima.hospede.nome if ultima and ultima.hospede else '',
+            'Ãšltimo quarto': ultima.quarto.numero if ultima and ultima.quarto else '',
+            'Data da Ãºltima movimentaÃ§Ã£o': ultima.data_evento.strftime('%d/%m/%Y %H:%M') if ultima else '',
         })
 
     output = BytesIO()
@@ -2131,16 +2163,16 @@ def exportar(modelo, tipo):
     }.get(modelo)
 
     if not modulo_modelo or not usuario_tem_acesso(modulo_modelo):
-        flash('Você não possui permissão para exportar estes dados.', 'danger')
+        flash('VocÃª nÃ£o possui permissÃ£o para exportar estes dados.', 'danger')
         return redirect(url_for('dashboard'))
 
     cls = MODELOS.get(modelo)
-    if not cls: flash('Exportação inválida.', 'danger'); return redirect(url_for('dashboard'))
+    if not cls: flash('ExportaÃ§Ã£o invÃ¡lida.', 'danger'); return redirect(url_for('dashboard'))
     dados = cls.query.all()
     if tipo == 'excel': return export_excel(dados, f'{modelo}.xlsx')
     headers = [c.name for c in cls.__table__.columns]
     rows = [[str(getattr(obj, h) or '') for h in headers] for obj in dados]
-    return export_pdf(f'Relatório de {modelo.title()}', headers, rows, f'{modelo}.pdf')
+    return export_pdf(f'RelatÃ³rio de {modelo.title()}', headers, rows, f'{modelo}.pdf')
 
 @app.route('/importar/<modelo>', methods=['POST'])
 @login_required
@@ -2155,11 +2187,11 @@ def importar(modelo):
     }.get(modelo)
 
     if not modulo_modelo or not usuario_tem_acesso(modulo_modelo):
-        flash('Você não possui permissão para importar estes dados.', 'danger')
+        flash('VocÃª nÃ£o possui permissÃ£o para importar estes dados.', 'danger')
         return redirect(url_for('dashboard'))
 
     cls = MODELOS.get(modelo)
-    if not cls: flash('Importação inválida.', 'danger'); return redirect(url_for('dashboard'))
+    if not cls: flash('ImportaÃ§Ã£o invÃ¡lida.', 'danger'); return redirect(url_for('dashboard'))
     arquivo = request.files.get('arquivo')
     if not arquivo: flash('Selecione um arquivo Excel.', 'danger'); return redirect(request.referrer or url_for('dashboard'))
     df = pd.read_excel(arquivo)
@@ -2189,7 +2221,7 @@ def backup():
 def recibo(id):
     r = Reserva.query.get_or_404(id)
 
-    # Procura a última movimentação de retirada do cartão.
+    # Procura a Ãºltima movimentaÃ§Ã£o de retirada do cartÃ£o.
     movimentacao = (
         MovimentacaoCartao.query
         .filter_by(reserva_id=r.id)
@@ -2240,7 +2272,7 @@ def recibo(id):
         leftMargin=20 * mm,
         topMargin=18 * mm,
         bottomMargin=18 * mm,
-        title=f'Termo de cartão - Reserva {r.id}',
+        title=f'Termo de cartÃ£o - Reserva {r.id}',
         author='ORCA'
     )
 
@@ -2337,7 +2369,7 @@ def recibo(id):
             fill=1
         )
 
-        # Logo como marca-d'água.
+        # Logo como marca-d'Ã¡gua.
         if os.path.exists(logo_path):
             try:
                 if hasattr(canvas_pdf, 'setFillAlpha'):
@@ -2359,7 +2391,7 @@ def recibo(id):
             except Exception:
                 pass
 
-        # Rodapé fixo.
+        # RodapÃ© fixo.
         canvas_pdf.setFillColor(colors.HexColor('#777777'))
         canvas_pdf.setFont('Helvetica', 7)
 
@@ -2374,14 +2406,14 @@ def recibo(id):
     elementos = []
 
     # =====================================================
-    # CABEÇALHO
+    # CABEÃ‡ALHO
     # =====================================================
 
     titulo_cabecalho = Table(
         [
             [
                 Paragraph(
-                    'TERMO DE RETIRADA E DEVOLUÇÃO DE CARTÃO',
+                    'TERMO DE RETIRADA E DEVOLUÃ‡ÃƒO DE CARTÃƒO',
                     estilo_titulo
                 )
             ],
@@ -2485,8 +2517,8 @@ def recibo(id):
             Paragraph(r.hospede.cpf or '-', estilo_valor)
         ],
         [
-            Paragraph('FUNÇÃO', estilo_rotulo),
-            Paragraph('NÚMERO DA RESERVA', estilo_rotulo)
+            Paragraph('FUNÃ‡ÃƒO', estilo_rotulo),
+            Paragraph('NÃšMERO DA RESERVA', estilo_rotulo)
         ],
         [
             Paragraph(r.hospede.profissao or '-', estilo_valor),
@@ -2494,19 +2526,19 @@ def recibo(id):
         ],
         [
             Paragraph('QUARTO', estilo_rotulo),
-            Paragraph('NÚMERO DO CARTÃO', estilo_rotulo)
+            Paragraph('NÃšMERO DO CARTÃƒO', estilo_rotulo)
         ],
         [
             Paragraph(str(r.quarto.numero), estilo_valor),
             Paragraph(str(numero_cartao), estilo_valor)
         ],
         [
-            Paragraph('PERÍODO DA RESERVA', estilo_rotulo),
+            Paragraph('PERÃODO DA RESERVA', estilo_rotulo),
             ''
         ],
         [
             Paragraph(
-                f'{data_entrada} até {data_saida}',
+                f'{data_entrada} atÃ© {data_saida}',
                 estilo_valor
             ),
             ''
@@ -2582,12 +2614,12 @@ def recibo(id):
     # =====================================================
 
     declaracao = (
-        'Declaro, para os devidos fins, que recebi o cartão de '
+        'Declaro, para os devidos fins, que recebi o cartÃ£o de '
         'acesso acima identificado, destinado exclusivamente ao '
-        'uso durante o período da reserva informada. Estou ciente '
-        'de que o cartão deverá ser conservado sob minha '
+        'uso durante o perÃ­odo da reserva informada. Estou ciente '
+        'de que o cartÃ£o deverÃ¡ ser conservado sob minha '
         'responsabilidade e devolvido '
-        '<b>obrigatoriamente na portaria</b> ao término da '
+        '<b>obrigatoriamente na portaria</b> ao tÃ©rmino da '
         'hospedagem, no momento do check-out ou sempre que '
         'solicitado pela empresa. Comprometo-me, ainda, a '
         'comunicar imediatamente qualquer perda, dano ou extravio.'
@@ -2598,7 +2630,7 @@ def recibo(id):
             [
                 Paragraph(
                     '<font color="#FFFFFF">'
-                    'TERMO DE CIÊNCIA E RESPONSABILIDADE'
+                    'TERMO DE CIÃŠNCIA E RESPONSABILIDADE'
                     '</font>',
                     estilo_rotulo
                 )
@@ -2656,8 +2688,8 @@ def recibo(id):
             linha
         ],
         [
-            'Assinatura do colaborador — retirada',
-            'Responsável pela entrega'
+            'Assinatura do colaborador â€” retirada',
+            'ResponsÃ¡vel pela entrega'
         ],
         [
             'Data: ____/____/________  Hora: ____:____',
@@ -2672,8 +2704,8 @@ def recibo(id):
             linha
         ],
         [
-            'Assinatura do colaborador — devolução',
-            'Responsável pelo recebimento na portaria'
+            'Assinatura do colaborador â€” devoluÃ§Ã£o',
+            'ResponsÃ¡vel pelo recebimento na portaria'
         ],
         [
             'Data: ____/____/________  Hora: ____:____',
@@ -2761,15 +2793,15 @@ def recibo(id):
     elementos.append(Spacer(1, 6 * mm))
 
     # =====================================================
-    # IDENTIFICAÇÃO DA EMISSÃO
+    # IDENTIFICAÃ‡ÃƒO DA EMISSÃƒO
     # =====================================================
 
     elementos.append(
         Paragraph(
             (
                 f'Documento emitido em '
-                f'{datetime.now().strftime("%d/%m/%Y às %H:%M")} '
-                f'· Reserva nº {r.id:06d}'
+                f'{datetime.now().strftime("%d/%m/%Y Ã s %H:%M")} '
+                f'Â· Reserva nÂº {r.id:06d}'
             ),
             estilo_rodape
         )
@@ -2832,8 +2864,42 @@ def seed():
     db.session.commit()
 
 
+def executar_migracoes_simples():
+    """Adiciona colunas novas sem apagar ou recriar o banco existente."""
+    colunas_cartao = {
+        linha[1]
+        for linha in db.session.execute(db.text('PRAGMA table_info(cartao)')).fetchall()
+    }
+
+    if 'quarto_id' not in colunas_cartao:
+        db.session.execute(db.text('ALTER TABLE cartao ADD COLUMN quarto_id INTEGER'))
+        db.session.commit()
+
+    db.session.execute(db.text(
+        'CREATE INDEX IF NOT EXISTS ix_cartao_quarto_id ON cartao (quarto_id)'
+    ))
+
+    # Corrige registros antigos que foram gravados com problema de codificação.
+    db.session.execute(
+        db.text(
+            'UPDATE cartao SET status = :correto WHERE status = :quebrado'
+        ),
+        {'correto': 'Disponível', 'quebrado': 'DisponÃ­vel'}
+    )
+    db.session.execute(
+        db.text(
+            'UPDATE movimentacao_cartao '
+            'SET status_resultante = :correto '
+            'WHERE status_resultante = :quebrado'
+        ),
+        {'correto': 'Disponível', 'quebrado': 'DisponÃ­vel'}
+    )
+    db.session.commit()
+
+
 with app.app_context():
     db.create_all()
+    executar_migracoes_simples()
     seed()
 
 

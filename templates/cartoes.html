@@ -137,7 +137,13 @@
               <span class="badge {{ cls }}">{{ c.status }}</span>
             </td>
             <td>{{ ultima.hospede.nome if c.status == 'Em uso' and ultima and ultima.hospede else '-' }}</td>
-            <td>{{ ultima.quarto.numero if c.status == 'Em uso' and ultima and ultima.quarto else '-' }}</td>
+            <td>
+              {% if c.quarto_vinculado %}
+                <strong>Quarto {{ c.quarto_vinculado.numero }}</strong>
+              {% else %}
+                <span style="color:#94a3b8">Sem vínculo</span>
+              {% endif %}
+            </td>
             <td>{{ c.criado_por }}</td>
             <td>
               <div class="row-actions">
@@ -176,6 +182,18 @@
   <form method="post" action="{{ url_for('cartoes') }}" class="form-grid">
     <div class="form-group"><label>Código *</label><input name="codigo" required placeholder="Ex.: CART-001"></div>
     <div class="form-group"><label>Descrição</label><input name="descricao" placeholder="Ex.: Cartão do bloco A"></div>
+    <div class="form-group full">
+      <label>Vincular ao quarto</label>
+      <select name="quarto_id">
+        <option value="">Sem quarto vinculado</option>
+        {% for quarto in quartos %}
+          <option value="{{ quarto.id }}">
+            Quarto {{ quarto.numero }} — {{ quarto.categoria or 'Sem categoria' }}
+          </option>
+        {% endfor %}
+      </select>
+      <small style="color:#64748b">O cartão só poderá ser entregue a uma reserva deste quarto.</small>
+    </div>
     <div class="form-group full"><label>Observações</label><textarea name="observacoes"></textarea></div>
     <div class="form-group full"><button class="btn btn-primary" type="submit">Salvar cartão</button></div>
   </form>
@@ -238,9 +256,13 @@
       <label>Cartão disponível *</label>
       <select name="cartao_id" id="cartaoIdEntrega" required>
         <option value="">Selecione</option>
-        {% for c in dados if c.status == 'Disponível' %}
-          <option value="{{ c.id }}">
-            {{ c.codigo }} — {{ c.descricao or 'Sem descrição' }}
+        {% for c in dados %}
+          <option
+            value="{{ c.id }}"
+            data-quarto-id="{{ c.quarto_id or '' }}"
+            data-quarto-numero="{{ c.quarto_vinculado.numero if c.quarto_vinculado else '' }}"
+          >
+            {{ c.codigo }} — {{ c.descricao or 'Sem descrição' }}{% if c.quarto_vinculado %} — Quarto {{ c.quarto_vinculado.numero }}{% endif %}{% if c.status != 'Disponível' %} — {{ c.status }}{% endif %}
           </option>
         {% endfor %}
       </select>
@@ -454,8 +476,37 @@ function selecionarColaboradorCartao(item){
     document.getElementById('dadosCartaoAtual').textContent =
         item.cartao_atual || 'Nenhum';
 
+    selecionarCartaoDoQuarto(item.quarto_id, item.quarto);
+
     colaboradorSelecionado.style.display = 'grid';
     resultadoBuscaColaborador.classList.remove('aberto');
+}
+
+function selecionarCartaoDoQuarto(quartoId, quartoNumero){
+    const select = document.getElementById('cartaoIdEntrega');
+    if(!select) return;
+
+    select.value = '';
+    select.options[0].textContent = 'Selecione';
+
+    const opcoes = Array.from(select.options).slice(1);
+
+    const cartaoDoQuarto = opcoes.find(option => {
+        const idVinculado = option.dataset.quartoId || '';
+        const numeroVinculado = option.dataset.quartoNumero || '';
+        const mesmoId = quartoId && String(idVinculado) === String(quartoId);
+        const mesmoNumero = quartoNumero && String(numeroVinculado) === String(quartoNumero);
+        const mesmoTexto = option.textContent
+            .replace(/\s+/g, ' ')
+            .includes('Quarto ' + String(quartoNumero).trim());
+        return mesmoId || mesmoNumero || mesmoTexto;
+    });
+
+    if(cartaoDoQuarto){
+        cartaoDoQuarto.selected = true;
+        select.selectedIndex = cartaoDoQuarto.index;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 }
 
 function limparSelecaoColaborador(){
@@ -474,6 +525,12 @@ function limparSelecaoColaborador(){
 
     if(colaboradorSelecionado){
         colaboradorSelecionado.style.display = 'none';
+    }
+
+    const select = document.getElementById('cartaoIdEntrega');
+    if(select){
+        select.value = '';
+        select.options[0].textContent = 'Selecione';
     }
 }
 
