@@ -11,9 +11,11 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.units import mm
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
@@ -292,18 +294,27 @@ def reservas_ativas_quarto(quarto_id):
 
 
 def lotacao_quarto(quarto):
-    """Retorna a lotação atual e as vagas do quarto.
+    """Retorna a ocupação do quarto neste momento.
 
-    Cada reserva representa um colaborador. Reservas em status Reservado
-    ocupam uma vaga futura/garantida e Hospedado representa ocupação física.
+    Reservas futuras continuam garantidas no período delas, mas não reduzem
+    as vagas atuais nem alteram antecipadamente o status do quarto.
     """
-    reservados = reservas_ativas_quarto(quarto.id).filter(
-        Reserva.status == 'Reservado'
-    ).count()
+    agora = datetime.now()
+    reservados = 0
+    hospedados = 0
 
-    hospedados = reservas_ativas_quarto(quarto.id).filter(
-        Reserva.status == 'Hospedado'
-    ).count()
+    for reserva in reservas_ativas_quarto(quarto.id).all():
+        try:
+            entrada = datetime.fromisoformat(reserva.data_entrada)
+            saida = datetime.fromisoformat(reserva.data_saida)
+        except (TypeError, ValueError):
+            # Registro antigo com data inválida não deve bloquear o quarto.
+            continue
+
+        if reserva.status == 'Hospedado':
+            hospedados += 1
+        elif entrada <= agora < saida:
+            reservados += 1
 
     capacidade = max(int(quarto.capacidade or 0), 0)
     comprometidas = reservados + hospedados
@@ -1093,10 +1104,41 @@ def reservas():
         .all()
     )
 
+    # Recalcula a situação atual antes de montar a lista. Assim, uma reserva
+    # futura não deixa o quarto como Lotado antes da data de entrada.
+    for quarto in quartos_lista:
+        atualizar_status_quarto(quarto)
+
+    db.session.commit()
+
     ocupacoes = {
         quarto.id: lotacao_quarto(quarto)
         for quarto in quartos_lista
     }
+
+    # Agenda ativa por quarto para o aviso exibido ao selecionar um quarto.
+    # Inclui hospedagens em andamento e reservas que ainda não terminaram.
+    agora_iso = datetime.now().isoformat(timespec='minutes')
+    agenda_quartos = {str(quarto.id): [] for quarto in quartos_lista}
+
+    reservas_agendadas = (
+        Reserva.query
+        .filter(
+            Reserva.status.in_(['Reservado', 'Hospedado']),
+            Reserva.data_saida > agora_iso
+        )
+        .order_by(Reserva.data_entrada.asc())
+        .all()
+    )
+
+    for reserva in reservas_agendadas:
+        agenda_quartos.setdefault(str(reserva.quarto_id), []).append({
+            'id': reserva.id,
+            'hospede': reserva.hospede.nome,
+            'entrada': reserva.data_entrada,
+            'saida': reserva.data_saida,
+            'status': reserva.status,
+        })
 
     return render_template(
         'reservas.html',
@@ -1110,6 +1152,7 @@ def reservas():
         ),
         quartos=quartos_lista,
         ocupacoes=ocupacoes,
+        agenda_quartos=agenda_quartos,
         q=busca
     )
 
@@ -2127,23 +2170,610 @@ def backup():
 @permissao_necessaria('reservas')
 def recibo(id):
     r = Reserva.query.get_or_404(id)
-    pagamentos = Pagamento.query.filter_by(reserva_id=id).all()
-    rows = [[p.data.strftime('%d/%m/%Y %H:%M'), p.tipo, f'R$ {p.valor:.2f}', p.status] for p in pagamentos]
-    return export_pdf(f'Recibo Reserva #{id} - {r.hospede.nome}', ['Data','Forma','Valor','Status'], rows, f'recibo_reserva_{id}.pdf')
 
-# ========================= INIT =========================
-def seed():
-    if not Usuario.query.filter_by(usuario='admin').first():
-        db.session.add(Usuario(nome='Administrador', usuario='admin', senha_hash=generate_password_hash('admin123'), perfil='Administrador'))
-    if Quarto.query.count() == 0:
-        for n in range(101, 111):
-            db.session.add(Quarto(numero=str(n), andar='1', categoria='Standard', capacidade=2, valor_diaria=180, status='Livre'))
-        for n in range(201, 206):
-            db.session.add(Quarto(numero=str(n), andar='2', categoria='Luxo', capacidade=3, valor_diaria=260, status='Livre'))
-    db.session.commit()
+    # Procura a última movimentação de retirada do cartão.
+    movimentacao = (
+        MovimentacaoCartao.query
+        .filter_by(reserva_id=r.id)
+        .filter(
+            MovimentacaoCartao.tipo.in_([
+                'Retirada',
+                'Entrega',
+                'Em uso'
+            ])
+        )
+        .order_by(MovimentacaoCartao.data_evento.desc())
+        .first()
+    )
+
+    numero_cartao = (
+        movimentacao.cartao.codigo
+        if movimentacao and movimentacao.cartao
+        else '________________'
+    )
+
+    # Caminho da logo.
+    logo_path = os.path.join(
+        BASE_DIR,
+        'static',
+        'img',
+        'logo_orca.png'
+    )
+
+    # Formata as datas da reserva.
+    def formatar_data(valor):
+        if not valor:
+            return '-'
+
+        try:
+            return datetime.fromisoformat(str(valor)).strftime('%d/%m/%Y')
+        except (ValueError, TypeError):
+            return str(valor)
+
+    data_entrada = formatar_data(r.data_entrada)
+    data_saida = formatar_data(r.data_saida)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=20 * mm,
+        leftMargin=20 * mm,
+        topMargin=18 * mm,
+        bottomMargin=18 * mm,
+        title=f'Termo de cartão - Reserva {r.id}',
+        author='ORCA'
+    )
+
+    estilos = getSampleStyleSheet()
+
+    estilo_titulo = ParagraphStyle(
+        'TituloRecibo',
+        parent=estilos['Title'],
+        fontName='Helvetica-Bold',
+        fontSize=15,
+        leading=18,
+        alignment=TA_CENTER,
+        textColor=colors.white,
+        spaceAfter=0
+    )
+
+    estilo_subtitulo = ParagraphStyle(
+        'SubtituloRecibo',
+        parent=estilos['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8.5,
+        leading=11,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#F5B400')
+    )
+
+    estilo_rotulo = ParagraphStyle(
+        'RotuloRecibo',
+        parent=estilos['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor('#202020')
+    )
+
+    estilo_valor = ParagraphStyle(
+        'ValorRecibo',
+        parent=estilos['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#171717')
+    )
+
+    estilo_texto = ParagraphStyle(
+        'TextoRecibo',
+        parent=estilos['Normal'],
+        fontName='Helvetica',
+        fontSize=9.7,
+        leading=14.5,
+        alignment=TA_JUSTIFY,
+        textColor=colors.HexColor('#222222')
+    )
+
+    estilo_rodape = ParagraphStyle(
+        'RodapeRecibo',
+        parent=estilos['Normal'],
+        fontName='Helvetica',
+        fontSize=7.5,
+        leading=10,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#666666')
+    )
+
+    # Desenha elementos que ficam no fundo do PDF.
+    def desenhar_pagina(canvas_pdf, documento):
+        canvas_pdf.saveState()
+
+        largura_pagina, altura_pagina = A4
+
+        # Moldura externa.
+        canvas_pdf.setStrokeColor(colors.HexColor('#D2D2D2'))
+        canvas_pdf.setLineWidth(0.8)
+
+        canvas_pdf.roundRect(
+            12 * mm,
+            12 * mm,
+            largura_pagina - 24 * mm,
+            altura_pagina - 24 * mm,
+            3 * mm,
+            stroke=1,
+            fill=0
+        )
+
+        # Linha amarela superior.
+        canvas_pdf.setFillColor(colors.HexColor('#F5B400'))
+
+        canvas_pdf.rect(
+            12 * mm,
+            altura_pagina - 15 * mm,
+            largura_pagina - 24 * mm,
+            3 * mm,
+            stroke=0,
+            fill=1
+        )
+
+        # Logo como marca-d'água.
+        if os.path.exists(logo_path):
+            try:
+                if hasattr(canvas_pdf, 'setFillAlpha'):
+                    canvas_pdf.setFillAlpha(0.055)
+
+                canvas_pdf.drawImage(
+                    logo_path,
+                    41 * mm,
+                    88 * mm,
+                    width=128 * mm,
+                    height=119.5 * mm,
+                    preserveAspectRatio=True,
+                    mask='auto'
+                )
+
+                if hasattr(canvas_pdf, 'setFillAlpha'):
+                    canvas_pdf.setFillAlpha(1)
+
+            except Exception:
+                pass
+
+        # Rodapé fixo.
+        canvas_pdf.setFillColor(colors.HexColor('#777777'))
+        canvas_pdf.setFont('Helvetica', 7)
+
+        canvas_pdf.drawCentredString(
+            largura_pagina / 2,
+            8 * mm,
+            'Documento interno de controle de acesso e hospedagem'
+        )
+
+        canvas_pdf.restoreState()
+
+    elementos = []
+
+    # =====================================================
+    # CABEÇALHO
+    # =====================================================
+
+    titulo_cabecalho = Table(
+        [
+            [
+                Paragraph(
+                    'TERMO DE RETIRADA E DEVOLUÇÃO DE CARTÃO',
+                    estilo_titulo
+                )
+            ],
+            [
+                Paragraph(
+                    'CONTROLE DE ACESSO AO ALOJAMENTO',
+                    estilo_subtitulo
+                )
+            ]
+        ],
+        colWidths=[119 * mm]
+    )
+
+    titulo_cabecalho.setStyle(
+        TableStyle([
+            (
+                'BACKGROUND',
+                (0, 0),
+                (-1, -1),
+                colors.HexColor('#171717')
+            ),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 3),
+            ('TOPPADDING', (0, 1), (-1, 1), 2),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 8)
+        ])
+    )
+
+    if os.path.exists(logo_path):
+        logo_cabecalho = Image(
+            logo_path,
+            width=25 * mm,
+            height=23.3 * mm
+        )
+    else:
+        logo_cabecalho = Paragraph(
+            '<b>ORCA</b>',
+            ParagraphStyle(
+                'LogoTexto',
+                parent=estilos['Normal'],
+                fontName='Helvetica-Bold',
+                fontSize=18,
+                alignment=TA_CENTER,
+                textColor=colors.black
+            )
+        )
+
+    cabecalho = Table(
+        [
+            [
+                logo_cabecalho,
+                titulo_cabecalho
+            ]
+        ],
+        colWidths=[
+            31 * mm,
+            119 * mm
+        ]
+    )
+
+    cabecalho.setStyle(
+        TableStyle([
+            (
+                'BACKGROUND',
+                (0, 0),
+                (0, 0),
+                colors.HexColor('#F5B400')
+            ),
+            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            (
+                'BOX',
+                (0, 0),
+                (-1, -1),
+                0.9,
+                colors.HexColor('#171717')
+            ),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3)
+        ])
+    )
+
+    elementos.append(cabecalho)
+    elementos.append(Spacer(1, 6 * mm))
+
+    # =====================================================
+    # DADOS DO COLABORADOR E DA RESERVA
+    # =====================================================
+
+    dados = [
+        [
+            Paragraph('COLABORADOR', estilo_rotulo),
+            Paragraph('CPF', estilo_rotulo)
+        ],
+        [
+            Paragraph(r.hospede.nome or '-', estilo_valor),
+            Paragraph(r.hospede.cpf or '-', estilo_valor)
+        ],
+        [
+            Paragraph('FUNÇÃO', estilo_rotulo),
+            Paragraph('NÚMERO DA RESERVA', estilo_rotulo)
+        ],
+        [
+            Paragraph(r.hospede.profissao or '-', estilo_valor),
+            Paragraph(f'{r.id:06d}', estilo_valor)
+        ],
+        [
+            Paragraph('QUARTO', estilo_rotulo),
+            Paragraph('NÚMERO DO CARTÃO', estilo_rotulo)
+        ],
+        [
+            Paragraph(str(r.quarto.numero), estilo_valor),
+            Paragraph(str(numero_cartao), estilo_valor)
+        ],
+        [
+            Paragraph('PERÍODO DA RESERVA', estilo_rotulo),
+            ''
+        ],
+        [
+            Paragraph(
+                f'{data_entrada} até {data_saida}',
+                estilo_valor
+            ),
+            ''
+        ]
+    ]
+
+    tabela_dados = Table(
+        dados,
+        colWidths=[
+            85 * mm,
+            65 * mm
+        ]
+    )
+
+    tabela_dados.setStyle(
+        TableStyle([
+            ('SPAN', (0, 6), (1, 6)),
+            ('SPAN', (0, 7), (1, 7)),
+
+            (
+                'BACKGROUND',
+                (0, 0),
+                (-1, 0),
+                colors.HexColor('#F5B400')
+            ),
+            (
+                'BACKGROUND',
+                (0, 2),
+                (-1, 2),
+                colors.HexColor('#F5B400')
+            ),
+            (
+                'BACKGROUND',
+                (0, 4),
+                (-1, 4),
+                colors.HexColor('#F5B400')
+            ),
+            (
+                'BACKGROUND',
+                (0, 6),
+                (-1, 6),
+                colors.HexColor('#F5B400')
+            ),
+
+            (
+                'BOX',
+                (0, 0),
+                (-1, -1),
+                0.9,
+                colors.HexColor('#555555')
+            ),
+            (
+                'INNERGRID',
+                (0, 0),
+                (-1, -1),
+                0.4,
+                colors.HexColor('#B8B8B8')
+            ),
+
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8)
+        ])
+    )
+
+    elementos.append(tabela_dados)
+    elementos.append(Spacer(1, 6 * mm))
+
+    # =====================================================
+    # TERMO DE RESPONSABILIDADE
+    # =====================================================
+
+    declaracao = (
+        'Declaro, para os devidos fins, que recebi o cartão de '
+        'acesso acima identificado, destinado exclusivamente ao '
+        'uso durante o período da reserva informada. Estou ciente '
+        'de que o cartão deverá ser conservado sob minha '
+        'responsabilidade e devolvido '
+        '<b>obrigatoriamente na portaria</b> ao término da '
+        'hospedagem, no momento do check-out ou sempre que '
+        'solicitado pela empresa. Comprometo-me, ainda, a '
+        'comunicar imediatamente qualquer perda, dano ou extravio.'
+    )
+
+    caixa_declaracao = Table(
+        [
+            [
+                Paragraph(
+                    '<font color="#FFFFFF">'
+                    'TERMO DE CIÊNCIA E RESPONSABILIDADE'
+                    '</font>',
+                    estilo_rotulo
+                )
+            ],
+            [
+                Paragraph(
+                    declaracao,
+                    estilo_texto
+                )
+            ]
+        ],
+        colWidths=[150 * mm]
+    )
+
+    caixa_declaracao.setStyle(
+        TableStyle([
+            (
+                'BACKGROUND',
+                (0, 0),
+                (0, 0),
+                colors.HexColor('#171717')
+            ),
+            (
+                'BACKGROUND',
+                (0, 1),
+                (0, 1),
+                colors.HexColor('#FAFAFA')
+            ),
+            (
+                'BOX',
+                (0, 0),
+                (-1, -1),
+                0.8,
+                colors.HexColor('#777777')
+            ),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 7),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 7)
+        ])
+    )
+
+    elementos.append(caixa_declaracao)
+    elementos.append(Spacer(1, 9 * mm))
+
+    # =====================================================
+    # ASSINATURAS
+    # =====================================================
+
+    linha = '________________________________________'
+
+    assinaturas = [
+        [
+            linha,
+            linha
+        ],
+        [
+            'Assinatura do colaborador — retirada',
+            'Responsável pela entrega'
+        ],
+        [
+            'Data: ____/____/________  Hora: ____:____',
+            'Data: ____/____/________  Hora: ____:____'
+        ],
+        [
+            '',
+            ''
+        ],
+        [
+            linha,
+            linha
+        ],
+        [
+            'Assinatura do colaborador — devolução',
+            'Responsável pelo recebimento na portaria'
+        ],
+        [
+            'Data: ____/____/________  Hora: ____:____',
+            'Data: ____/____/________  Hora: ____:____'
+        ]
+    ]
+
+    tabela_assinaturas = Table(
+        assinaturas,
+        colWidths=[
+            75 * mm,
+            75 * mm
+        ],
+        rowHeights=[
+            7 * mm,
+            5 * mm,
+            7 * mm,
+            9 * mm,
+            7 * mm,
+            5 * mm,
+            7 * mm
+        ]
+    )
+
+    tabela_assinaturas.setStyle(
+        TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+
+            (
+                'BOX',
+                (0, 0),
+                (0, 2),
+                0.6,
+                colors.HexColor('#B0B0B0')
+            ),
+            (
+                'BOX',
+                (1, 0),
+                (1, 2),
+                0.6,
+                colors.HexColor('#B0B0B0')
+            ),
+            (
+                'BOX',
+                (0, 4),
+                (0, 6),
+                0.6,
+                colors.HexColor('#B0B0B0')
+            ),
+            (
+                'BOX',
+                (1, 4),
+                (1, 6),
+                0.6,
+                colors.HexColor('#B0B0B0')
+            ),
+
+            (
+                'BACKGROUND',
+                (0, 0),
+                (-1, 2),
+                colors.HexColor('#FCFCFC')
+            ),
+            (
+                'BACKGROUND',
+                (0, 4),
+                (-1, 6),
+                colors.HexColor('#FCFCFC')
+            ),
+
+            ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 5), (-1, 5), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8.3),
+            (
+                'TEXTCOLOR',
+                (0, 0),
+                (-1, -1),
+                colors.HexColor('#333333')
+            )
+        ])
+    )
+
+    elementos.append(tabela_assinaturas)
+    elementos.append(Spacer(1, 6 * mm))
+
+    # =====================================================
+    # IDENTIFICAÇÃO DA EMISSÃO
+    # =====================================================
+
+    elementos.append(
+        Paragraph(
+            (
+                f'Documento emitido em '
+                f'{datetime.now().strftime("%d/%m/%Y às %H:%M")} '
+                f'· Reserva nº {r.id:06d}'
+            ),
+            estilo_rodape
+        )
+    )
+
+    doc.build(
+        elementos,
+        onFirstPage=desenhar_pagina,
+        onLaterPages=desenhar_pagina
+    )
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=False,
+        download_name=f'termo_cartao_reserva_{r.id}.pdf',
+        mimetype='application/pdf'
+    )
 
 with app.app_context():
-    db.create_all(); seed()
+    db.create_all();
 
 if __name__ == '__main__':
     app.run(debug=True)
