@@ -292,6 +292,19 @@
             <p id="mqDescricao"></p>
         </div>
 
+        <form id="formCapacidadeQuarto" method="post" class="capacity-editor">
+            <div>
+                <label for="mqNovaCapacidade">Capacidade do quarto</label>
+                <p>Informe o total de pessoas que cabem no quarto, incluindo as vagas atuais.</p>
+            </div>
+            <div class="capacity-editor-controls">
+                <input id="mqNovaCapacidade" name="capacidade" type="number"
+                       min="1" step="1" required inputmode="numeric" aria-describedby="mqCapacidadeAjuda">
+                <button class="btn primary" type="submit">Salvar capacidade</button>
+            </div>
+            <small id="mqCapacidadeAjuda">As vagas disponíveis serão recalculadas após salvar.</small>
+        </form>
+
         <div class="modal-actions">
 
             <form id="formBloquearQuarto" method="post">
@@ -942,6 +955,23 @@
         grid-template-columns:1fr;
     }
 }
+
+.capacity-editor{
+    display:grid; gap:14px; margin:18px 0; padding:20px;
+    border:1px solid rgba(96,165,250,.35); border-radius:18px;
+    background:rgba(59,130,246,.08);
+}
+.capacity-editor label{display:block; font-weight:800; color:#f8fafc; font-size:16px;}
+.capacity-editor p{margin:6px 0 0; color:#cbd5e1; font-size:13px; line-height:1.5;}
+.capacity-editor-controls{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.capacity-editor input{
+    width:110px; padding:12px; border-radius:12px; border:1px solid #64748b;
+    background:#0f172a; color:#fff; font-size:20px; font-weight:800;
+}
+.capacity-editor input:focus{outline:2px solid #60a5fa; outline-offset:2px;}
+.capacity-editor small{color:#93c5fd; line-height:1.5;}
+@media(max-width:480px){.capacity-editor-controls .btn{flex:1;}}
+
 </style>
 
 <script>
@@ -994,6 +1024,13 @@ function abrirQuarto(el) {
     document.getElementById('mqStatus').innerText = statusTexto;
     document.getElementById('mqAndar').innerText = textoSeguro(el.dataset.andar);
     document.getElementById('mqCapacidade').innerText = textoSeguro(el.dataset.capacidade);
+    const capacidadeAtual = Math.max(Number(el.dataset.capacidade) || 0, 1);
+    const campoCapacidade = document.getElementById('mqNovaCapacidade');
+    campoCapacidade.value = capacidadeAtual;
+    campoCapacidade.min = capacidadeAtual;
+    document.getElementById('formCapacidadeQuarto').action =
+        {{ url_for('quarto_capacidade', id=0)|tojson }}.replace('/0', '/' + quartoId);
+
     document.getElementById('mqOcupados').innerText = textoSeguro(el.dataset.ocupados);
     document.getElementById('mqReservados').innerText = textoSeguro(el.dataset.reservados);
     document.getElementById('mqVagas').innerText = textoSeguro(el.dataset.vagas);
