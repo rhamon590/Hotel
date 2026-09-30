@@ -767,6 +767,47 @@ def quartos():
     )
 
 
+@app.route('/quarto_capacidade/<int:id>', methods=['POST'])
+@login_required
+@permissao_necessaria('quartos')
+def quarto_capacidade(id):
+    quarto = Quarto.query.get_or_404(id)
+    capacidade = request.form.get('capacidade', type=int)
+    anterior = max(int(quarto.capacidade or 0), 0)
+
+    if capacidade is None or capacidade < 1:
+        flash('Informe uma capacidade válida, com pelo menos 1 pessoa.', 'danger')
+        return redirect(url_for('quartos'))
+    if capacidade < anterior:
+        flash('Este campo permite aumentar a capacidade. Informe um valor igual ou maior que o atual.', 'warning')
+        return redirect(url_for('quartos'))
+    if capacidade == anterior:
+        flash('A capacidade do quarto já está com esse valor.', 'info')
+        return redirect(url_for('quartos'))
+
+    try:
+        quarto.capacidade = capacidade
+        atualizar_status_quarto(quarto)
+        auditar(
+            'Aumentou capacidade do quarto', 'quartos', quarto.id,
+            f'Quarto {quarto.numero}: {anterior} → {capacidade} pessoas.'
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Erro ao atualizar capacidade do quarto.')
+        flash('Não foi possível salvar a capacidade. Tente novamente.', 'danger')
+        return redirect(url_for('quartos'))
+
+    lotacao = lotacao_quarto(quarto)
+    flash(
+        f'Quarto {quarto.numero}: capacidade atualizada de {anterior} para '
+        f'{capacidade} pessoas. Vagas disponíveis: {lotacao["vagas"]}.',
+        'success'
+    )
+    return redirect(url_for('quartos'))
+
+
 @app.route('/quartos/excluir-todos', methods=['POST'])
 @login_required
 @admin_required
