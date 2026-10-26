@@ -1,5 +1,6 @@
 import os
 import shutil
+import sqlite3
 from datetime import datetime, date
 from io import BytesIO
 from functools import wraps
@@ -676,7 +677,7 @@ def login():
         flash('UsuÃ¡rio ou senha invÃ¡lidos.', 'danger')
 
     return render_template('login.html')
-    
+
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     auditar('Logout')
@@ -742,16 +743,53 @@ def dashboard():
         ocupacao=ocupacao,
         proximas=proximas
     )
-    
+
 # ========================= CRUD GENERIC PAGES =========================
 @app.route('/hospedes', methods=['GET','POST'])
 @login_required
 @permissao_necessaria('hospedes')
 def hospedes():
     if request.method == 'POST':
-        h = Hospede(**{k: request.form.get(k) for k in ['nome','cpf','rg','passaporte','nascimento','telefone','whatsapp','email','nacionalidade','endereco','cidade','estado','cep','profissao','empresa','observacoes']})
-        db.session.add(h); db.session.commit(); auditar('Criou hÃ³spede','hospedes',h.id,h.nome); flash('HÃ³spede salvo.', 'success'); return redirect(url_for('hospedes'))
-    q = request.args.get('q','')
+        campos = ['nome', 'cpf', 'rg', 'passaporte', 'nascimento', 'telefone',
+                  'whatsapp', 'email', 'nacionalidade', 'endereco', 'cidade',
+                  'estado', 'cep', 'profissao', 'empresa', 'observacoes']
+        valores = {campo: (request.form.get(campo) or '').strip() or None for campo in campos}
+        if not valores['nome']:
+            flash('Informe o nome do hóspede.', 'danger')
+            return redirect(url_for('hospedes'))
+        cpf_digitos = ''.join(ch for ch in (valores.get('cpf') or '') if ch.isdigit())
+        if cpf_digitos:
+            if len(cpf_digitos) != 11:
+                flash('CPF deve possuir 11 dígitos.', 'danger')
+                return redirect(url_for('hospedes'))
+            cpfs_atuais = {
+                ''.join(c for c in (cpf or '') if c.isdigit())
+                for (cpf,) in db.session.query(Hospede.cpf).all() if cpf
+            }
+            if cpf_digitos in cpfs_atuais:
+                flash('Já existe um hóspede cadastrado com esse CPF.', 'warning')
+                return redirect(url_for('hospedes'))
+            valores['cpf'] = f'{cpf_digitos[:3]}.{cpf_digitos[3:6]}.{cpf_digitos[6:9]}-{cpf_digitos[9:]}'
+        else:
+            # SQLite permite varios NULL em indice UNIQUE; nao permite varios ''
+            valores['cpf'] = None
+        try:
+            h = Hospede(**valores)
+            db.session.add(h)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            app.logger.exception('Erro ao cadastrar hóspede')
+            flash('Não foi possível cadastrar. Verifique os dados e tente novamente.', 'danger')
+            return redirect(url_for('hospedes'))
+        try:
+            auditar('Criou hóspede', 'hospedes', h.id, h.nome)
+        except Exception:
+            db.session.rollback()
+            app.logger.exception('Falha ao registrar auditoria de hóspede')
+        flash('Hóspede salvo.', 'success')
+        return redirect(url_for('hospedes'))
+    q = request.args.get('q', '')
     dados = Hospede.query.filter(Hospede.nome.contains(q)).order_by(Hospede.nome).all() if q else Hospede.query.order_by(Hospede.nome).all()
     return render_template('hospedes.html', dados=dados, q=q)
 
@@ -776,6 +814,47 @@ def quartos():
         dados=dados,
         ocupacoes=ocupacoes
     )
+
+
+@app.route('/quarto_capacidade/<int:id>', methods=['POST'])
+@login_required
+@permissao_necessaria('quartos')
+def quarto_capacidade(id):
+    quarto = Quarto.query.get_or_404(id)
+    capacidade = request.form.get('capacidade', type=int)
+    anterior = max(int(quarto.capacidade or 0), 0)
+
+    if capacidade is None or capacidade < 1:
+        flash('Informe uma capacidade válida, com pelo menos 1 pessoa.', 'danger')
+        return redirect(url_for('quartos'))
+    if capacidade < anterior:
+        flash('Este campo permite aumentar a capacidade. Informe um valor igual ou maior que o atual.', 'warning')
+        return redirect(url_for('quartos'))
+    if capacidade == anterior:
+        flash('A capacidade do quarto já está com esse valor.', 'info')
+        return redirect(url_for('quartos'))
+
+    try:
+        quarto.capacidade = capacidade
+        atualizar_status_quarto(quarto)
+        auditar(
+            'Aumentou capacidade do quarto', 'quartos', quarto.id,
+            f'Quarto {quarto.numero}: {anterior} → {capacidade} pessoas.'
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Erro ao atualizar capacidade do quarto.')
+        flash('Não foi possível salvar a capacidade. Tente novamente.', 'danger')
+        return redirect(url_for('quartos'))
+
+    lotacao = lotacao_quarto(quarto)
+    flash(
+        f'Quarto {quarto.numero}: capacidade atualizada de {anterior} para '
+        f'{capacidade} pessoas. Vagas disponíveis: {lotacao["vagas"]}.',
+        'success'
+    )
+    return redirect(url_for('quartos'))
 
 
 @app.route('/quartos/excluir-todos', methods=['POST'])
@@ -2186,54 +2265,165 @@ def exportar(modelo, tipo):
 @login_required
 def importar(modelo):
     modulo_modelo = {
-        'hospedes': 'hospedes',
-        'quartos': 'quartos',
-        'reservas': 'reservas',
-        'produtos': 'estoque',
-        'funcionarios': 'funcionarios',
-        'empresas': 'empresas',
+        'hospedes': 'hospedes', 'quartos': 'quartos', 'reservas': 'reservas',
+        'produtos': 'estoque', 'funcionarios': 'funcionarios', 'empresas': 'empresas',
     }.get(modelo)
-
+    retorno = request.referrer or url_for('dashboard')
     if not modulo_modelo or not usuario_tem_acesso(modulo_modelo):
-        flash('VocÃª nÃ£o possui permissÃ£o para importar estes dados.', 'danger')
+        flash('Você não possui permissão para importar estes dados.', 'danger')
         return redirect(url_for('dashboard'))
-
     cls = MODELOS.get(modelo)
-    if not cls: flash('ImportaÃ§Ã£o invÃ¡lida.', 'danger'); return redirect(url_for('dashboard'))
+    if cls is None:
+        flash('Importação inválida.', 'danger')
+        return redirect(retorno)
     arquivo = request.files.get('arquivo')
-    if not arquivo: flash('Selecione um arquivo Excel.', 'danger'); return redirect(request.referrer or url_for('dashboard'))
-    df = pd.read_excel(arquivo)
-    cols = {c.name for c in cls.__table__.columns if c.name != 'id'}
-    count = 0
-    for _, row in df.iterrows():
-        data = {k: (None if pd.isna(row[k]) else row[k]) for k in df.columns if k in cols}
-        if data:
-            db.session.add(cls(**data)); count += 1
-    db.session.commit(); auditar('Importou Excel', modelo, '', f'{count} registros'); flash(f'{count} registros importados.', 'success')
-    return redirect(request.referrer or url_for('dashboard'))
+    if not arquivo or not arquivo.filename:
+        flash('Selecione um arquivo Excel.', 'danger')
+        return redirect(retorno)
+    if not arquivo.filename.lower().endswith(('.xlsx', '.xls')):
+        flash('Envie uma planilha .xlsx ou .xls.', 'danger')
+        return redirect(retorno)
+
+    try:
+        planilha = pd.read_excel(arquivo, dtype=object)
+        planilha.columns = [str(c).strip().lower() for c in planilha.columns]
+        colunas = {c.name: c for c in cls.__table__.columns if c.name != 'id'}
+        if modelo == 'hospedes' and 'nome' not in planilha.columns:
+            raise ValueError('A planilha de hóspedes precisa conter a coluna nome.')
+
+        # CPF unico no banco e na planilha. O padrao historico do sistema eh 000.000.000-00.
+        cpf_existentes = set()
+        chaves_sem_cpf = set()
+        if modelo == 'hospedes':
+            for h in Hospede.query.all():
+                digitos = ''.join(c for c in (h.cpf or '') if c.isdigit())
+                if digitos:
+                    cpf_existentes.add(digitos)
+                else:
+                    chaves_sem_cpf.add((
+                        (h.nome or '').strip().casefold(),
+                        (h.rg or '').strip().casefold(),
+                        ''.join(c for c in (h.telefone or '') if c.isdigit()),
+                    ))
+
+        importados = 0
+        ignorados = 0
+        avisos = []
+        for indice, linha in planilha.iterrows():
+            dados = {}
+            for campo, coluna in colunas.items():
+                if campo not in planilha.columns:
+                    continue
+                valor = linha[campo]
+                if valor is None or pd.isna(valor):
+                    dados[campo] = None
+                elif isinstance(valor, (pd.Timestamp, datetime, date)):
+                    data_valor = valor.to_pydatetime() if isinstance(valor, pd.Timestamp) else valor
+                    if coluna.type.__class__.__name__ == 'DateTime':
+                        dados[campo] = data_valor if isinstance(data_valor, datetime) else datetime.combine(data_valor, datetime.min.time())
+                    else:
+                        dados[campo] = data_valor.strftime('%Y-%m-%d')
+                elif isinstance(valor, str):
+                    dados[campo] = valor.strip() or None
+                else:
+                    dados[campo] = valor
+
+            if not dados or all(x is None for x in dados.values()):
+                continue
+            if modelo == 'hospedes':
+                dados['nome'] = str(dados.get('nome') or '').strip()
+                if not dados['nome']:
+                    ignorados += 1
+                    avisos.append(str(indice + 2))
+                    continue
+                cpf = dados.get('cpf')
+                if isinstance(cpf, float) and cpf.is_integer():
+                    cpf = str(int(cpf))
+                elif isinstance(cpf, int):
+                    cpf = str(cpf)
+                cpf = ''.join(ch for ch in str(cpf or '') if ch.isdigit())
+                if cpf:
+                    if len(cpf) != 11:
+                        ignorados += 1
+                        avisos.append(str(indice + 2))
+                        continue
+                    if cpf in cpf_existentes:
+                        ignorados += 1
+                        continue
+                    cpf_existentes.add(cpf)
+                    dados['cpf'] = f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                else:
+                    dados['cpf'] = None
+                    chave = (
+                        dados['nome'].casefold(),
+                        str(dados.get('rg') or '').strip().casefold(),
+                        ''.join(ch for ch in str(dados.get('telefone') or '') if ch.isdigit()),
+                    )
+                    if chave in chaves_sem_cpf:
+                        ignorados += 1
+                        continue
+                    chaves_sem_cpf.add(chave)
+            db.session.add(cls(**dados))
+            importados += 1
+        # Uma transacao: se houver falha no commit, NENHUM registro da planilha eh salvo.
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha ao importar Excel de %s', modelo)
+        flash('Importação não concluída. Nenhum novo registro foi confirmado nesta tentativa. Confira o Excel e os logs.', 'danger')
+        return redirect(retorno)
+
+    try:
+        auditar('Importou Excel', modelo, '', f'{importados} registros novos; {ignorados} ignorados')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha ao auditar importação')
+    mensagem = f'{importados} registros importados; {ignorados} duplicados/inválidos ignorados.'
+    if avisos:
+        mensagem += ' Confira as linhas: ' + ', '.join(avisos[:20]) + (', ...' if len(avisos) > 20 else '')
+    flash(mensagem, 'success' if importados else 'warning')
+    return redirect(retorno)
 
 @app.route('/backup')
 @login_required
 @permissao_necessaria('backup')
 def backup():
-    import sqlite3
-    from pathlib import Path
+    # Snapshot consistente, com nome exclusivo, sem abrir o banco em modo de escrita.
     from contextlib import closing
+    from pathlib import Path
+
+    if not os.path.isfile(DATABASE_PATH):
+        flash('Banco de dados não encontrado; backup não realizado.', 'danger')
+        return redirect(url_for('dashboard'))
+
     nome = f'hotel_backup_{datetime.now().strftime("%Y%m%d_%H%M%S_%f")}.db'
     destino = os.path.join(BACKUP_DIR, nome)
-    if not os.path.isfile(DATABASE_PATH):
-        flash('Banco atual não encontrado. Backup não foi gerado.', 'danger')
-        return redirect(url_for('dashboard'))
+
     try:
-        with closing(sqlite3.connect(Path(DATABASE_PATH).as_uri() + '?mode=ro', uri=True)) as origem:
+        uri_origem = Path(DATABASE_PATH).resolve().as_uri() + '?mode=ro'
+        with closing(sqlite3.connect(uri_origem, uri=True)) as origem:
             with closing(sqlite3.connect(destino)) as copia:
                 origem.backup(copia)
-        auditar('Gerou backup', 'backup', '', nome)
-        return send_file(destino, as_attachment=True, download_name=nome)
+                resultado = copia.execute('PRAGMA integrity_check').fetchone()
+                if not resultado or resultado[0] != 'ok':
+                    raise RuntimeError('Verificação de integridade do backup falhou')
     except Exception:
-        app.logger.exception('Não foi possível gerar o backup consistente do banco atual.')
-        flash('Não foi possível gerar o backup. Tente novamente.', 'danger')
+        app.logger.exception('Falha ao gerar backup consistente')
+        try:
+            if os.path.isfile(destino):
+                os.remove(destino)
+        except OSError:
+            app.logger.exception('Falha ao remover arquivo de backup incompleto')
+        flash('Não foi possível criar o backup. O banco original não foi alterado.', 'danger')
         return redirect(url_for('dashboard'))
+
+    try:
+        auditar('Gerou backup', 'backup', '', nome)
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Falha ao registrar auditoria do backup')
+
+    return send_file(destino, as_attachment=True, download_name=nome)
 
 @app.route('/recibo/<int:id>')
 @login_required
