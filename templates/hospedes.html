@@ -1,565 +1,106 @@
 {% extends 'base.html' %}
-
-{% set page_title = 'Hóspedes' %}
-{% set page_subtitle = 'Cadastro, consulta e importação de hóspedes' %}
+{% set page_title='Hóspedes' %}
+{% set page_subtitle='Cadastro e consulta de hóspedes e colaboradores.' %}
+{% macro icone(nome) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if nome == 'bed' %}<path d="M3 18V8m18 10V8M3 14h18M3 18v3m18-3v3M3 10h18v8H3zM6 10V5h12v5M7 10V8h4v2m2 0V8h4v2"/>{% elif nome == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>{% elif nome == 'users' %}<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/>{% elif nome == 'arrow' %}<path d="M5 12h14m-5-5 5 5-5 5"/>{% elif nome == 'plus' %}<path d="M12 5v14M5 12h14"/>{% elif nome == 'download' %}<path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/>{% elif nome == 'upload' %}<path d="M12 16V3m-4 4 4-4 4 4M4 16v5h16v-5"/>{% elif nome == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>{% elif nome == 'list' %}<path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/>{% elif nome == 'lock' %}<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/>{% elif nome == 'check' %}<path d="m5 12 4 4L19 6"/>{% elif nome == 'close' %}<path d="m6 6 12 12M18 6 6 18"/>{% elif nome == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9v.1"/>{% endif %}</svg>
+{%- endmacro %}
+{% macro token_form() -%}{% if csrf_token is defined %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endif %}{%- endmacro %}
 
 {% block content %}
+{% set resumo=namespace(contato=0,empresa=0,semcontato=0) %}
+{% for h in dados %}{% if h.telefone or h.whatsapp or h.email %}{% set resumo.contato=resumo.contato+1 %}{% else %}{% set resumo.semcontato=resumo.semcontato+1 %}{% endif %}{% if h.empresa %}{% set resumo.empresa=resumo.empresa+1 %}{% endif %}{% endfor %}
+<div class="hg-page" id="hgPage">
+  <section class="hg-hero" aria-labelledby="hgTitle"><div><span class="hg-eyebrow">RECEPÇÃO / CADASTRO DE PESSOAS</span><h2 id="hgTitle">Hóspedes.<br><span>Informações organizadas.</span></h2><p>Encontre o cadastro que precisa e consulte os dados para o atendimento.</p></div><div class="hg-hero-side"><span class="hg-live"><i></i> Gestão de hóspedes e colaboradores</span><a class="hg-btn hg-primary" href="#hgCadastro" id="hgNew">{{ icone('plus') }} Novo hóspede</a></div></section>
+  <section class="hg-stats" aria-label="Resumo dos registros carregados"><div class="hg-stat"><span class="hg-stat-icon">{{ icone('users') }}</span><div><span>Registros nesta consulta</span><strong>{{ dados|length }}</strong><small>{{ 'Resultado da busca por nome' if q else 'Lista de hóspedes carregada' }}</small></div></div><div class="hg-stat"><span class="hg-stat-icon hg-blue">{{ icone('check') }}</span><div><span>Com contato informado</span><strong>{{ resumo.contato }}</strong><small>Telefone, WhatsApp ou e-mail</small></div></div><div class="hg-stat"><span class="hg-stat-icon hg-green">{{ icone('users') }}</span><div><span>Com empresa informada</span><strong>{{ resumo.empresa }}</strong><small>Vínculo registrado no cadastro</small></div></div><div class="hg-stat"><span class="hg-stat-icon hg-amber">{{ icone('info') }}</span><div><span>Sem contato informado</span><strong>{{ resumo.semcontato }}</strong><small>Nos registros desta consulta</small></div></div></section>
 
-<div class="hospedes-page">
+  <details class="hg-panel hg-registration" id="hgCadastro"><summary><span class="hg-summary-icon">{{ icone('plus') }}</span><span><strong>Cadastrar novo hóspede</strong><small>Identificação, contato e informações para a hospedagem.</small></span><span class="hg-chevron" aria-hidden="true">⌄</span></summary>
+    <form method="post" action="{{ url_for('hospedes') }}" class="hg-guest-form" id="hgForm" data-hg-loading>{{ token_form() }}
+      <fieldset><legend><span>01</span> Identificação</legend><p class="hg-fieldset-note">Informe o nome e os documentos necessários ao atendimento.</p><div class="hg-fields">
+        <div class="hg-field hg-two"><label for="hgNome">Nome completo <span>*</span></label><input id="hgNome" name="nome" maxlength="160" autocomplete="name" placeholder="Nome completo do hóspede" required></div>
+        <div class="hg-field"><label for="hgNacionalidade">Nacionalidade</label><input id="hgNacionalidade" name="nacionalidade" maxlength="80" placeholder="Ex.: brasileira"></div>
+        <div class="hg-field"><label for="hgCpf">CPF</label><input id="hgCpf" name="cpf" maxlength="20" inputmode="numeric" placeholder="000.000.000-00"></div>
+        <div class="hg-field"><label for="hgRg">RG</label><input id="hgRg" name="rg" maxlength="30" placeholder="Documento de identidade"></div>
+        <div class="hg-field"><label for="hgPassaporte">Passaporte</label><input id="hgPassaporte" name="passaporte" maxlength="40" placeholder="Quando aplicável"></div>
+        <div class="hg-field"><label for="hgNascimento">Data de nascimento</label><input id="hgNascimento" name="nascimento" type="date" autocomplete="bday"></div>
+      </div></fieldset>
+      <fieldset><legend><span>02</span> Contato</legend><div class="hg-fields"><div class="hg-field"><label for="hgTelefone">Telefone</label><input id="hgTelefone" name="telefone" type="tel" maxlength="40" autocomplete="tel" placeholder="(00) 0000-0000"></div><div class="hg-field"><label for="hgWhatsapp">WhatsApp</label><input id="hgWhatsapp" name="whatsapp" type="tel" maxlength="40" placeholder="(00) 00000-0000"></div><div class="hg-field"><label for="hgEmail">E-mail</label><input id="hgEmail" name="email" type="email" maxlength="120" autocomplete="email" placeholder="nome@empresa.com.br"></div></div></fieldset>
+      <fieldset><legend><span>03</span> Endereço</legend><div class="hg-fields"><div class="hg-field"><label for="hgCep">CEP</label><input id="hgCep" name="cep" maxlength="20" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000"></div><div class="hg-field hg-two"><label for="hgEndereco">Endereço</label><input id="hgEndereco" name="endereco" maxlength="200" autocomplete="street-address" placeholder="Rua, número e bairro"></div><div class="hg-field hg-two"><label for="hgCidade">Cidade</label><input id="hgCidade" name="cidade" maxlength="80" autocomplete="address-level2" placeholder="Cidade"></div><div class="hg-field"><label for="hgEstado">Estado (UF)</label><input id="hgEstado" name="estado" maxlength="2" autocomplete="address-level1" placeholder="Ex.: SP" class="hg-uppercase"></div></div></fieldset>
+      <fieldset><legend><span>04</span> Informações profissionais</legend><div class="hg-fields"><div class="hg-field"><label for="hgProfissao">Profissão / função</label><input id="hgProfissao" name="profissao" maxlength="100" autocomplete="organization-title" placeholder="Ex.: auxiliar de produção"></div><div class="hg-field hg-two"><label for="hgEmpresa">Empresa</label><input id="hgEmpresa" name="empresa" maxlength="120" autocomplete="organization" placeholder="Empresa vinculada ao hóspede"></div><div class="hg-field hg-wide"><label for="hgObservacoes">Observações</label><textarea id="hgObservacoes" name="observacoes" rows="3" placeholder="Informações relevantes para a hospedagem."></textarea></div></div></fieldset>
+      <div class="hg-form-bottom"><span><span>*</span> Nome completo é obrigatório. Preencha os demais campos conforme a necessidade.</span><button class="hg-btn hg-primary" type="submit">{{ icone('check') }} Salvar hóspede</button></div>
+    </form>
+  </details>
 
-    <div class="panel guest-form-panel">
-
-        <div class="panel-header">
-            <div>
-                <span class="page-label">Cadastro</span>
-                <h2>Novo hóspede</h2>
-                <p>Preencha os dados do hóspede para registrar no sistema.</p>
-            </div>
-        </div>
-
-        <form method="post" class="form-grid guest-form">
-
-            <div class="form-group span-2">
-                <label>Nome completo</label>
-                <input name="nome" placeholder="Digite o nome completo" required>
-            </div>
-
-            <div class="form-group">
-                <label>CPF</label>
-                <input name="cpf" placeholder="000.000.000-00">
-            </div>
-
-            <div class="form-group">
-                <label>RG</label>
-                <input name="rg" placeholder="RG">
-            </div>
-
-            <div class="form-group">
-                <label>Passaporte</label>
-                <input name="passaporte" placeholder="Passaporte">
-            </div>
-
-            <div class="form-group">
-                <label>Nascimento</label>
-                <input name="nascimento" type="date">
-            </div>
-
-            <div class="form-group">
-                <label>Telefone</label>
-                <input name="telefone" placeholder="(00) 0000-0000">
-            </div>
-
-            <div class="form-group">
-                <label>WhatsApp</label>
-                <input name="whatsapp" placeholder="(00) 00000-0000">
-            </div>
-
-            <div class="form-group">
-                <label>E-mail</label>
-                <input name="email" type="email" placeholder="email@exemplo.com">
-            </div>
-
-            <div class="form-group">
-                <label>Nacionalidade</label>
-                <input name="nacionalidade" placeholder="Brasileira">
-            </div>
-
-            <div class="form-group span-2">
-                <label>Endereço</label>
-                <input name="endereco" placeholder="Rua, número, bairro">
-            </div>
-
-            <div class="form-group">
-                <label>Cidade</label>
-                <input name="cidade" placeholder="Cidade">
-            </div>
-
-            <div class="form-group">
-                <label>UF</label>
-                <input name="estado" placeholder="UF" maxlength="2">
-            </div>
-
-            <div class="form-group">
-                <label>CEP</label>
-                <input name="cep" placeholder="00000-000">
-            </div>
-
-            <div class="form-group">
-                <label>Profissão</label>
-                <input name="profissao" placeholder="Profissão">
-            </div>
-
-            <div class="form-group span-2">
-                <label>Empresa</label>
-                <input name="empresa" placeholder="Empresa">
-            </div>
-
-            <div class="form-group span-2">
-                <label>Observações</label>
-                <textarea name="observacoes" placeholder="Observações importantes sobre o hóspede"></textarea>
-            </div>
-
-            <div class="form-actions span-2">
-                <button class="btn primary">
-                    Salvar hóspede
-                </button>
-            </div>
-
-        </form>
-
-    </div>
-
-    <div class="panel guest-list-panel">
-
-        <div class="list-header">
-            <div>
-                <span class="page-label">Consulta</span>
-                <h2>Hóspedes cadastrados</h2>
-                <p>Busque, importe, exporte e visualize os hóspedes cadastrados.</p>
-            </div>
-        </div>
-
-        <div class="toolbar guest-toolbar">
-
-            <form method="get" class="search-form">
-                <input name="q" value="{{ q or '' }}" placeholder="Buscar por nome, CPF, telefone ou cidade...">
-                <button class="btn">Buscar</button>
-            </form>
-
-            <div class="export-actions">
-                <a class="btn" href="{{ url_for('exportar', modelo='hospedes', tipo='excel') }}">
-                    Excel
-                </a>
-
-                <a class="btn" href="{{ url_for('exportar', modelo='hospedes', tipo='pdf') }}">
-                    PDF
-                </a>
-            </div>
-
-        </div>
-
-        <form action="{{ url_for('importar', modelo='hospedes') }}" method="post" enctype="multipart/form-data" class="import-box">
-            <div>
-                <strong>Importar hóspedes</strong>
-                <span>Selecione uma planilha Excel nos formatos .xlsx ou .xls.</span>
-            </div>
-
-            <div class="import-actions">
-                <input type="file" name="arquivo" accept=".xlsx,.xls">
-                <button class="btn">Importar Excel</button>
-            </div>
-        </form>
-
-        <div class="table-wrap">
-
-            <table class="guest-table">
-                <thead>
-                    <tr>
-                        <th>Hóspede</th>
-                        <th>CPF</th>
-                        <th>Telefone</th>
-                        <th>E-mail</th>
-                        <th>Cidade</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for h in dados %}
-                        <tr>
-                            <td>
-                                <div class="guest-name">
-                                    <span class="avatar">
-                                        {{ h.nome[0]|upper if h.nome else '?' }}
-                                    </span>
-
-                                    <div>
-                                        <strong>{{ h.nome or 'Sem nome' }}</strong>
-                                        <small>{{ h.nacionalidade or 'Nacionalidade não informada' }}</small>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td>{{ h.cpf or '-' }}</td>
-                            <td>{{ h.telefone or h.whatsapp or '-' }}</td>
-                            <td>{{ h.email or '-' }}</td>
-                            <td>
-                                {% if h.cidade or h.estado %}
-                                    {{ h.cidade or '-' }}{% if h.estado %}/{{ h.estado }}{% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-table">
-                                    <strong>Nenhum hóspede encontrado</strong>
-                                    <span>Cadastre um novo hóspede ou ajuste sua busca.</span>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-        </div>
-
-    </div>
-
+  <section class="hg-panel hg-map" aria-labelledby="hgListTitle"><div class="hg-map-head"><div><span class="hg-eyebrow">CONSULTA DE CADASTROS</span><h2 id="hgListTitle">Quem você procura?</h2><p>Pesquise no cadastro ou refine os registros desta lista.</p></div><div class="hg-exports"><a class="hg-btn hg-soft" href="{{ url_for('exportar',modelo='hospedes',tipo='excel') }}">{{ icone('download') }} Excel</a><a class="hg-btn hg-soft" href="{{ url_for('exportar',modelo='hospedes',tipo='pdf') }}">{{ icone('download') }} PDF</a></div></div>
+    <form method="get" action="{{ url_for('hospedes') }}" class="hg-server-search"><div class="hg-search">{{ icone('search') }}<label class="hg-sr" for="hgQuery">Pesquisar no cadastro por nome</label><input id="hgQuery" name="q" type="search" value="{{ q or '' }}" placeholder="Pesquisar no cadastro por nome…" autocomplete="off"></div><button class="hg-btn hg-primary" type="submit">Pesquisar</button>{% if q %}<a class="hg-btn hg-soft" href="{{ url_for('hospedes') }}">Exibir todos</a>{% endif %}</form>
+    {% if q %}<p class="hg-query-note">Consulta carregada para o nome <strong>“{{ q }}”</strong>. Os filtros abaixo atuam neste resultado.</p>{% endif %}
+    <div class="hg-list-filters"><div class="hg-field"><label for="hgQuick">Filtrar registros carregados</label><div class="hg-search">{{ icone('search') }}<input id="hgQuick" type="search" placeholder="Nome, CPF, telefone, e-mail…" autocomplete="off"></div></div><div class="hg-field"><label for="hgFilterCompany">Empresa</label><select id="hgFilterCompany"><option value="">Todas as empresas</option></select></div><div class="hg-field"><label for="hgFilterCity">Cidade / UF</label><select id="hgFilterCity"><option value="">Todas as localidades</option></select></div></div>
+    <div class="hg-result-row"><p id="hgResults" role="status" aria-live="polite">{{ dados|length }} registro(s) nesta consulta</p><button id="hgClear" type="button" class="hg-text-btn" hidden>Limpar filtros</button><label class="hg-page-size" for="hgPageSize">Por página<select id="hgPageSize"><option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option></select></label></div>
+    <div class="hg-table-wrap"><table class="hg-table"><caption class="hg-sr">Hóspedes carregados na consulta</caption><thead><tr><th scope="col">Hóspede</th><th scope="col">Documento</th><th scope="col">Contato</th><th scope="col">Localização</th><th scope="col"><span class="hg-sr">Ações</span></th></tr></thead><tbody id="hgRows">
+      {% for h in dados %}
+      {% set payload={'id':h.id,'nome':h.nome,'cpf':h.cpf,'rg':h.rg,'passaporte':h.passaporte,'nascimento':h.nascimento,'telefone':h.telefone,'whatsapp':h.whatsapp,'email':h.email,'nacionalidade':h.nacionalidade,'endereco':h.endereco,'cidade':h.cidade,'estado':h.estado,'cep':h.cep,'profissao':h.profissao,'empresa':h.empresa,'observacoes':h.observacoes} %}
+      <tr data-guest data-payload="{{ payload|tojson|forceescape }}"><td><div class="hg-name"><span class="hg-avatar" aria-hidden="true">{{ h.nome[0]|upper if h.nome else '?' }}</span><div><strong>{{ h.nome or 'Sem nome' }}</strong><small>{{ h.empresa or 'Empresa não informada' }}</small></div></div></td><td><span class="hg-cell-label" aria-hidden="true">Documento</span><span class="hg-doc">{{ h.cpf or h.passaporte or h.rg or 'Não informado' }}</span><small class="hg-cell-secondary">{{ 'CPF' if h.cpf else ('Passaporte' if h.passaporte else ('RG' if h.rg else '')) }}</small></td><td><span class="hg-cell-label" aria-hidden="true">Contato</span><span>{{ h.telefone or h.whatsapp or 'Telefone não informado' }}</span><small class="hg-cell-secondary">{{ h.email or 'E-mail não informado' }}</small></td><td><span class="hg-cell-label" aria-hidden="true">Localização</span><span>{{ h.cidade or 'Cidade não informada' }}{% if h.estado %} / {{ h.estado }}{% endif %}</span><small class="hg-cell-secondary">{{ h.nacionalidade or 'Nacionalidade não informada' }}</small></td><td class="hg-row-action"><button class="hg-detail-btn" type="button" aria-label="Consultar ficha de {{ h.nome or 'hóspede' }}">Ver ficha {{ icone('arrow') }}</button></td></tr>
+      {% endfor %}
+    </tbody></table></div>
+    <div id="hgEmpty" class="hg-empty" {% if dados %}hidden{% endif %}><span>{{ icone('users') }}</span><h3>Nenhum hóspede encontrado</h3><p id="hgEmptyText">{{ 'Tente outro nome ou consulte todos os registros.' if q else 'Cadastre o primeiro hóspede para começar.' }}</p><a href="#hgCadastro" id="hgEmptyNew" class="hg-btn hg-soft">{{ icone('plus') }} Cadastrar hóspede</a></div>
+    <div class="hg-pagination" id="hgPagination"><span id="hgPageInfo">Lista de hóspedes</span><div><button type="button" id="hgPrev" class="hg-btn hg-soft" aria-label="Página anterior">← Anterior</button><span id="hgPageNumber">1</span><button type="button" id="hgNext" class="hg-btn hg-soft" aria-label="Próxima página">Próxima →</button></div></div>
+  </section>
+  <details class="hg-panel hg-import"><summary><span class="hg-summary-icon">{{ icone('upload') }}</span><span><strong>Importar hóspedes por planilha</strong><small>Cadastre registros usando um arquivo compatível com o sistema.</small></span><span class="hg-chevron" aria-hidden="true">⌄</span></summary><form action="{{ url_for('importar',modelo='hospedes') }}" method="post" enctype="multipart/form-data" class="hg-import-form" data-hg-loading>{{ token_form() }}<div class="hg-field"><label for="hgArquivo">Arquivo Excel</label><input id="hgArquivo" name="arquivo" type="file" accept=".xlsx,.xls" required><small>Use as colunas do modelo de importação já utilizado pelo sistema.</small></div><button type="submit" class="hg-btn hg-primary">{{ icone('upload') }} Importar Excel</button></form></details>
 </div>
 
+<dialog id="hgDialog" class="hg-dialog" aria-labelledby="hgDialogTitle"><div class="hg-modal-head"><div class="hg-modal-identity"><span class="hg-avatar" id="hgDAvatar" aria-hidden="true">?</span><div><span class="hg-eyebrow">FICHA DO HÓSPEDE</span><h2 id="hgDialogTitle">Hóspede</h2><p id="hgDCompany"></p></div></div><button id="hgClose" type="button" class="hg-icon-btn" aria-label="Fechar ficha">{{ icone('close') }}</button></div><div class="hg-modal-scroll">
+  <section class="hg-profile-section"><h3>Identificação</h3><dl class="hg-info-grid"><div><dt>CPF</dt><dd id="hgDCpf"></dd></div><div><dt>RG</dt><dd id="hgDRg"></dd></div><div><dt>Passaporte</dt><dd id="hgDPassaporte"></dd></div><div><dt>Nascimento</dt><dd id="hgDNascimento"></dd></div><div><dt>Nacionalidade</dt><dd id="hgDNacionalidade"></dd></div></dl></section>
+  <section class="hg-profile-section"><h3>Contato</h3><dl class="hg-info-grid"><div><dt>Telefone</dt><dd id="hgDTelefone"></dd></div><div><dt>WhatsApp</dt><dd id="hgDWhatsapp"></dd></div><div class="hg-info-wide"><dt>E-mail</dt><dd id="hgDEmail"></dd></div></dl></section>
+  <section class="hg-profile-section"><h3>Endereço</h3><dl class="hg-info-grid"><div class="hg-info-wide"><dt>Endereço</dt><dd id="hgDEndereco"></dd></div><div><dt>Cidade / UF</dt><dd id="hgDLocal"></dd></div><div><dt>CEP</dt><dd id="hgDCep"></dd></div></dl></section>
+  <section class="hg-profile-section"><h3>Informações profissionais</h3><dl class="hg-info-grid"><div><dt>Profissão / função</dt><dd id="hgDProfissao"></dd></div><div><dt>Empresa</dt><dd id="hgDEmpresa"></dd></div></dl></section><section class="hg-profile-section"><h3>Observações</h3><p class="hg-observation" id="hgDObservacoes"></p></section>
+  </div><div class="hg-modal-foot"><span>Consulta dos dados cadastrados</span><button id="hgCloseBottom" type="button" class="hg-btn hg-primary">Concluir consulta {{ icone('check') }}</button></div></dialog>
 <style>
-.hospedes-page{
-    display:flex;
-    flex-direction:column;
-    gap:24px;
-}
+main:has(#hgPage)>.page-heading{display:none}
+.hg-page,.hg-dialog{--hg-bg:var(--surface,#0f172a);--hg-soft:var(--surface-2,#152136);--hg-text:var(--text,#f1f5f9);--hg-muted:var(--muted,#94a3b8);--hg-border:var(--border,rgba(148,163,184,.17));--hg-blue:#60a5fa;--hg-green:#34d399;--hg-amber:#e9bd64;--hg-radius:20px;color:var(--hg-text);font-family:inherit;font-size:14px;line-height:1.6}.hg-page *,.hg-dialog *{box-sizing:border-box}.hg-page{display:grid;gap:22px;margin-bottom:26px}.hg-page svg,.hg-dialog svg{width:19px;height:19px;flex-shrink:0}.hg-page button,.hg-dialog button,.hg-page input,.hg-page select,.hg-page textarea{font:inherit}.hg-page [hidden],.hg-dialog [hidden]{display:none!important}.hg-hero{display:flex;justify-content:space-between;gap:24px;padding:32px 34px;border:1px solid var(--hg-border);border-radius:var(--hg-radius);background:radial-gradient(ellipse at right top,rgba(59,130,246,.12),transparent 60%),var(--hg-bg)}.hg-eyebrow{display:block;font-size:10px;font-weight:750;letter-spacing:1.9px;color:var(--hg-muted)}.hg-hero h2{font-size:clamp(29px,3.5vw,43px);letter-spacing:-1.4px;line-height:1.12;margin:17px 0 15px;font-weight:650}.hg-hero h2 span{color:var(--hg-blue)}.hg-hero p{margin:0;color:var(--hg-muted);font-size:13px;max-width:420px}.hg-hero-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:28px}.hg-live{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--hg-muted);white-space:nowrap}.hg-live i{width:6px;height:6px;border-radius:50%;background:var(--hg-green);box-shadow:0 0 0 4px rgba(52,211,153,.09)}.hg-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:43px;padding:10px 16px;border:1px solid transparent;border-radius:10px;font-size:12px!important;font-weight:650!important;text-decoration:none;cursor:pointer;line-height:1.3;transition:background .18s,border-color .18s,transform .18s;white-space:nowrap}.hg-btn:hover{transform:translateY(-1px)}.hg-primary{background:#2563eb;color:#fff}.hg-primary:hover{background:#1d4ed8}.hg-soft{background:var(--hg-soft);border-color:var(--hg-border);color:var(--hg-text)}.hg-soft:hover{border-color:#6281a5}.hg-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.hg-stat{display:flex;gap:14px;padding:22px 20px;border:1px solid var(--hg-border);border-radius:16px;background:var(--hg-bg)}.hg-stat-icon{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border:1px solid var(--hg-border);border-radius:11px;color:var(--hg-muted);background:var(--hg-soft)}.hg-stat-icon.hg-blue{color:var(--hg-blue);background:rgba(96,165,250,.08)}.hg-stat-icon.hg-green{color:var(--hg-green);background:rgba(52,211,153,.08)}.hg-stat-icon.hg-amber{color:var(--hg-amber);background:rgba(233,189,100,.08)}.hg-stat>div>span{display:block;color:var(--hg-muted);font-size:11px}.hg-stat strong{display:block;font-size:30px;font-weight:650;line-height:1.35;font-variant-numeric:tabular-nums;letter-spacing:-1px}.hg-stat small{display:block;color:var(--hg-muted);font-size:10px;margin-top:4px}.hg-panel{background:var(--hg-bg);border:1px solid var(--hg-border);border-radius:var(--hg-radius);overflow:hidden}.hg-panel summary{display:flex;align-items:center;gap:13px;padding:19px 24px;cursor:pointer;list-style:none}.hg-panel summary::-webkit-details-marker{display:none}.hg-panel summary strong,.hg-panel summary small{display:block}.hg-panel summary strong{font-size:13px}.hg-panel summary small{color:var(--hg-muted);font-size:11px;margin-top:2px}.hg-summary-icon{width:35px;height:35px;border-radius:10px;background:var(--hg-soft);display:grid;place-items:center;color:var(--hg-blue)}.hg-chevron{margin-left:auto;color:var(--hg-muted);font-size:21px;transition:transform .2s}.hg-panel[open] .hg-chevron{transform:rotate(180deg)}.hg-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:24px;border-top:1px solid var(--hg-border)}.hg-field label{display:block;margin:0 0 7px;font-size:11px;font-weight:650;color:var(--hg-text)}.hg-field label span,.hg-fohg-bottom>span>span{color:#f0a574}.hg-page input,.hg-page select,.hg-page textarea{display:block;width:100%;min-height:43px;border:1px solid var(--hg-border);border-radius:9px;background:var(--hg-soft);color:var(--hg-text);padding:10px 12px;font-size:12px;outline:none}.hg-page textarea{resize:vertical}.hg-page input::placeholder,.hg-page textarea::placeholder{color:var(--hg-muted);opacity:.8}.hg-page input:focus,.hg-page select:focus,.hg-page textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.11)}.hg-page select{color-scheme:dark}.hg-span{grid-column:span 3}.hg-fohg-bottom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:2px}.hg-fohg-bottom>span{color:var(--hg-muted);font-size:10px}.hg-map{padding:26px}.hg-map-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:25px}.hg-map-head h2{margin:7px 0 6px;font-size:22px;font-weight:650;letter-spacing:-.6px}.hg-map-head p{margin:0;font-size:12px;color:var(--hg-muted)}.hg-exports{display:flex;gap:8px}.hg-filters{display:grid;grid-template-columns:minmax(200px,1fr) 190px 170px auto;gap:10px;padding:14px;background:var(--hg-soft);border:1px solid var(--hg-border);border-radius:13px}.hg-search{position:relative}.hg-search svg{position:absolute;left:12px;top:12px;color:var(--hg-muted);width:18px;height:18px}.hg-search input{padding-left:39px;background:var(--hg-bg)}.hg-filter-field select{background:var(--hg-bg);height:43px}.hg-view{display:flex;gap:3px;padding:4px;border:1px solid var(--hg-border);border-radius:9px;background:var(--hg-bg)}.hg-view button{display:grid;place-items:center;width:34px;border:0;border-radius:6px;background:transparent;color:var(--hg-muted);cursor:pointer}.hg-view button.is-active{background:var(--hg-soft);color:var(--hg-blue)}.hg-view svg{width:16px;height:16px}.hg-result-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}.hg-result-row p{margin:0;color:var(--hg-muted);font-size:11px}.hg-text-btn{padding:0;border:0;background:none;color:var(--hg-blue);font-size:11px!important;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.hg-result-note{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--hg-muted);font-size:10px}.hg-result-note svg{width:13px;height:13px}.hg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}.hg-card{--room-color:var(--hg-green);display:block;width:100%;padding:20px;text-align:left;color:var(--hg-text);background:var(--hg-soft);border:1px solid var(--hg-border);border-radius:15px;position:relative;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;overflow:hidden}.hg-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--room-color);opacity:.75}.hg-card:hover{border-color:var(--room-color);transform:translateY(-3px);box-shadow:0 9px 22px rgba(0,0,0,.12)}.hg-state-reservado{--room-color:#60a5fa}.hg-state-parcialmente-ocupado{--room-color:#a78bfa}.hg-state-lotado,.hg-state-ocupado{--room-color:#fb7185}.hg-state-em-limpeza{--room-color:#fbbf24}.hg-state-em-manutencao{--room-color:#c084fc}.hg-state-bloqueado{--room-color:#94a3b8}.hg-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.hg-door{flex-shrink:0;display:flex;align-items:center;gap:9px}.hg-door>svg{color:var(--hg-muted);width:23px;height:23px}.hg-door>span{display:block;color:var(--hg-muted);font-size:8px;font-weight:700;letter-spacing:1.6px}.hg-door strong{white-space:nowrap;display:block;color:var(--hg-text);font-size:25px;letter-spacing:-.7px;line-height:1.2;overflow-wrap:anywhere}.hg-pill{display:inline-flex;align-items:center;gap:5px;max-width:150px;padding:5px 8px;border:1px solid var(--hg-border);border-radius:30px;font-size:9px;line-height:1.4;color:var(--room-color,var(--hg-blue));font-weight:650}.hg-pill i{display:block;flex-shrink:0;width:5px;height:5px;border-radius:50%;background:currentColor}.hg-card-category{display:block;margin-top:20px;font-size:13px;font-weight:650}.hg-card-category small{display:block;font-size:10px;font-weight:400;color:var(--hg-muted);margin-top:2px}.hg-occupancy{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:19px;padding:12px 0;border-top:1px solid var(--hg-border);border-bottom:1px solid var(--hg-border)}.hg-occupancy>span{display:block}.hg-occupancy small{display:block;color:var(--hg-muted);font-size:9px;font-weight:400}.hg-occupancy strong{display:block;font-size:18px;line-height:1.4;font-weight:600;font-variant-numeric:tabular-nums}.hg-vacancy strong{color:var(--hg-green)}.hg-progress-label{display:block;color:var(--hg-muted);font-size:9px;margin:12px 0 7px}.hg-progress{display:block;width:100%;height:4px;border:none;border-radius:8px;overflow:hidden;background:rgba(148,163,184,.13);color:var(--room-color);accent-color:var(--room-color)}.hg-progress::-webkit-progress-bar{background:rgba(148,163,184,.13);border-radius:8px}.hg-progress::-webkit-progress-value{background:var(--room-color);border-radius:8px}.hg-progress::-moz-progress-bar{background:var(--room-color);border-radius:8px}.hg-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}.hg-card-bottom small{display:block;font-size:9px;color:var(--hg-muted);font-weight:400}.hg-card-bottom strong{display:block;font-size:13px;font-weight:650}.hg-card-cta{display:flex;align-items:center;gap:6px;color:var(--hg-muted);font-size:10px}.hg-card-cta svg{width:14px;height:14px}.hg-empty{text-align:center;padding:45px 20px}.hg-empty>span{display:grid;place-items:center;width:56px;height:56px;border-radius:18px;background:var(--hg-soft);color:var(--hg-muted);margin:0 auto 15px}.hg-empty svg{width:27px;height:27px}.hg-empty h3{font-size:17px;margin:0 0 7px}.hg-empty p{font-size:12px;color:var(--hg-muted);margin:0 0 18px}.hg-import-form{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:22px 24px;border-top:1px solid var(--hg-border)}.hg-import-form>.hg-field{flex:1;max-width:600px}.hg-field>small{display:block;color:var(--hg-muted);font-size:10px;margin-top:8px}.hg-import-form input{padding:8px}.hg-import-form input::file-selector-button{padding:6px 10px;border:0;border-radius:5px;margin-right:10px;background:rgba(96,165,250,.13);color:var(--hg-text);font:inherit;cursor:pointer}.hg-danger-area{color:var(--hg-muted);font-size:11px}.hg-danger-area summary{cursor:pointer;padding:4px 0}.hg-danger-area>div{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:10px;border:1px solid rgba(251,113,133,.2);border-radius:13px;padding:18px 22px}.hg-danger-area p{margin:0}.hg-danger-area p strong{display:block;color:#f28b9d;font-size:12px}.hg-danger-area p span{display:block;margin-top:4px;max-width:700px;font-size:11px}.hg-danger-area form{margin:0}.hg-danger{border-color:rgba(251,113,133,.25);background:rgba(251,113,133,.08);color:#f58d9f}.hg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.hg-page a:focus-visible,.hg-page button:focus-visible,.hg-page summary:focus-visible,.hg-dialog button:focus-visible{outline:3px solid #60a5fa;outline-offset:4px}.hg-grid.is-list{grid-template-columns:1fr}.hg-grid.is-list .hg-card{display:grid;grid-template-columns:1.4fr .8fr 1fr .8fr;gap:20px;align-items:center;padding:18px 22px}.hg-grid.is-list .hg-card-category{margin:0}.hg-grid.is-list .hg-occupancy{margin:0;border:none;padding:0}.hg-grid.is-list .hg-progress-label,.hg-grid.is-list .hg-progress{display:none}.hg-grid.is-list .hg-card-bottom{margin:0}.hg-grid.is-list .hg-door strong{font-size:21px}
+.hg-dialog{padding:0;border:1px solid var(--hg-border);border-radius:22px;background:var(--hg-bg);width:min(780px,calc(100% - 28px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);color:var(--hg-text);box-shadow:0 28px 100px rgba(0,0,0,.4);overflow:hidden}.hg-dialog[open]{display:flex;flex-direction:column}.hg-dialog::backdrop{background:rgba(2,8,20,.76);backdrop-filter:blur(7px)}.hg-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px 28px;border-bottom:1px solid var(--hg-border)}.hg-modal-head h2{font-size:27px;letter-spacing:-.7px;margin:6px 0 3px;color:var(--hg-text)}.hg-modal-head p{margin:0;font-size:11px;color:var(--hg-muted)}.hg-icon-btn{display:grid;place-items:center;width:33px;height:33px;flex-shrink:0;border:1px solid var(--hg-border);border-radius:10px;background:var(--hg-soft);color:var(--hg-muted);cursor:pointer}.hg-modal-scroll{padding:22px 28px;overflow:auto;min-height:0}.hg-modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}.hg-modal-stats>div{padding:13px;border:1px solid var(--hg-border);border-radius:10px;background:var(--hg-soft)}.hg-modal-stats small{display:block;color:var(--hg-muted);font-size:10px}.hg-modal-stats strong{font-size:22px;font-weight:650}.hg-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.hg-detail-grid section{padding:15px;background:var(--hg-soft);border:1px solid var(--hg-border);border-radius:11px}.hg-dialog h3{font-size:12px;font-weight:650;margin:0 0 6px;color:var(--hg-text)}.hg-detail-grid p{font-size:12px;color:var(--hg-muted);margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.hg-operations{padding:18px 0;border-bottom:1px solid var(--hg-border);margin-bottom:20px}.hg-operations p{font-size:11px;color:var(--hg-muted);margin:0}.hg-operation-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hg-operation-actions form{margin:0}.hg-operation-actions .hg-btn{min-height:37px;font-size:11px!important;padding:8px 12px}.hg-history-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:12px}.hg-history-head h3{display:flex;gap:7px;align-items:center;margin:0}.hg-history-head svg{width:16px;height:16px;color:var(--hg-muted)}.hg-history-item{padding:13px 15px;border:1px solid var(--hg-border);border-radius:11px;background:var(--hg-soft);margin-top:9px}.hg-history-item>strong{display:block;font-size:12px;overflow-wrap:anywhere}.hg-history-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px}.hg-history-meta span{font-size:10px;color:var(--hg-muted)}.hg-history-message{padding:20px;border:1px dashed var(--hg-border);border-radius:12px;color:var(--hg-muted);font-size:12px;text-align:center}.hg-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--hg-border);padding:18px 28px;flex-shrink:0}.hg-modal-foot>span{font-size:10px;color:var(--hg-muted)}.hg-modal-foot strong{display:block;font-size:19px;font-weight:650;color:var(--hg-text)}.hg-btn:disabled{opacity:.5;cursor:wait;transform:none}.hg-btn.is-loading:before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:hg-spin .7s linear infinite}.hg-btn.is-loading svg{display:none}@keyframes hg-spin{to{transform:rotate(360deg)}}html[data-theme=light] .hg-page,html[data-theme=light] .hg-dialog{--hg-blue:#2563eb;--hg-green:#047857;--hg-amber:#a76607}html[data-theme=light] .hg-page select{color-scheme:light}html[data-theme=light] .hg-card{background:#fff}html[data-theme=light] .hg-state-reservado{--room-color:#2563eb}html[data-theme=light] .hg-state-parcialmente-ocupado{--room-color:#7c3aed}html[data-theme=light] .hg-state-lotado,html[data-theme=light] .hg-state-ocupado{--room-color:#be123c}html[data-theme=light] .hg-state-em-limpeza{--room-color:#a16207}html[data-theme=light] .hg-state-em-manutencao{--room-color:#9333ea}html[data-theme=light] .hg-danger{color:#b42342}html[data-theme=light] .hg-danger-area p strong{color:#b42342}@media(min-width:1500px){.hg-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:1150px){.hg-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.hg-filters{grid-template-columns:minmax(180px,1fr) 160px 150px}.hg-view{display:none}.hg-grid.is-list .hg-card{grid-template-columns:1fr 1fr}.hg-result-note{margin-left:0}}@media(max-width:760px){.hg-hero{padding:25px;flex-direction:column}.hg-hero h2{font-size:34px}.hg-hero-side{flex-direction:row;align-items:center;gap:15px}.hg-live{font-size:10px}.hg-map{padding:20px}.hg-map-head{align-items:flex-start}.hg-map-head h2{font-size:20px}.hg-map-head .hg-exports{flex-direction:column}.hg-filters{grid-template-columns:1fr 1fr;padding:10px}.hg-search{grid-column:1/-1}.hg-form{grid-template-columns:1fr 1fr}.hg-span{grid-column:1/-1}.hg-import-form{flex-direction:column;align-items:stretch}.hg-import-form>.hg-field{max-width:none}.hg-stat{padding:16px;gap:10px}.hg-stat-icon{width:32px;height:32px}.hg-stat strong{font-size:26px}.hg-stat small{font-size:9px}.hg-danger-area>div{align-items:flex-start;flex-direction:column}.hg-result-note{font-size:9px}.hg-dialog .hg-modal-head{padding:22px}.hg-modal-scroll{padding:20px 22px}.hg-modal-foot{padding:16px 22px}.hg-modal-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:450px){.hg-page{gap:16px}.hg-hero{padding:22px}.hg-hero-side{align-items:flex-start;flex-direction:column;gap:18px}.hg-hero-side .hg-btn{width:100%}.hg-stats{gap:10px}.hg-stat{padding:14px 12px;display:block}.hg-stat-icon{margin-bottom:10px}.hg-panel summary{padding:17px}.hg-panel summary small{font-size:10px}.hg-form{grid-template-columns:1fr;padding:18px}.hg-map{padding:17px}.hg-map-head{flex-direction:column}.hg-map-head .hg-exports{flex-direction:row}.hg-grid{grid-template-columns:1fr}.hg-detail-grid{grid-template-columns:1fr}.hg-modal-foot .hg-btn{padding:10px;font-size:10px!important}.hg-dialog{width:calc(100% - 18px);border-radius:17px}.hg-dialog .hg-modal-head,.hg-modal-scroll{padding:18px}.hg-operation-actions{display:grid;grid-template-columns:1fr 1fr}.hg-operation-actions .hg-btn{width:100%}.hg-modal-foot{padding:15px 18px}}@media(prefers-reduced-motion:reduce){.hg-page *,.hg-dialog *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
-.guest-form-panel,
-.guest-list-panel{
-    position:relative;
-    overflow:hidden;
-    background:
-        radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,.10), transparent 34%),
-        #0f172a;
-    color:#f8fafc;
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:24px;
-    padding:24px;
-    box-shadow:0 24px 60px rgba(2,6,23,.35);
-}
+.hg-guest-form{padding:25px;border-top:1px solid var(--hg-border)}.hg-guest-form fieldset{border:0;border-bottom:1px solid var(--hg-border);padding:0 0 25px;margin:0 0 24px;min-width:0}.hg-guest-form fieldset:last-of-type{border-bottom:0;padding-bottom:0}.hg-guest-form legend{display:flex;align-items:center;gap:10px;padding:0;font-weight:650;font-size:13px;margin-bottom:18px}.hg-guest-form legend>span{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:rgba(96,165,250,.09);color:var(--hg-blue);font-size:9px;letter-spacing:.5px}.hg-fieldset-note{font-size:11px;color:var(--hg-muted);margin:-7px 0 18px}.hg-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:19px}.hg-two{grid-column:span 2}.hg-wide{grid-column:1/-1}.hg-uppercase{text-transform:uppercase}.hg-server-search{display:flex;align-items:stretch;gap:9px;margin-bottom:20px}.hg-server-search>.hg-search{flex:1}.hg-list-filters{display:grid;grid-template-columns:minmax(220px,1.6fr) minmax(150px,1fr) minmax(150px,1fr);gap:13px;padding:17px;background:var(--hg-soft);border:1px solid var(--hg-border);border-radius:12px}.hg-list-filters input,.hg-list-filters select{background:var(--hg-bg)}.hg-query-note{margin:-6px 0 18px;color:var(--hg-muted);font-size:11px}.hg-query-note strong{font-weight:600;color:var(--hg-text)}.hg-page-size{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--hg-muted);font-size:10px}.hg-page-size select{width:68px;min-height:33px;padding:5px 8px;font-size:10px}.hg-table-wrap{width:100%;overflow:auto;border:1px solid var(--hg-border);border-radius:12px}.hg-table{width:100%;border-collapse:collapse;text-align:left;font-size:12px;line-height:1.5}.hg-table th{background:var(--hg-soft);padding:14px 16px;font-weight:650;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--hg-muted);border-bottom:1px solid var(--hg-border);white-space:nowrap}.hg-table td{padding:17px 16px;border-bottom:1px solid var(--hg-border);vertical-align:middle;max-width:290px;overflow-wrap:anywhere;color:var(--hg-text)}.hg-table tr:last-child td{border-bottom:0}.hg-table tbody tr:hover{background:rgba(96,165,250,.035)}.hg-name{display:flex;align-items:center;gap:11px;min-width:200px}.hg-avatar{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;background:rgba(96,165,250,.1);color:var(--hg-blue);border:1px solid rgba(96,165,250,.14);border-radius:12px;font-size:15px;font-weight:650}.hg-name strong{display:block;font-size:12px;font-weight:650}.hg-name small,.hg-cell-secondary{display:block;color:var(--hg-muted);font-size:10px;margin-top:4px}.hg-doc{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:11px}.hg-detail-btn{border:1px solid var(--hg-border);background:var(--hg-soft);color:var(--hg-text);padding:8px 10px;border-radius:8px;font-size:10px!important;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;cursor:pointer;transition:border-color .18s,color .18s}.hg-detail-btn svg{width:14px;height:14px}.hg-detail-btn:hover{border-color:var(--hg-blue);color:var(--hg-blue)}.hg-cell-label{display:none}.hg-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:18px;color:var(--hg-muted);font-size:10px}.hg-pagination>div{display:flex;align-items:center;gap:10px}.hg-pagination .hg-btn{min-height:34px;padding:7px 11px;font-size:10px!important}.hg-pagination button:disabled{opacity:.4;cursor:default}.hg-pagination button:disabled:hover{transform:none}.hg-profile-section{padding:0 0 20px;margin-bottom:20px;border-bottom:1px solid var(--hg-border)}.hg-profile-section:last-child{border:0;padding-bottom:0;margin-bottom:0}.hg-dialog .hg-profile-section h3{font-size:12px;margin:0 0 15px}.hg-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;margin:0}.hg-info-grid dt{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--hg-muted);margin-bottom:4px}.hg-info-grid dd{font-size:12px;margin:0;color:var(--hg-text);overflow-wrap:anywhere}.hg-info-wide{grid-column:1/-1}.hg-observation{margin:0;padding:15px;background:var(--hg-soft);border-radius:10px;font-size:12px;color:var(--hg-muted);white-space:pre-wrap;overflow-wrap:anywhere}.hg-modal-identity{display:flex;align-items:flex-start;gap:13px;min-width:0}.hg-modal-identity .hg-avatar{width:44px;height:44px;font-size:17px}.hg-modal-identity h2{font-size:22px;overflow-wrap:anywhere}.hg-modal-identity .hg-eyebrow{font-size:8px}.hg-modal-foot>span{max-width:200px}.hg-modal-foot .hg-btn{font-size:11px!important}.hg-page input[type=date]{color-scheme:dark}.hg-btn:disabled{opacity:.55;cursor:wait}.hg-btn.is-loading:before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:hg-spin .7s linear infinite}.hg-btn.is-loading svg{display:none}html[data-theme=light] .hg-page input[type=date]{color-scheme:light}@media(max-width:1000px){.hg-list-filters{grid-template-columns:1fr 1fr}.hg-list-filters>.hg-field:first-child{grid-column:1/-1}.hg-table{min-width:790px}}@media(max-width:760px){.hg-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.hg-two{grid-column:span 2}.hg-guest-form{padding:20px}.hg-form-bottom{align-items:flex-start;flex-direction:column}.hg-form-bottom .hg-btn{width:100%}.hg-pagination{flex-wrap:wrap}.hg-pagination>div{margin-left:auto}.hg-server-search{flex-wrap:wrap}.hg-server-search>.hg-search{min-width:0;flex-basis:calc(100% - 110px)}.hg-table-wrap{border:0;overflow:visible}.hg-table{display:block;min-width:0}.hg-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.hg-table tbody{display:grid;gap:13px}.hg-table tbody tr{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--hg-border);border-radius:13px;padding:16px;background:var(--hg-bg);gap:14px}.hg-table td{border:0;padding:0;max-width:none;display:block;min-width:0;font-size:11px}.hg-table td:first-child{grid-column:1/-1;padding-bottom:13px;border-bottom:1px solid var(--hg-border)}.hg-table td.hg-row-action{grid-column:1/-1}.hg-detail-btn{width:100%;min-height:36px}.hg-cell-label{display:block;color:var(--hg-muted);font-size:9px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}.hg-table td:nth-child(3){grid-column:1/-1}.hg-name{min-width:0}.hg-table td:nth-child(4){grid-column:2;grid-row:2}.hg-page-size{font-size:9px}}@media(max-width:450px){.hg-hero h2{font-size:30px}.hg-hero-side .hg-live{white-space:normal}.hg-fields{grid-template-columns:1fr}.hg-two{grid-column:span 1}.hg-guest-form{padding:18px}.hg-list-filters{padding:12px;gap:11px}.hg-list-filters>.hg-field{min-width:0}.hg-page-size select{min-height:30px;width:62px}.hg-pagination .hg-btn{padding:7px 8px}.hg-pagination>div{gap:7px}.hg-info-grid{gap:14px}.hg-info-grid dd{font-size:11px}.hg-modal-identity h2{font-size:19px}.hg-modal-identity .hg-avatar{display:none}}
 
-.guest-form-panel::before,
-.guest-list-panel::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 38%);
-    pointer-events:none;
-}
-
-.panel-header,
-.list-header{
-    position:relative;
-    margin-bottom:22px;
-}
-
-.page-label{
-    display:inline-flex;
-    align-items:center;
-    margin-bottom:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    color:#bfdbfe;
-    background:rgba(59,130,246,.14);
-    border:1px solid rgba(96,165,250,.25);
-    font-size:12px;
-    font-weight:900;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-}
-
-.panel-header h2,
-.list-header h2{
-    margin:0;
-    color:#fff;
-    font-size:28px;
-    line-height:1.2;
-}
-
-.panel-header p,
-.list-header p{
-    margin-top:8px;
-    color:#cbd5e1;
-}
-
-.guest-form{
-    position:relative;
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:16px;
-}
-
-.form-group{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
-}
-
-.form-group label{
-    color:#e2e8f0;
-    font-size:13px;
-    font-weight:800;
-}
-
-.form-group input,
-.form-group textarea,
-.search-form input{
-    width:100%;
-    border:none;
-    outline:none;
-    color:#f8fafc;
-    background:rgba(15,23,42,.86);
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:14px;
-    padding:13px 14px;
-    font-size:14px;
-    transition:.22s ease;
-}
-
-.form-group textarea{
-    min-height:110px;
-    resize:vertical;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder,
-.search-form input::placeholder{
-    color:#94a3b8;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.search-form input:focus{
-    border-color:#60a5fa;
-    box-shadow:0 0 0 4px rgba(59,130,246,.16);
-}
-
-.span-2{
-    grid-column:span 2;
-}
-
-.form-actions{
-    display:flex;
-    justify-content:flex-end;
-}
-
-.btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    border:none;
-    cursor:pointer;
-    text-decoration:none;
-    color:#e2e8f0;
-    background:rgba(30,41,59,.92);
-    border:1px solid rgba(148,163,184,.24);
-    border-radius:14px;
-    padding:12px 16px;
-    font-weight:900;
-    transition:.22s ease;
-}
-
-.btn:hover{
-    transform:translateY(-2px);
-    border-color:#60a5fa;
-    color:#fff;
-    box-shadow:0 14px 30px rgba(15,23,42,.35);
-}
-
-.btn.primary{
-    color:#fff;
-    background:linear-gradient(135deg, #2563eb, #3b82f6);
-    border-color:rgba(96,165,250,.55);
-    box-shadow:0 14px 30px rgba(37,99,235,.32);
-}
-
-.guest-toolbar{
-    position:relative;
-    display:flex;
-    justify-content:space-between;
-    gap:14px;
-    margin-bottom:16px;
-}
-
-.search-form{
-    flex:1;
-    display:flex;
-    gap:10px;
-}
-
-.export-actions{
-    display:flex;
-    gap:10px;
-}
-
-.import-box{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    margin-bottom:18px;
-    padding:16px;
-    border-radius:18px;
-    background:rgba(15,23,42,.68);
-    border:1px dashed rgba(148,163,184,.32);
-}
-
-.import-box strong{
-    display:block;
-    color:#fff;
-    margin-bottom:4px;
-}
-
-.import-box span{
-    color:#cbd5e1;
-    font-size:13px;
-}
-
-.import-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-
-.import-actions input[type="file"]{
-    color:#cbd5e1;
-    max-width:260px;
-}
-
-.table-wrap{
-    position:relative;
-    overflow:auto;
-    border-radius:18px;
-    border:1px solid rgba(148,163,184,.18);
-}
-
-.guest-table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:850px;
-    background:rgba(15,23,42,.76);
-}
-
-.guest-table thead{
-    background:rgba(30,41,59,.95);
-}
-
-.guest-table th{
-    color:#cbd5e1;
-    font-size:12px;
-    text-align:left;
-    padding:15px;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    border-bottom:1px solid rgba(148,163,184,.18);
-}
-
-.guest-table td{
-    color:#e5e7eb;
-    padding:15px;
-    border-bottom:1px solid rgba(148,163,184,.13);
-    font-size:14px;
-}
-
-.guest-table tr:hover td{
-    background:rgba(59,130,246,.08);
-}
-
-.guest-name{
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.avatar{
-    width:42px;
-    height:42px;
-    flex:0 0 42px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:14px;
-    color:#fff;
-    background:linear-gradient(135deg, #2563eb, #06b6d4);
-    font-weight:900;
-    box-shadow:0 10px 22px rgba(37,99,235,.28);
-}
-
-.guest-name strong{
-    display:block;
-    color:#fff;
-    margin-bottom:3px;
-}
-
-.guest-name small{
-    color:#94a3b8;
-    font-size:12px;
-}
-
-.empty-table{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:5px;
-    padding:32px;
-    text-align:center;
-}
-
-.empty-table strong{
-    color:#fff;
-    font-size:17px;
-}
-
-.empty-table span{
-    color:#cbd5e1;
-}
-
-@media(max-width:900px){
-    .guest-toolbar,
-    .import-box{
-        flex-direction:column;
-        align-items:stretch;
-    }
-
-    .search-form,
-    .export-actions,
-    .import-actions{
-        width:100%;
-    }
-
-    .search-form{
-        flex-direction:column;
-    }
-
-    .export-actions .btn,
-    .import-actions .btn{
-        flex:1;
-    }
-}
-
-@media(max-width:650px){
-    .guest-form{
-        grid-template-columns:1fr;
-    }
-
-    .span-2{
-        grid-column:span 1;
-    }
-
-    .guest-form-panel,
-    .guest-list-panel{
-        padding:16px;
-        border-radius:18px;
-    }
-
-    .panel-header h2,
-    .list-header h2{
-        font-size:24px;
-    }
-
-    .form-actions{
-        justify-content:stretch;
-    }
-
-    .form-actions .btn{
-        width:100%;
-    }
-}
 </style>
-
+<script>
+(function(){
+  'use strict';
+  const rows=Array.from(document.querySelectorAll('[data-guest]'));
+  const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const digits=v=>String(v||'').replace(/\D/g,'');
+  const entries=rows.map(row=>{const data=JSON.parse(row.dataset.payload);const city=[data.cidade,data.estado].filter(Boolean).join(' / ');return {row,data,city,company:data.empresa||'',search:normalize(Object.values(data).filter(Boolean).join(' ')),numbers:[data.cpf,data.telefone,data.whatsapp,data.rg,data.cep].map(digits)};});
+  const quick=document.getElementById('hgQuick'),company=document.getElementById('hgFilterCompany'),city=document.getElementById('hgFilterCity'),size=document.getElementById('hgPageSize');
+  const empty=document.getElementById('hgEmpty'),clear=document.getElementById('hgClear');let page=1,filtered=entries;
+  function fill(select,values){Array.from(new Set(values.filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;select.append(option);});}
+  fill(company,entries.map(e=>e.company));fill(city,entries.map(e=>e.city));
+  function render(){
+    const limit=Number(size.value),pages=Math.max(1,Math.ceil(filtered.length/limit));page=Math.min(Math.max(page,1),pages);
+    entries.forEach(e=>{e.row.hidden=true;});filtered.slice((page-1)*limit,page*limit).forEach(e=>{e.row.hidden=false;});
+    document.getElementById('hgResults').textContent=filtered.length+' de '+entries.length+' registro'+(entries.length===1?'':'s')+' carregado'+(entries.length===1?'':'s');
+    document.getElementById('hgPageInfo').textContent=filtered.length?('Exibindo '+((page-1)*limit+1)+'–'+Math.min(page*limit,filtered.length)+' de '+filtered.length):'Nenhum registro para exibir';
+    document.getElementById('hgPageNumber').textContent=page+' / '+pages;
+    document.getElementById('hgPrev').disabled=page<=1;document.getElementById('hgNext').disabled=page>=pages;
+    empty.hidden=filtered.length>0;document.getElementById('hgPagination').hidden=!filtered.length;
+    clear.hidden=!(quick.value||company.value||city.value);
+    if(entries.length&&!filtered.length)document.getElementById('hgEmptyText').textContent='Ajuste os filtros para encontrar um registro nesta lista.';
+    document.getElementById('hgEmptyNew').hidden=entries.length>0;
+  }
+  function filter(){const terms=normalize(quick.value).split(/\s+/).filter(Boolean);filtered=entries.filter(e=>terms.every(term=>e.search.includes(term)||(/^\d[\d.()\-+/]*$/.test(term)&&digits(term)&&e.numbers.some(n=>n.includes(digits(term)))))&&(!company.value||e.company===company.value)&&(!city.value||e.city===city.value));page=1;render();}
+  quick.addEventListener('input',filter);company.addEventListener('change',filter);city.addEventListener('change',filter);size.addEventListener('change',()=>{page=1;render();});
+  clear.addEventListener('click',()=>{quick.value='';company.value='';city.value='';filter();quick.focus();});
+  document.getElementById('hgPrev').addEventListener('click',()=>{page--;render();});document.getElementById('hgNext').addEventListener('click',()=>{page++;render();});
+  function registration(event){event.preventDefault();const block=document.getElementById('hgCadastro');block.open=true;block.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});document.getElementById('hgNome').focus({preventScroll:true});}
+  document.getElementById('hgNew').addEventListener('click',registration);document.getElementById('hgEmptyNew').addEventListener('click',registration);
+  const dialog=document.getElementById('hgDialog');let lastButton=null;
+  function value(id,text){document.getElementById(id).textContent=text||'Não informado';}
+  function birthDate(raw){if(!raw)return '';const match=String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);return match?match[3]+'/'+match[2]+'/'+match[1]:String(raw);}
+  entries.forEach(e=>e.row.querySelector('.hg-detail-btn').addEventListener('click',event=>{lastButton=event.currentTarget;const d=e.data;value('hgDialogTitle',d.nome);value('hgDAvatar',d.nome?d.nome.trim().charAt(0).toUpperCase():'?');value('hgDCompany',d.empresa||'Empresa não informada');[['Cpf','cpf'],['Rg','rg'],['Passaporte','passaporte'],['Nacionalidade','nacionalidade'],['Telefone','telefone'],['Whatsapp','whatsapp'],['Email','email'],['Endereco','endereco'],['Cep','cep'],['Profissao','profissao'],['Empresa','empresa']].forEach(([id,key])=>value('hgD'+id,d[key]));value('hgDNascimento',birthDate(d.nascimento));value('hgDLocal',e.city);value('hgDObservacoes',d.observacoes||'Nenhuma observação registrada.');if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');document.getElementById('hgClose').focus();}));
+  function close(){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');lastButton?.focus();}
+  document.getElementById('hgClose').addEventListener('click',close);document.getElementById('hgCloseBottom').addEventListener('click',close);dialog.addEventListener('cancel',event=>{event.preventDefault();close();});dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close();});
+  document.getElementById('hgEstado').addEventListener('input',event=>{event.target.value=event.target.value.toUpperCase();});
+  document.getElementById('hgForm').addEventListener('submit',()=>{const cpf=document.getElementById('hgCpf');if(!cpf.value.trim())cpf.disabled=true;});
+  document.querySelectorAll('[data-hg-loading]').forEach(form=>form.addEventListener('submit',event=>{if(event.defaultPrevented||!form.checkValidity())return;if(form.dataset.busy==='1'){event.preventDefault();return;}form.dataset.busy='1';const button=form.querySelector('button[type=submit]');if(button){button.disabled=true;button.classList.add('is-loading');button.setAttribute('aria-busy','true');}}));
+  window.addEventListener('pageshow',()=>{document.getElementById('hgCpf').disabled=false;document.querySelectorAll('[data-hg-loading]').forEach(form=>{delete form.dataset.busy;const button=form.querySelector('button[type=submit]');if(button){button.disabled=false;button.classList.remove('is-loading');button.removeAttribute('aria-busy');}});});
+  render();
+}());
+</script>
 {% endblock %}

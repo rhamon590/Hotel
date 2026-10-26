@@ -1,361 +1,239 @@
 {% extends "base.html" %}
-
-{% set page_title = "Módulos do sistema" %}
-{% set page_subtitle = "Escolha uma função para acessar e gerenciar." %}
-{% set perfil = (session.get('perfil') or '')|lower %}
+{% set page_title = "Visão geral" %}
+{% set page_subtitle = "Sua operação, em um só lugar." %}
+{% set perfil = (session.get('perfil') or '')|lower|trim %}
 
 {% block extra_css %}
+{{ super() }}
 <style>
-    .dashboard-hero{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:24px;
-        margin-bottom:22px;
-        padding:26px;
-        border-radius:24px;
-        background:
-            radial-gradient(circle at top right,rgba(37,99,235,.22),transparent 35%),
-            var(--surface);
-        border:1px solid var(--border);
-        box-shadow:var(--shadow);
-    }
-
-    .dashboard-hero h2{
-        margin:0;
-        font-size:28px;
-    }
-
-    .dashboard-hero p{
-        margin:8px 0 0;
-        color:var(--muted);
-    }
-
-    .dashboard-user{
-        padding:14px 18px;
-        border-radius:16px;
-        background:rgba(37,99,235,.12);
-        border:1px solid rgba(59,130,246,.22);
-        text-align:right;
-    }
-
-    .dashboard-user strong{display:block}
-    .dashboard-user span{color:var(--muted);font-size:13px}
-
-    .summary-grid{
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-        gap:14px;
-        margin-bottom:22px;
-    }
-
-    .summary-card{
-        padding:18px;
-        border-radius:18px;
-        background:var(--surface);
-        border:1px solid var(--border);
-    }
-
-    .summary-card small{
-        color:var(--muted);
-        font-weight:700;
-    }
-
-    .summary-card strong{
-        display:block;
-        margin-top:7px;
-        font-size:25px;
-    }
-
-    .modules-panel{
-        padding:24px;
-        border-radius:24px;
-        background:var(--surface);
-        border:1px solid var(--border);
-        box-shadow:var(--shadow);
-    }
-
-    .modules-panel-header{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:18px;
-        margin-bottom:20px;
-    }
-
-    .modules-panel-header h2{
-        margin:0;
-        font-size:21px;
-    }
-
-    .modules-panel-header p{
-        margin:5px 0 0;
-        color:var(--muted);
-        font-size:14px;
-    }
-
-    .modules-grid{
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(245px,1fr));
-        gap:16px;
-    }
-
-    .module-card{
-        position:relative;
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        min-height:215px;
-        padding:20px;
-        border-radius:20px;
-        background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
-        border:1px solid var(--border);
-        transition:.25s;
-    }
-
-    html[data-theme="light"] .module-card{
-        background:linear-gradient(145deg,#fff,#f8fafc);
-    }
-
-    .module-card:hover{
-        transform:translateY(-5px);
-        border-color:rgba(59,130,246,.44);
-        box-shadow:0 18px 40px rgba(0,0,0,.16);
-    }
-
-    .module-card::before{
-        content:"";
-        position:absolute;
-        top:-65px;
-        right:-65px;
-        width:145px;
-        height:145px;
-        border-radius:50%;
-        background:rgba(37,99,235,.10);
-    }
-
-    .module-icon{
-        position:relative;
-        width:52px;
-        height:52px;
-        display:grid;
-        place-items:center;
-        margin-bottom:16px;
-        border-radius:16px;
-        font-size:25px;
-        background:rgba(37,99,235,.14);
-        border:1px solid rgba(59,130,246,.22);
-    }
-
-    .module-card h3{
-        position:relative;
-        margin:0 0 8px;
-        font-size:17px;
-    }
-
-    .module-card p{
-        position:relative;
-        flex:1;
-        margin:0 0 18px;
-        color:var(--muted);
-        font-size:13px;
-        line-height:1.55;
-    }
-
-    .module-card .btn{
-        position:relative;
-        width:100%;
-    }
-
-    @media(max-width:760px){
-        .dashboard-hero{
-            align-items:flex-start;
-            flex-direction:column;
-        }
-
-        .dashboard-user{
-            width:100%;
-            text-align:left;
-        }
-
-        .modules-panel{
-            padding:18px;
-        }
-
-        .modules-grid{grid-template-columns:1fr}
-    }
+.hp-dashboard{--hp-blue:#60a5fa;--hp-soft:rgba(96,165,250,.1);font-size:14px;line-height:1.5}
+.hp-dashboard *{box-sizing:border-box}
+.hp-dashboard svg{width:22px;height:22px;flex-shrink:0}
+.hp-dashboard [hidden]{display:none!important}
+.hp-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:36px;align-items:center;padding:38px 40px;margin-bottom:24px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(115deg,var(--surface) 25%,var(--surface-2));}
+.hp-hero:after{content:"";position:absolute;z-index:-1;width:360px;height:360px;border:60px solid rgba(96,165,250,.05);border-radius:50%;right:-100px;top:-180px}
+.hp-eyebrow{display:flex;align-items:center;gap:9px;color:var(--hp-blue);font-size:11px;font-weight:750;letter-spacing:1.8px;text-transform:uppercase}
+.hp-eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.hp-hero h2{font-size:clamp(27px,3vw,39px);line-height:1.2;letter-spacing:-1.2px;margin:14px 0 12px;font-weight:750;overflow-wrap:anywhere}
+.hp-hero p{color:var(--muted);margin:0;max-width:530px;font-size:14px}
+.hp-account{min-width:190px;max-width:280px;padding:20px 24px;border-left:1px solid var(--border)}
+.hp-account small{display:block;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px}
+.hp-account strong{display:block;font-size:16px;overflow-wrap:anywhere}
+.hp-account span{display:inline-flex;font-size:11px;color:var(--hp-blue);padding:4px 10px;margin-top:9px;border:1px solid var(--border);border-radius:99px;text-transform:capitalize;background:var(--hp-soft)}
+.hp-section-label{color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin:0 0 12px}
+.hp-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:32px}
+.hp-metric{padding:20px 18px;background:var(--surface);border:1px solid var(--border);border-radius:16px;min-width:0}
+.hp-metric-label{display:block;color:var(--muted);font-size:12px}
+.hp-metric strong{display:block;font-size:30px;letter-spacing:-1px;line-height:1.25;margin-top:12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hp-metric-foot{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;margin-top:8px}
+.hp-dot{width:5px;height:5px;border-radius:50%;background:var(--hp-blue)}
+.hp-green .hp-dot{background:#34d399}.hp-orange .hp-dot{background:#fbbf24}
+.hp-panel{margin-top:8px}
+.hp-panel-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}
+.hp-panel h2{margin:0;font-size:22px;letter-spacing:-.5px}
+.hp-panel-head p{color:var(--muted);font-size:13px;margin:4px 0 0}
+.hp-search{position:relative;display:flex;align-items:center;gap:10px;width:min(100%,340px);padding:0 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted)}
+.hp-search:focus-within{border-color:var(--hp-blue);box-shadow:0 0 0 3px var(--hp-soft)}
+.hp-search svg{width:18px;height:18px}
+.hp-search input{width:100%;min-width:0;height:46px;background:transparent;border:0;outline:none;color:var(--text);font:inherit}
+.hp-search input::placeholder{color:var(--muted)}
+.hp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.hp-filters{display:flex;flex-wrap:wrap;gap:6px}
+.hp-filter{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:1px solid transparent;border-radius:9px;padding:9px 13px;min-height:40px;cursor:pointer}
+.hp-filter:hover{color:var(--text);background:var(--surface)}
+.hp-filter[aria-pressed="true"]{color:var(--hp-blue);background:var(--hp-soft);border-color:rgba(96,165,250,.2)}
+.hp-count{font-size:12px;color:var(--muted);white-space:nowrap}
+.hp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.hp-module{--hp-accent:#60a5fa;display:flex;flex-direction:column;min-width:0;min-height:232px;padding:24px;border:1px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text);text-decoration:none;transition:transform .18s,border-color .18s,box-shadow .18s}
+.hp-module:hover{transform:translateY(-4px);border-color:var(--hp-accent);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.hp-module:focus-visible,.hp-filter:focus-visible,.hp-reset:focus-visible{outline:3px solid var(--hp-blue);outline-offset:4px}
+.hp-teal{--hp-accent:#2dd4bf}.hp-amber{--hp-accent:#fbbf24}.hp-violet{--hp-accent:#a78bfa}.hp-slate{--hp-accent:#94a3b8}
+.hp-module-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:20px}
+.hp-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;border:1px solid var(--border);background:var(--surface-2);color:var(--hp-accent)}
+.hp-tag{font-size:10px;letter-spacing:.3px;color:var(--muted)}
+.hp-module h3{font-size:16px;letter-spacing:-.2px;line-height:1.4;margin:0 0 8px}
+.hp-module p{color:var(--muted);font-size:12px;line-height:1.7;margin:0 0 22px;flex:1}
+.hp-module-bottom{border-top:1px solid var(--border);padding-top:14px;display:flex;justify-content:space-between;align-items:center;color:var(--hp-accent);font-size:11px;font-weight:650}
+.hp-arrow{display:grid;place-items:center}.hp-arrow svg{width:17px;height:17px}
+.hp-empty{text-align:center;padding:48px 24px;border:1px dashed var(--border);border-radius:18px;background:var(--surface)}
+.hp-empty h3{margin:12px 0 6px;font-size:18px}.hp-empty p{color:var(--muted);margin:0 0 16px}
+.hp-reset{padding:10px 18px;border:1px solid var(--border);border-radius:10px;background:var(--hp-soft);color:var(--text);font:inherit;cursor:pointer}
+.hp-footer{display:flex;justify-content:space-between;gap:16px;margin-top:26px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:11px}
+.hp-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+html[data-theme="light"] .hp-dashboard{--hp-blue:#1d4ed8;--hp-soft:rgba(37,99,235,.07)}
+html[data-theme="light"] .hp-module{--hp-accent:#2563eb}
+html[data-theme="light"] .hp-teal{--hp-accent:#0f766e}
+html[data-theme="light"] .hp-amber{--hp-accent:#a16207}
+html[data-theme="light"] .hp-violet{--hp-accent:#7c3aed}
+html[data-theme="light"] .hp-slate{--hp-accent:#475569}
+@media(min-width:1450px){.hp-module{min-height:245px}}
+@media(max-width:1180px){.hp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hp-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){.hp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hp-hero{padding:28px;gap:20px}.hp-account{min-width:160px;padding:12px 0 12px 20px}.hp-toolbar{align-items:flex-start;flex-direction:column;gap:8px}}
+@media(max-width:600px){.hp-hero{grid-template-columns:1fr;padding:24px;border-radius:18px;gap:20px}.hp-account{max-width:none;min-width:0;padding:16px 0 0;border-left:0;border-top:1px solid var(--border)}.hp-account small{display:none}.hp-account strong{font-size:14px}.hp-panel-head{align-items:flex-start;flex-direction:column;gap:16px}.hp-search{width:100%}.hp-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hp-metric{padding:16px}.hp-metric strong{font-size:27px}.hp-grid{grid-template-columns:1fr;gap:12px}.hp-module{min-height:0;padding:22px}.hp-footer{flex-direction:column;gap:5px}.hp-filter{padding:9px 10px}.hp-hero h2{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.hp-module{transition:none}.hp-module:hover{transform:none}}
+@media print{.hp-search,.hp-toolbar,.hp-footer{display:none!important}.hp-grid{grid-template-columns:repeat(3,1fr)}.hp-module,.hp-hero,.hp-metric{break-inside:avoid;box-shadow:none}.hp-module{min-height:0}}
 </style>
 {% endblock %}
 
 {% block content %}
-
-<section class="dashboard-hero">
-    <div>
-        <h2>Bem-vindo ao Hotel PRO</h2>
-        <p>
-            Selecione abaixo o módulo que deseja acessar.
-            Cada função será aberta em uma página separada.
-        </p>
-    </div>
-
-    <div class="dashboard-user">
-        <strong>{{ session.get('nome') or 'Usuário' }}</strong>
-        <span>{{ session.get('perfil') or 'Perfil' }}</span>
-    </div>
+<div class="hp-dashboard" id="hotel-dashboard">
+<section class="hp-hero" aria-labelledby="hp-welcome">
+ <div><span class="hp-eyebrow">Hotel PRO · Central de gestão</span>
+ <h2 id="hp-welcome">Sua operação,<br>sob controle.</h2>
+ <p>Acompanhe a disponibilidade e encontre as ferramentas para cuidar de cada etapa da hospedagem.</p></div>
+ <div class="hp-account"><small>SEU ESPAÇO DE TRABALHO</small><strong>{{ session.get('nome') or 'Usuário' }}</strong><span>{{ session.get('perfil') or 'Perfil não informado' }}</span></div>
 </section>
-
-{% if cards is defined %}
-<section class="summary-grid">
-    <article class="summary-card">
-        <small>Total de quartos</small>
-        <strong>{{ cards.quartos or 0 }}</strong>
-    </article>
-
-    <article class="summary-card">
-        <small>Quartos livres</small>
-        <strong>{{ cards.livres or 0 }}</strong>
-    </article>
-
-    <article class="summary-card">
-        <small>Quartos ocupados</small>
-        <strong>{{ cards.ocupados or 0 }}</strong>
-    </article>
-
-    <article class="summary-card">
-        <small>Reservas</small>
-        <strong>{{ cards.reservas or 0 }}</strong>
-    </article>
-
-    <article class="summary-card">
-        <small>Check-ins hoje</small>
-        <strong>{{ cards.checkins or 0 }}</strong>
-    </article>
-
-    <article class="summary-card">
-        <small>Check-outs hoje</small>
-        <strong>{{ cards.checkouts or 0 }}</strong>
-    </article>
+{% if cards is defined and cards is not none %}
+<p class="hp-section-label" id="hp-overview">Panorama da operação</p>
+<section class="hp-metrics" aria-labelledby="hp-overview">
+<article class="hp-metric "><span class="hp-metric-label">Total de quartos</span><strong>{{ cards.quartos if cards.quartos is defined and cards.quartos is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Estrutura cadastrada</span></article>
+<article class="hp-metric hp-green"><span class="hp-metric-label">Quartos livres</span><strong>{{ cards.livres if cards.livres is defined and cards.livres is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Disponibilidade</span></article>
+<article class="hp-metric hp-orange"><span class="hp-metric-label">Quartos ocupados</span><strong>{{ cards.ocupados if cards.ocupados is defined and cards.ocupados is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Em hospedagem</span></article>
+<article class="hp-metric "><span class="hp-metric-label">Reservas</span><strong>{{ cards.reservas if cards.reservas is defined and cards.reservas is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Reservas registradas</span></article>
+<article class="hp-metric hp-green"><span class="hp-metric-label">Check-ins hoje</span><strong>{{ cards.checkins if cards.checkins is defined and cards.checkins is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Entradas do dia</span></article>
+<article class="hp-metric hp-orange"><span class="hp-metric-label">Check-outs hoje</span><strong>{{ cards.checkouts if cards.checkouts is defined and cards.checkouts is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Saídas do dia</span></article>
 </section>
 {% endif %}
-
-<section class="modules-panel">
-
-    <div class="modules-panel-header">
-        <div>
-            <h2>🧩 Módulos do sistema</h2>
-            <p>Clique em acessar para abrir a função escolhida.</p>
-        </div>
-    </div>
-
-    <div class="modules-grid">
-
-        {% if perfil in ['administrador', 'rh'] %}
-        <article class="module-card">
-            <div class="module-icon">👥</div>
-            <h3>Hóspedes</h3>
-            <p>Cadastre hóspedes e consulte CPF, telefone, empresa, endereço e histórico.</p>
-            <a href="{{ url_for('hospedes') }}" class="btn">Acessar hóspedes</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">🛏️</div>
-            <h3>Quartos</h3>
-            <p>Controle disponibilidade, categoria, capacidade, diária e situação dos quartos.</p>
-            <a href="{{ url_for('quartos') }}" class="btn">Acessar quartos</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">📅</div>
-            <h3>Reservas</h3>
-            <p>Registre reservas, entradas, saídas, valores, descontos e status da hospedagem.</p>
-            <a href="{{ url_for('reservas') }}" class="btn">Acessar reservas</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">🧹</div>
-            <h3>Governança</h3>
-            <p>Controle limpeza, responsáveis, checklist, inspeção e liberação dos quartos.</p>
-            <a href="{{ url_for('limpeza') }}" class="btn">Acessar governança</a>
-        </article>
-        {% endif %}
-
-        {% if perfil in ['administrador', 'porteiro'] %}
-        <article class="module-card">
-            <div class="module-icon">🗓️</div>
-            <h3>Calendário</h3>
-            <p>Visualize as reservas por período e acompanhe entradas e saídas dos quartos.</p>
-            <a href="{{ url_for('calendario') }}" class="btn">Abrir calendário</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">💳</div>
-            <h3>Controle de cartões</h3>
-            <p>Cadastre, entregue e receba cartões com rastreabilidade completa das movimentações.</p>
-            <a href="{{ url_for('cartoes') }}" class="btn">Acessar cartões</a>
-        </article>
-        {% endif %}
-
-        {% if perfil == 'administrador' %}
-        <article class="module-card">
-            <div class="module-icon">🛠️</div>
-            <h3>Manutenção</h3>
-            <p>Registre problemas, prioridade, responsáveis, custos e andamento dos serviços.</p>
-            <a href="{{ url_for('manutencao') }}" class="btn">Acessar manutenção</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">👔</div>
-            <h3>Funcionários</h3>
-            <p>Gerencie funcionários, cargos, setores, contatos e situação cadastral.</p>
-            <a href="{{ url_for('funcionarios') }}" class="btn">Acessar funcionários</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">🏢</div>
-            <h3>Empresas e agências</h3>
-            <p>Cadastre empresas parceiras, contatos, CNPJ e tarifas especiais.</p>
-            <a href="{{ url_for('empresas') }}" class="btn">Acessar empresas</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">📊</div>
-            <h3>Relatórios</h3>
-            <p>Consulte resultados financeiros, despesas, consumos e dados gerenciais.</p>
-            <a href="{{ url_for('relatorios') }}" class="btn">Acessar relatórios</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">🔎</div>
-            <h3>Auditoria</h3>
-            <p>Consulte ações dos usuários, registros alterados, datas, detalhes e IP.</p>
-            <a href="{{ url_for('auditoria') }}" class="btn">Acessar auditoria</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">🔐</div>
-            <h3>Usuários</h3>
-            <p>Crie contas, defina perfis de acesso e controle permissões do sistema.</p>
-            <a href="{{ url_for('usuarios') }}" class="btn">Acessar usuários</a>
-        </article>
-
-        <article class="module-card">
-            <div class="module-icon">💾</div>
-            <h3>Backup</h3>
-            <p>Gere uma cópia de segurança do banco de dados do sistema.</p>
-            <a href="{{ url_for('backup') }}" class="btn">Gerar backup</a>
-        </article>
-        {% endif %}
-
-        {% if perfil not in ['administrador', 'rh', 'porteiro'] %}
-        <article class="module-card module-card-empty">
-            <div class="module-icon">🔒</div>
-            <h3>Perfil sem acesso</h3>
-            <p>Este usuário não possui módulos liberados. Solicite ao administrador a correção do perfil.</p>
-        </article>
-        {% endif %}
-
-    </div>
-
+<section class="hp-panel" aria-labelledby="hp-modules-title">
+ <div class="hp-panel-head"><div><h2 id="hp-modules-title">Módulos do sistema</h2><p>Tudo o que você precisa para conduzir a rotina.</p></div>
+ <label class="hp-search" data-search-control hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><span class="hp-sr-only">Buscar módulo</span><input id="hp-search" type="search" placeholder="Buscar módulo..." autocomplete="off" aria-controls="hp-modules-grid"></label>
+ </div>
+ <div class="hp-toolbar" id="hp-toolbar" hidden>
+ <div class="hp-filters" role="group" aria-label="Filtrar módulos por área">
+<button type="button" class="hp-filter" data-filter="all" aria-pressed="true">Todos</button>
+<button type="button" class="hp-filter" data-filter="operacao" aria-pressed="false">Operação</button>
+<button type="button" class="hp-filter" data-filter="recepcao" aria-pressed="false">Recepção</button>
+<button type="button" class="hp-filter" data-filter="gestao" aria-pressed="false">Gestão</button>
+<button type="button" class="hp-filter" data-filter="administracao" aria-pressed="false">Administração</button>
+</div><span class="hp-count" id="hp-result-count" role="status" aria-live="polite"></span></div>
+ <div class="hp-grid" id="hp-modules-grid">
+{% if perfil in ['administrador', 'rh'] %}
+<a class="hp-module hp-blue" href="{{ url_for('hospedes') }}" data-module data-category="operacao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="hp-tag">Operação</span></div>
+ <h3>Hóspedes</h3><p>Cadastre hóspedes e consulte CPF, telefone, empresa, endereço e histórico.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-blue" href="{{ url_for('quartos') }}" data-module data-category="operacao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v3m18-3v3M3 10V4m18 14H3v-8h15a3 3 0 0 1 3 3v5Z"/><path d="M7 10V7h5v3"/></svg></span><span class="hp-tag">Operação</span></div>
+ <h3>Quartos</h3><p>Controle disponibilidade, categoria, capacidade, diária e situação dos quartos.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-blue" href="{{ url_for('reservas') }}" data-module data-category="operacao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18m-13 5h3"/></svg></span><span class="hp-tag">Operação</span></div>
+ <h3>Reservas</h3><p>Registre reservas, entradas, saídas, valores, descontos e status da hospedagem.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-teal" href="{{ url_for('limpeza') }}" data-module data-category="operacao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 3-4 10m-4-1 8 3-2 6H2l4-9Zm12-5v6m-3-3h6"/></svg></span><span class="hp-tag">Operação</span></div>
+ <h3>Governança</h3><p>Controle limpeza, responsáveis, checklist, inspeção e liberação dos quartos.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+{% endif %}
+{% if perfil in ['administrador', 'porteiro'] %}
+<a class="hp-module hp-teal" href="{{ url_for('calendario') }}" data-module data-category="recepcao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18m-13 5h3"/></svg></span><span class="hp-tag">Recepção</span></div>
+ <h3>Calendário</h3><p>Visualize as reservas por período e acompanhe entradas e saídas dos quartos.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-teal" href="{{ url_for('cartoes') }}" data-module data-category="recepcao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 10h20M6 15h4"/></svg></span><span class="hp-tag">Recepção</span></div>
+ <h3>Controle de cartões</h3><p>Cadastre, entregue e receba cartões com rastreabilidade completa das movimentações.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+{% endif %}
+{% if perfil == 'administrador' %}
+<a class="hp-module hp-amber" href="{{ url_for('manutencao') }}" data-module data-category="gestao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18a2.1 2.1 0 0 0 3 3l5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-3-3 3-3Z"/></svg></span><span class="hp-tag">Gestão</span></div>
+ <h3>Manutenção</h3><p>Registre problemas, prioridade, responsáveis, custos e andamento dos serviços.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-violet" href="{{ url_for('funcionarios') }}" data-module data-category="gestao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V3h8v4M3 12a22 22 0 0 0 18 0m-9 0v4"/></svg></span><span class="hp-tag">Gestão</span></div>
+ <h3>Funcionários</h3><p>Gerencie funcionários, cargos, setores, contatos e situação cadastral.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-violet" href="{{ url_for('empresas') }}" data-module data-category="gestao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V3h12v18M16 9h4v12M2 21h20M8 7h4M8 11h4M8 15h4m0 6v-3"/></svg></span><span class="hp-tag">Gestão</span></div>
+ <h3>Empresas e agências</h3><p>Cadastre empresas parceiras, contatos, CNPJ e tarifas especiais.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-violet" href="{{ url_for('relatorios') }}" data-module data-category="gestao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18M7 16v-4m5 4V7m5 9v-6"/></svg></span><span class="hp-tag">Gestão</span></div>
+ <h3>Relatórios</h3><p>Consulte resultados financeiros, despesas, consumos e dados gerenciais.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-slate" href="{{ url_for('auditoria') }}" data-module data-category="administracao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span><span class="hp-tag">Administração</span></div>
+ <h3>Auditoria</h3><p>Consulte ações dos usuários, registros alterados, datas, detalhes e IP.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-slate" href="{{ url_for('usuarios') }}" data-module data-category="administracao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg></span><span class="hp-tag">Administração</span></div>
+ <h3>Usuários</h3><p>Crie contas, defina perfis de acesso e controle permissões do sistema.</p>
+ <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+<a class="hp-module hp-slate" href="{{ url_for('backup') }}" data-module data-category="administracao">
+ <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13l3 3v13H4V4Z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/></svg></span><span class="hp-tag">Administração</span></div>
+ <h3>Backup</h3><p>Gere uma cópia de segurança do banco de dados do sistema.</p>
+ <span class="hp-module-bottom">Gerar backup<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
+</a>
+{% endif %}
+ </div>
+ <div class="hp-empty" id="hp-no-results" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><h3>Nenhum módulo encontrado</h3><p>Tente outro termo ou selecione uma área diferente.</p><button type="button" class="hp-reset" id="hp-reset">Limpar filtros</button></div>
+ {% if perfil not in ['administrador', 'rh', 'porteiro'] %}
+ <div class="hp-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg><h3>Nenhum módulo liberado</h3><p>Solicite ao administrador a revisão do seu perfil de acesso.</p></div>
+ {% endif %}
 </section>
+<footer class="hp-footer"><span>HOTEL PRO · Gestão hoteleira</span><span>Módulos disponíveis conforme seu perfil de acesso.</span></footer>
+</div>
+{% endblock %}
 
+{% block extra_js %}
+{{ super() }}
+<script>
+(function () {
+    'use strict';
+    const root = document.getElementById('hotel-dashboard');
+    if (!root) return;
+    const modules = Array.from(root.querySelectorAll('[data-module]'));
+    if (!modules.length) return;
+    const input = root.querySelector('#hp-search');
+    const buttons = Array.from(root.querySelectorAll('[data-filter]'));
+    const count = root.querySelector('#hp-result-count');
+    const empty = root.querySelector('#hp-no-results');
+    let category = 'all';
+    const normalize = value => value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const indexed = modules.map(node => ({node, text: normalize(node.textContent)}));
+
+    function filterModules() {
+        const terms = normalize(input.value).split(/\s+/).filter(Boolean);
+        let visible = 0;
+        indexed.forEach(item => {
+            const matches = (category === 'all' || item.node.dataset.category === category)
+                && terms.every(term => item.text.includes(term));
+            item.node.hidden = !matches;
+            if (matches) visible += 1;
+        });
+        count.textContent = visible + ' de ' + modules.length + (modules.length === 1 ? ' módulo' : ' módulos');
+        empty.hidden = visible !== 0;
+        buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === category)));
+    }
+
+    buttons.forEach(button => {
+        const value = button.dataset.filter;
+        button.hidden = value !== 'all' && !modules.some(node => node.dataset.category === value);
+        button.addEventListener('click', () => { category = value; filterModules(); });
+    });
+    input.addEventListener('input', filterModules);
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { input.value = ''; filterModules(); }
+    });
+    root.querySelector('#hp-reset').addEventListener('click', () => {
+        input.value = ''; category = 'all'; filterModules(); input.focus();
+    });
+    root.querySelector('[data-search-control]').hidden = false;
+    root.querySelector('#hp-toolbar').hidden = false;
+    filterModules();
+}());
+</script>
 {% endblock %}

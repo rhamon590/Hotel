@@ -1,577 +1,149 @@
 {% extends 'base.html' %}
+{% set page_title='Controle de cartões' %}
+{% set page_subtitle='Recepção, acesso e movimentações de cartões' %}
 {% block title %}Controle de Cartões{% endblock %}
-
 {% block content %}
 <style>
-.cartoes-page{padding:24px}.page-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:22px}.page-head h1{margin:0;color:#0f172a}.page-head p{margin:5px 0 0;color:#64748b}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px}.btn-primary{background:#0f172a;color:white}.btn-success{background:#15803d;color:white}.btn-warning{background:#d97706;color:white}.btn-danger{background:#b91c1c;color:white}.btn-light{background:#e2e8f0;color:#0f172a}.cards{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-bottom:20px}.card{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:16px;box-shadow:0 4px 14px rgba(15,23,42,.05)}.card small{color:#64748b;font-weight:700}.card strong{display:block;font-size:25px;margin-top:7px;color:#0f172a}.panel{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:18px;margin-bottom:20px}.panel h2{margin:0 0 15px;color:#0f172a;font-size:18px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group.full{grid-column:1/-1}label{font-weight:700;color:#334155;font-size:13px}input,select,textarea{border:1px solid #cbd5e1;border-radius:9px;padding:10px;background:#fff;color:#0f172a}textarea{min-height:75px;resize:vertical}.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.filters input{min-width:230px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:11px 10px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:13px}th{background:#f8fafc;color:#334155}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.b-disponivel{background:#dcfce7;color:#166534}.b-uso{background:#dbeafe;color:#1d4ed8}.b-perdido{background:#fee2e2;color:#991b1b}.b-danificado{background:#ffedd5;color:#9a3412}.b-bloqueado{background:#e2e8f0;color:#334155}.row-actions{display:flex;gap:6px;flex-wrap:wrap}.mini{padding:7px 9px;font-size:12px}.timeline{display:grid;gap:10px}.event{border-left:4px solid #0f172a;padding:10px 12px;background:#f8fafc;border-radius:0 9px 9px 0}.event strong{color:#0f172a}.event small{display:block;color:#64748b;margin-top:4px}.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:1000;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-card{background:white;border-radius:14px;padding:20px;width:min(540px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.modal-head h3{margin:0}.close{border:0;background:#e2e8f0;border-radius:8px;padding:7px 10px;cursor:pointer}@media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.cards,.form-grid{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.cartoes-page{padding:14px}}
-
-.resultado-busca-colaborador{
-    display:none;
-    max-height:250px;
-    overflow-y:auto;
-    margin-top:7px;
-    border-radius:10px;
-    background:#fff;
-    border:1px solid #cbd5e1;
-    box-shadow:0 14px 35px rgba(15,23,42,.16);
-}
-.resultado-busca-colaborador.aberto{display:block}
-.item-colaborador{
-    width:100%;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    padding:12px 13px;
-    border:0;
-    border-bottom:1px solid #e2e8f0;
-    background:#fff;
-    color:#0f172a;
-    text-align:left;
-    cursor:pointer;
-}
-.item-colaborador:last-child{border-bottom:0}
-.item-colaborador:hover{background:#eff6ff}
-.item-colaborador strong{display:block;font-size:13px}
-.item-colaborador small{display:block;margin-top:3px;color:#64748b;font-size:11px}
-.quarto-badge{
-    flex-shrink:0;
-    padding:7px 10px;
-    border-radius:999px;
-    background:#dbeafe;
-    color:#1d4ed8;
-    font-size:11px;
-    font-weight:800;
-}
-.colaborador-selecionado{
-    display:none;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:10px;
-    padding:12px;
-    border-radius:12px;
-    background:#f8fafc;
-    border:1px solid #dbe4f0;
-}
-.colaborador-selecionado div{
-    padding:10px;
-    border-radius:9px;
-    background:#fff;
-    border:1px solid #e2e8f0;
-}
-.colaborador-selecionado small{
-    display:block;
-    margin-bottom:4px;
-    color:#64748b;
-    font-size:10px;
-    font-weight:800;
-    text-transform:uppercase;
-}
-.colaborador-selecionado strong{
-    color:#0f172a;
-    font-size:13px;
-}
-.aviso-cartao{
-    margin-top:4px;
-    color:#b45309 !important;
-    font-weight:800;
-}
-.busca-status{
-    padding:12px;
-    color:#64748b;
-    font-size:13px;
-}
-.busca-status.erro{color:#b91c1c}
-@media(max-width:600px){
-    .colaborador-selecionado{grid-template-columns:1fr}
-}
+.hc{--hc-bg:var(--surface,#fff);--hc-soft:var(--surface-2,#f8fafc);--hc-text:var(--text,#0f172a);--hc-muted:var(--muted,#64748b);--hc-line:var(--border,#e2e8f0);--hc-blue:#2563eb;--hc-good:#15803d;--hc-warn:#b45309;--hc-bad:#b91c1c;color:var(--hc-text);font-family:inherit;line-height:1.5}
+html[data-theme="dark"] .hc{--hc-blue:#93b4ff;--hc-good:#86efac;--hc-warn:#fcd38d;--hc-bad:#fca5a5}
+.hc-page{max-width:1560px;margin:0 auto;padding:28px clamp(14px,3vw,38px) 40px}
+.hc *{box-sizing:border-box}.hc[hidden],.hc [hidden]{display:none!important}.hc h1,.hc h2,.hc h3,.hc p{margin:0}.hc a{color:inherit}.hc svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.hc button,.hc input,.hc select,.hc textarea{font:inherit}
+.hc-hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#12233e,#172f52 65%,#214e6d);color:#fff;border:1px solid #335272;border-radius:22px;padding:28px;display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:22px;box-shadow:0 12px 30px #0f172a12}
+.hc-hero:after{content:'';position:absolute;right:100px;top:-130px;border:1px solid #ffffff13;width:360px;height:360px;border-radius:50%;pointer-events:none}.hc-hero>*{position:relative;z-index:1}.hc-kicker{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#b8d2ef;margin-bottom:10px}.hc-kicker:before{content:'';width:7px;height:7px;border-radius:50%;background:#79d7d2;box-shadow:0 0 0 4px #79d7d216}.hc h1{font-size:clamp(24px,3vw,32px);line-height:1.2;font-weight:800;letter-spacing:-.035em;overflow-wrap:anywhere}.hc-hero p{color:#c5d5e9;font-size:13px;margin-top:10px;max-width:640px}.hc-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;flex-shrink:0}
+.hc .hc-btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid var(--hc-line);border-radius:10px;padding:10px 14px;background:var(--hc-bg);color:var(--hc-text);font-size:12px;font-weight:750;line-height:1.5;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .15s,transform .15s;min-height:40px}.hc .hc-btn:hover{transform:translateY(-1px);background:var(--hc-soft)}.hc .hc-primary{background:#2563eb;border-color:#2563eb;color:#fff}.hc .hc-primary:hover{background:#1d4ed8}.hc .hc-hero-btn{background:#ffffff0d;border-color:#ffffff32;color:#fff}.hc .hc-hero-btn:hover{background:#ffffff20}.hc .hc-accent{background:#dff5f1;color:#125e56;border-color:#dff5f1}.hc .hc-accent:hover{background:#c9eee7}.hc .hc-small{padding:6px 10px;min-height:32px;font-size:11px}.hc .hc-warning{color:var(--hc-warn)}.hc .hc-success{color:var(--hc-good)}.hc .hc-btn:disabled{opacity:.55;cursor:wait;transform:none}.hc :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #60a5fa;outline-offset:3px}
+.hc-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:22px}.hc-stat{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:15px;padding:17px 18px;position:relative;min-width:0}.hc-stat small{font-size:11px;font-weight:700;color:var(--hc-muted)}.hc-stat strong{display:block;font-size:27px;line-height:1.2;margin-top:9px;letter-spacing:-.04em}.hc-stat:before{content:'';position:absolute;top:18px;right:15px;width:7px;height:7px;border-radius:50%;background:var(--hc-muted)}.hc-stat[data-tone="good"]:before{background:#22c55e}.hc-stat[data-tone="blue"]:before{background:#3b82f6}.hc-stat[data-tone="bad"]:before{background:#ef4444}.hc-stat[data-tone="warn"]:before{background:#f59e0b}
+.hc-panel{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:18px;overflow:hidden;margin-bottom:20px}.hc-panel-head{padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--hc-line)}.hc h2{font-size:16px;font-weight:800;letter-spacing:-.02em}.hc-sub{font-size:12px;color:var(--hc-muted);margin-top:4px!important}.hc-count{font-size:11px;background:var(--hc-soft);border:1px solid var(--hc-line);padding:5px 9px;border-radius:7px;color:var(--hc-muted);white-space:nowrap}
+.hc-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:18px 22px;background:var(--hc-soft);border-bottom:1px solid var(--hc-line)}.hc-field{display:flex;flex-direction:column;gap:7px;min-width:0}.hc-field.grow{flex:1;min-width:220px}.hc-field label,.hc-field>span{font-size:11px;font-weight:750;color:var(--hc-muted)}.hc input:not([type=hidden]),.hc select,.hc textarea{display:block;width:100%;min-height:42px;padding:10px 12px;background:var(--hc-bg);color:var(--hc-text);border:1px solid var(--hc-line);border-radius:9px;font-size:12px;line-height:1.5}.hc textarea{min-height:92px;resize:vertical}.hc input::placeholder,.hc textarea::placeholder{color:var(--hc-muted);opacity:.9}.hc-search{position:relative}.hc-search svg{position:absolute;left:12px;top:12px;color:var(--hc-muted);width:17px;height:17px}.hc-search input{padding-left:38px!important}.hc-help{color:var(--hc-muted);font-size:11px}.hc-hint{display:flex;gap:9px;padding:12px 14px;border:1px solid var(--hc-line);background:var(--hc-soft);border-radius:10px;font-size:12px;color:var(--hc-muted)}.hc-hint svg{color:var(--hc-blue);margin-top:1px}.hc-form-error{color:var(--hc-bad);background:var(--hc-soft);border:1px solid currentColor;border-radius:9px;padding:11px 13px;font-size:12px}
+.hc-table-wrap{overflow:auto}.hc table{width:100%;border-collapse:collapse;min-width:1000px;color:var(--hc-text);table-layout:auto;background:var(--hc-bg)}.hc th,.hc td{padding:15px 20px;text-align:left;border-bottom:1px solid var(--hc-line);vertical-align:middle;line-height:1.5;font-size:12px}.hc th{background:var(--hc-soft);color:var(--hc-muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800;white-space:nowrap}.hc tbody tr:last-child td{border-bottom:0}.hc tbody tr:hover{background:var(--hc-soft)}.hc-code{display:flex;align-items:center;gap:10px}.hc-code-icon{display:grid;place-items:center;width:35px;height:39px;border:1px solid var(--hc-line);border-radius:8px;color:var(--hc-blue);background:var(--hc-soft)}.hc-code strong{font-size:13px;overflow-wrap:anywhere}.hc-muted{color:var(--hc-muted)}.hc-description{max-width:240px;overflow-wrap:anywhere}.hc-row-actions{display:flex;gap:6px;flex-wrap:wrap}.hc-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hc-line);padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;line-height:1.5;white-space:nowrap;background:var(--hc-soft);color:var(--hc-muted)}.hc-pill:before{content:'';width:5px;height:5px;background:currentColor;border-radius:50%}.hc-pill[data-tone="good"]{color:var(--hc-good)}.hc-pill[data-tone="blue"]{color:var(--hc-blue)}.hc-pill[data-tone="warn"]{color:var(--hc-warn)}.hc-pill[data-tone="bad"]{color:var(--hc-bad)}
+.hc-empty{text-align:center;padding:42px 20px;color:var(--hc-muted);font-size:13px}.hc-empty strong{display:block;color:var(--hc-text);font-size:15px;margin:8px 0 5px}.hc-empty svg{width:30px;height:30px}.hc-events{padding:8px 22px}.hc-event{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--hc-line)}.hc-event:last-child{border-bottom:0}.hc-event-icon{display:grid;place-items:center;width:33px;height:33px;flex-shrink:0;border:1px solid var(--hc-line);border-radius:10px;color:var(--hc-blue);background:var(--hc-soft)}.hc-event-body{flex:1;min-width:0}.hc-event-title{display:flex;justify-content:space-between;gap:12px;font-size:12px;align-items:center}.hc-event-title a{font-weight:800;text-decoration:none}.hc-event-title a:hover{text-decoration:underline}.hc-event time{color:var(--hc-muted);font-size:11px;white-space:nowrap}.hc-event p{font-size:12px;margin-top:5px;color:var(--hc-muted);overflow-wrap:anywhere}.hc-note{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--hc-text)!important;background:var(--hc-soft);border:1px solid var(--hc-line);padding:11px 13px;border-radius:9px;font-size:12px;margin-top:12px!important}
+.hc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:20px 8px}.hc-summary>div{padding:0 20px;min-width:0;border-right:1px solid var(--hc-line)}.hc-summary>div:last-child{border:0}.hc-summary dt{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--hc-muted);margin-bottom:8px}.hc-summary dd{margin:0;font-size:13px;font-weight:700;overflow-wrap:anywhere}.hc-detail{padding:0 28px 18px;color:var(--hc-muted);font-size:12px}.hc-history-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:26px 0 14px}.hc-history-head p{font-size:12px;color:var(--hc-muted);margin-top:3px}.hc-history-layout{display:grid;grid-template-columns:175px minmax(0,1fr);gap:22px}.hc-history-aside{font-size:12px;color:var(--hc-muted);padding-top:10px}.hc-history-aside strong{display:block;font-size:30px;font-weight:800;color:var(--hc-text);letter-spacing:-.04em}.hc-history-aside p{margin-top:10px;font-size:11px}.hc-timeline{list-style:none;margin:0;padding:0 0 0 24px;border-left:2px solid var(--hc-line)}.hc-entry{position:relative;margin:0 0 16px;background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:15px;padding:20px}.hc-entry:before{content:'';position:absolute;top:25px;left:-32px;width:12px;height:12px;border-radius:50%;background:var(--hc-blue);border:3px solid var(--hc-bg);box-shadow:0 0 0 1px var(--hc-line)}.hc-entry[data-tone="good"]:before{background:var(--hc-good)}.hc-entry[data-tone="bad"]:before{background:var(--hc-bad)}.hc-entry[data-tone="warn"]:before{background:var(--hc-warn)}.hc-entry-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.hc-entry h3{font-size:14px;font-weight:800}.hc-entry time{display:block;font-size:11px;color:var(--hc-muted);margin-top:3px}.hc-entry-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;padding:14px 0 0;border-top:1px solid var(--hc-line)}.hc-entry-grid small{display:block;color:var(--hc-muted);font-size:10px;margin-bottom:5px}.hc-entry-grid span{font-size:12px;font-weight:650;overflow-wrap:anywhere}.hc-entry-footer{font-size:11px;color:var(--hc-muted);margin-top:14px;overflow-wrap:anywhere}
+.hc-modal{position:fixed;inset:0;z-index:2200;background:#071225a8;display:flex;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(5px)}.hc-dialog{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:20px;width:min(600px,100%);max-height:92dvh;overflow:auto;box-shadow:0 30px 90px #0005}.hc-modal-head{padding:22px 24px;border-bottom:1px solid var(--hc-line);display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.hc-modal-head h2{font-size:19px}.hc-modal-head p{font-size:12px;color:var(--hc-muted);margin-top:5px}.hc .hc-close{min-height:32px;width:32px;padding:5px;flex-shrink:0}.hc-form{padding:22px 24px;display:grid;gap:17px}.hc-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.hc-form-footer{display:flex;justify-content:flex-end;gap:9px;border-top:1px solid var(--hc-line);padding-top:18px}.hc-results{border:1px solid var(--hc-line);border-radius:10px;overflow:auto;max-height:245px;background:var(--hc-bg);margin-top:6px}.hc-result{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--hc-bg);border:0;border-bottom:1px solid var(--hc-line);padding:12px;color:var(--hc-text);cursor:pointer}.hc-result:hover{background:var(--hc-soft)}.hc-result:last-child{border:0}.hc-result strong{display:block;font-size:12px}.hc-result small{display:block;color:var(--hc-muted);font-size:10px;margin-top:4px}.hc-result:disabled{cursor:not-allowed;opacity:.65}.hc-result-status{font-size:12px;color:var(--hc-muted);padding:14px}.hc-selected{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--hc-soft);border:1px solid var(--hc-line);border-radius:12px;padding:15px}.hc-selected small{display:block;font-size:10px;color:var(--hc-muted);margin-bottom:3px}.hc-selected strong{font-size:12px;overflow-wrap:anywhere}.hc-warn-text{color:var(--hc-warn)!important}
+@media(max-width:1150px){.hc-hero{align-items:flex-start;flex-direction:column}.hc-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.hc-page{padding-top:16px}.hc-hero{padding:22px 19px;border-radius:16px;gap:18px}.hc-stats{gap:8px}.hc-stat{padding:14px 12px}.hc-stat strong{font-size:24px}.hc-panel-head{padding:17px}.hc-filters{padding:15px;gap:10px}.hc-filters .hc-field{flex:1;min-width:140px}.hc-filters .hc-field.grow{flex-basis:100%}.hc-summary{grid-template-columns:1fr 1fr;gap:20px 0}.hc-summary>div:nth-child(2){border:0}.hc-history-layout{grid-template-columns:1fr}.hc-history-aside{display:none}.hc-timeline{margin-left:6px;padding-left:20px}.hc-entry{padding:16px}.hc-entry:before{left:-28px}.hc-entry-grid{grid-template-columns:1fr 1fr;gap:13px}.hc-entry-grid>div:first-child{grid-column:1/-1}.hc-entry-head{align-items:flex-start}.hc-events{padding:4px 16px}.hc-event-title{align-items:flex-start;flex-direction:column;gap:4px}.hc-dialog{max-height:94dvh}.hc-modal{padding:10px}.hc-modal-head,.hc-form{padding:19px}.hc-two{grid-template-columns:1fr}.hc-history-head{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.hc *{transition:none!important;animation:none!important}}
 
 </style>
+{% set tons = {'Disponível':'good','Em uso':'blue','Perdido':'bad','Danificado':'warn','Bloqueado':'neutral'} %}
+{% macro csrf() %}{% if csrf_token is defined %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endif %}{% endmacro %}
+{% macro icon(name) %}<svg aria-hidden="true" viewBox="0 0 24 24">{% if name=='card' %}<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 15h4"/>{% elif name=='search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>{% elif name=='plus' %}<path d="M12 5v14M5 12h14"/>{% elif name=='download' %}<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>{% elif name=='arrow' %}<path d="M4 12h16m-6-6 6 6-6 6"/>{% elif name=='clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>{% elif name=='close' %}<path d="m6 6 12 12M6 18 18 6"/>{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-9v1"/>{% endif %}</svg>{% endmacro %}
+<main class="hc hc-page" id="hcCards">
+  <header class="hc-hero"><div><span class="hc-kicker">Recepção · Controle de acesso</span><h1>Controle de cartões</h1><p>Gerencie entregas, devoluções e ocorrências. Cada movimentação mantém o registro de quem realizou a operação.</p></div><div class="hc-actions"><a class="hc-btn hc-hero-btn" href="{{ url_for('exportar_cartoes_excel') }}">{{ icon('download') }}Exportar Excel</a><button type="button" class="hc-btn hc-hero-btn" data-open="hcRegister">{{ icon('plus') }}Novo cartão</button><button type="button" class="hc-btn hc-accent" data-open="hcDelivery">{{ icon('arrow') }}Entregar cartão</button></div></header>
+  <section class="hc-stats" aria-label="Resumo dos cartões">
+    {% for label,key,tone in [('Total de cartões','total','neutral'),('Disponíveis','disponiveis','good'),('Em uso','em_uso','blue'),('Perdidos','perdidos','bad'),('Danificados','danificados','warn'),('Bloqueados','bloqueados','neutral')] %}<div class="hc-stat" data-tone="{{ tone }}"><small>{{ label }}</small><strong>{{ cards[key] }}</strong></div>{% endfor %}
+  </section>
+  <section class="hc-panel" aria-labelledby="hcCatalogTitle">
+    <div class="hc-panel-head"><div><h2 id="hcCatalogTitle">Cartões cadastrados</h2><p class="hc-sub">Consulte a situação e acesse as ações de cada cartão.</p></div><span class="hc-count">{{ dados|length }} resultado(s)</span></div>
+    <form class="hc-filters" method="get" action="{{ url_for('cartoes') }}" role="search"><div class="hc-field grow"><label for="hcCardSearch">Código ou descrição</label><div class="hc-search">{{ icon('search') }}<input type="search" id="hcCardSearch" name="q" value="{{ q or '' }}" placeholder="Ex.: CART-001 ou cartão do bloco A"></div></div><div class="hc-field"><label for="hcCardStatus">Situação do cartão</label><select id="hcCardStatus" name="status"><option value="">Todos os status</option>{% for s in ['Disponível','Em uso','Perdido','Danificado','Bloqueado'] %}<option value="{{ s }}" {% if status_filtro==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div><button class="hc-btn hc-primary" type="submit">{{ icon('search') }}Pesquisar</button><a class="hc-btn" href="{{ url_for('cartoes') }}">Limpar</a></form>
+    <div class="hc-table-wrap" role="region" aria-label="Lista de cartões" tabindex="0"><table><thead><tr><th scope="col">Cartão</th><th scope="col">Status</th><th scope="col">Colaborador atual</th><th scope="col">Quarto vinculado</th><th scope="col">Cadastro</th><th scope="col">Ações</th></tr></thead><tbody>
+    {% for c in dados %}
+      {% set ultima=c.movimentacoes[0] if c.movimentacoes else none %}
+      <tr><td><div class="hc-code"><span class="hc-code-icon">{{ icon('card') }}</span><div><strong>{{ c.codigo }}</strong><div class="hc-help hc-description">{{ c.descricao or 'Sem descrição' }}</div></div></div></td><td><span class="hc-pill" data-tone="{{ tons.get(c.status,'neutral') }}">{{ c.status }}</span></td><td>{{ ultima.hospede.nome if c.status=='Em uso' and ultima and ultima.hospede else '—' }}</td><td>{% if c.quarto_vinculado %}<strong>Quarto {{ c.quarto_vinculado.numero }}</strong>{% else %}<span class="hc-muted">Sem vínculo fixo</span>{% endif %}</td><td>{{ c.criado_por or 'Não informado' }}</td><td><div class="hc-row-actions"><a class="hc-btn hc-small" href="{{ url_for('historico_cartao',cartao_id=c.id) }}">{{ icon('clock') }}Histórico</a>{% if c.status=='Em uso' %}<button type="button" class="hc-btn hc-small hc-success" data-open="hcReturn" data-code="{{ c.codigo }}" data-action="{{ url_for('devolver_cartao',cartao_id=c.id) }}">Devolver</button>{% endif %}<button type="button" class="hc-btn hc-small hc-warning" data-open="hcOccurrence" data-code="{{ c.codigo }}" data-action="{{ url_for('ocorrencia_cartao',cartao_id=c.id) }}">Ocorrência</button></div></td></tr>
+    {% else %}<tr><td colspan="6"><div class="hc-empty">{{ icon('card') }}<strong>Nenhum cartão encontrado</strong><p>{% if q or status_filtro %}Tente outro código ou remova os filtros da pesquisa.{% else %}Cadastre o primeiro cartão para começar o controle.{% endif %}</p></div></td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="hc-panel" aria-labelledby="hcRecentTitle"><div class="hc-panel-head"><div><h2 id="hcRecentTitle">Últimas movimentações</h2><p class="hc-sub">Acompanhe os registros mais recentes da operação.</p></div>{{ icon('clock') }}</div><div class="hc-events">{% for m in ultimas_movimentacoes %}<article class="hc-event"><span class="hc-event-icon">{{ icon('card') }}</span><div class="hc-event-body"><div class="hc-event-title"><a href="{{ url_for('historico_cartao',cartao_id=m.cartao_id) }}">{{ m.cartao.codigo if m.cartao else 'Cartão sem vínculo' }} · {{ m.tipo }}</a><time {% if m.data_evento %}datetime="{{ m.data_evento.isoformat() }}"{% endif %}>{{ m.data_evento.strftime('%d/%m/%Y · %H:%M') if m.data_evento else 'Data não informada' }}</time></div><p>{{ m.hospede.nome if m.hospede else 'Sem colaborador vinculado' }}{% if m.quarto %} · Quarto {{ m.quarto.numero }}{% endif %}</p><p>Registrado por {{ m.usuario_responsavel or 'Não informado' }} · {{ m.status_resultante }}</p>{% if m.observacoes %}<p class="hc-note">{{ m.observacoes }}</p>{% endif %}</div></article>{% else %}<div class="hc-empty">{{ icon('clock') }}<strong>Ainda não há movimentações</strong><p>Os próximos registros aparecerão aqui.</p></div>{% endfor %}</div></section>
+</main>
 
-<div class="cartoes-page">
-  <div class="page-head">
-    <div>
-      <h1>Controle de Cartões</h1>
-      <p>Entrega, devolução, ocorrências e rastreabilidade completa.</p>
-    </div>
-    <div class="actions">
-      <a class="btn btn-light" href="{{ url_for('exportar_cartoes_excel') }}">Exportar Excel</a>
-      <button class="btn btn-primary" onclick="abrirModal('modalCadastro')">+ Novo cartão</button>
-      <button class="btn btn-success" onclick="abrirModal('modalEntrega')">Entregar cartão</button>
-    </div>
-  </div>
+<div class="hc hc-modal" id="hcRegister" hidden><section class="hc-dialog" role="dialog" aria-modal="true" aria-labelledby="hcRegisterTitle" tabindex="-1"><header class="hc-modal-head"><div><h2 id="hcRegisterTitle">Cadastrar cartão</h2><p>Identifique o cartão e defina um quarto, se necessário.</p></div><button type="button" class="hc-btn hc-close" data-close aria-label="Fechar cadastro">{{ icon('close') }}</button></header><form class="hc-form" method="post" action="{{ url_for('cartoes') }}">{{ csrf() }}<div class="hc-two"><div class="hc-field"><label for="hcCode">Código do cartão *</label><input id="hcCode" name="codigo" maxlength="50" required placeholder="Ex.: CART-001" autocomplete="off"></div><div class="hc-field"><label for="hcDescription">Descrição</label><input id="hcDescription" name="descricao" maxlength="150" placeholder="Ex.: Cartão do bloco A"></div></div><div class="hc-field"><label for="hcRoom">Quarto vinculado</label><select name="quarto_id" id="hcRoom"><option value="">Sem quarto vinculado</option>{% for quarto in quartos %}<option value="{{ quarto.id }}">Quarto {{ quarto.numero }} · {{ quarto.categoria or 'Sem categoria' }}</option>{% endfor %}</select><p class="hc-help">Com vínculo fixo, o cartão só poderá ser entregue a reservas desse quarto.</p></div><div class="hc-field"><label for="hcRegisterNotes">Observações</label><textarea id="hcRegisterNotes" name="observacoes" placeholder="Informações úteis para a identificação do cartão."></textarea></div><footer class="hc-form-footer"><button type="button" class="hc-btn" data-close>Cancelar</button><button type="submit" class="hc-btn hc-primary">Salvar cartão</button></footer></form></section></div>
 
-  <div class="cards">
-    <div class="card"><small>Total</small><strong>{{ cards.total }}</strong></div>
-    <div class="card"><small>Disponíveis</small><strong>{{ cards.disponiveis }}</strong></div>
-    <div class="card"><small>Em uso</small><strong>{{ cards.em_uso }}</strong></div>
-    <div class="card"><small>Perdidos</small><strong>{{ cards.perdidos }}</strong></div>
-    <div class="card"><small>Danificados</small><strong>{{ cards.danificados }}</strong></div>
-    <div class="card"><small>Bloqueados</small><strong>{{ cards.bloqueados }}</strong></div>
-  </div>
+<div class="hc hc-modal" id="hcDelivery" hidden><section class="hc-dialog" role="dialog" aria-modal="true" aria-labelledby="hcDeliveryTitle" tabindex="-1"><header class="hc-modal-head"><div><h2 id="hcDeliveryTitle">Entregar cartão</h2><p>Localize a reserva e confira o cartão antes de confirmar.</p></div><button type="button" class="hc-btn hc-close" data-close aria-label="Fechar entrega">{{ icon('close') }}</button></header><form class="hc-form" id="hcDeliveryForm" method="post" action="{{ url_for('entregar_cartao') }}">{{ csrf() }}<div class="hc-field"><label for="hcGuestSearch">Nome ou CPF do colaborador *</label><div class="hc-search">{{ icon('search') }}<input id="hcGuestSearch" type="search" placeholder="Digite pelo menos 2 caracteres" autocomplete="off" aria-controls="hcGuestResults" aria-expanded="false"></div><p class="hc-help">Selecione uma reserva nos resultados da busca.</p><div class="hc-results" id="hcGuestResults" hidden></div><p class="hc-help" id="hcSearchStatus" role="status" aria-live="polite"></p></div><input type="hidden" name="reserva_id" id="hcReservationId"><div class="hc-selected" id="hcSelectedGuest" hidden><div><small>Colaborador</small><strong data-guest="nome"></strong></div><div><small>CPF</small><strong data-guest="cpf"></strong></div><div><small>Quarto</small><strong data-guest="quarto"></strong></div><div><small>Reserva</small><strong data-guest="reserva"></strong></div><div><small>Status</small><strong data-guest="status"></strong></div><div><small>Cartão atual</small><strong data-guest="cartao"></strong></div></div><div class="hc-field"><label for="hcDeliveryCard">Cartão disponível *</label><select name="cartao_id" id="hcDeliveryCard" required><option value="">Selecione o cartão</option>{% for c in dados %}<option value="{{ c.id }}" data-room="{{ c.quarto_id or '' }}" data-available="{{ 'true' if c.status=='Disponível' else 'false' }}" {% if c.status!='Disponível' %}disabled{% endif %}>{{ c.codigo }}{% if c.quarto_vinculado %} · Quarto {{ c.quarto_vinculado.numero }}{% endif %} · {{ c.status }}</option>{% endfor %}</select><p class="hc-help" id="hcCardHelp">A lista acompanha os filtros da página. Se faltar um cartão, feche esta janela e limpe os filtros.</p></div><div class="hc-field"><label for="hcDeliveryNotes">Observações</label><textarea id="hcDeliveryNotes" name="observacoes" placeholder="Condição do cartão e informações da entrega."></textarea></div><p class="hc-form-error" id="hcDeliveryError" role="alert" hidden></p><footer class="hc-form-footer"><button type="button" class="hc-btn" data-close>Cancelar</button><button type="submit" class="hc-btn hc-primary" id="hcDeliverSubmit">Confirmar entrega</button></footer></form></section></div>
 
-  <div class="panel">
-    <h2>Cartões cadastrados</h2>
-    <form class="filters" method="get">
-      <input name="q" value="{{ q }}" placeholder="Buscar código ou descrição">
-      <select name="status">
-        <option value="">Todos os status</option>
-        {% for s in ['Disponível','Em uso','Perdido','Danificado','Bloqueado'] %}
-          <option value="{{ s }}" {% if status_filtro == s %}selected{% endif %}>{{ s }}</option>
-        {% endfor %}
-      </select>
-      <button class="btn btn-primary" type="submit">Filtrar</button>
-      <a class="btn btn-light" href="{{ url_for('cartoes') }}">Limpar</a>
-    </form>
+<div class="hc hc-modal" id="hcReturn" hidden><section class="hc-dialog" role="dialog" aria-modal="true" aria-labelledby="hcReturnTitle" tabindex="-1"><header class="hc-modal-head"><div><h2 id="hcReturnTitle">Devolver cartão</h2><p>Confira a condição do cartão no recebimento.</p></div><button type="button" class="hc-btn hc-close" data-close aria-label="Fechar devolução">{{ icon('close') }}</button></header><form class="hc-form" id="hcReturnForm" method="post">{{ csrf() }}<div class="hc-hint">{{ icon('info') }}<span>A devolução também finaliza a reserva vinculada. Se for a última reserva ativa do quarto, o sistema encaminha o quarto para limpeza.</span></div><div class="hc-field"><label for="hcReturnNotes">Observações</label><textarea id="hcReturnNotes" name="observacoes" placeholder="Informe a condição em que o cartão foi devolvido."></textarea></div><footer class="hc-form-footer"><button type="button" class="hc-btn" data-close>Cancelar</button><button type="submit" class="hc-btn hc-primary">Registrar devolução e saída</button></footer></form></section></div>
 
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Código</th><th>Descrição</th><th>Status</th><th>Colaborador atual</th><th>Quarto</th><th>Cadastrado por</th><th>Ações</th></tr></thead>
-        <tbody>
-        {% for c in dados %}
-          {% set ultima = c.movimentacoes[0] if c.movimentacoes else none %}
-          <tr>
-            <td><strong>{{ c.codigo }}</strong></td>
-            <td>{{ c.descricao or '-' }}</td>
-            <td>
-              {% set cls = {'Disponível':'b-disponivel','Em uso':'b-uso','Perdido':'b-perdido','Danificado':'b-danificado','Bloqueado':'b-bloqueado'}.get(c.status,'b-bloqueado') %}
-              <span class="badge {{ cls }}">{{ c.status }}</span>
-            </td>
-            <td>{{ ultima.hospede.nome if c.status == 'Em uso' and ultima and ultima.hospede else '-' }}</td>
-            <td>
-              {% if c.quarto_vinculado %}
-                <strong>Quarto {{ c.quarto_vinculado.numero }}</strong>
-              {% else %}
-                <span style="color:#94a3b8">Sem vínculo</span>
-              {% endif %}
-            </td>
-            <td>{{ c.criado_por }}</td>
-            <td>
-              <div class="row-actions">
-                <a class="btn btn-light mini" href="{{ url_for('historico_cartao', cartao_id=c.id) }}">Histórico</a>
-                {% if c.status == 'Em uso' %}
-                  <button class="btn btn-success mini" onclick="prepararDevolucao({{ c.id }}, '{{ c.codigo }}')">Devolver</button>
-                {% endif %}
-                <button class="btn btn-warning mini" onclick="prepararOcorrencia({{ c.id }}, '{{ c.codigo }}')">Ocorrência</button>
-              </div>
-            </td>
-          </tr>
-        {% else %}
-          <tr><td colspan="7">Nenhum cartão encontrado.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2>Últimas movimentações</h2>
-    <div class="timeline">
-      {% for m in ultimas_movimentacoes %}
-      <div class="event">
-        <strong>{{ m.cartao.codigo }} — {{ m.tipo }}</strong>
-        <div>{{ m.hospede.nome if m.hospede else 'Sem colaborador' }}{% if m.quarto %} • Quarto {{ m.quarto.numero }}{% endif %}</div>
-        <small>{{ m.data_evento.strftime('%d/%m/%Y %H:%M') }} • {{ m.usuario_responsavel }}{% if m.observacoes %} • {{ m.observacoes }}{% endif %}</small>
-      </div>
-      {% else %}<p>Nenhuma movimentação registrada.</p>{% endfor %}
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="modalCadastro"><div class="modal-card">
-  <div class="modal-head"><h3>Cadastrar cartão</h3><button class="close" onclick="fecharModal('modalCadastro')">X</button></div>
-  <form method="post" action="{{ url_for('cartoes') }}" class="form-grid">
-    <div class="form-group"><label>Código *</label><input name="codigo" required placeholder="Ex.: CART-001"></div>
-    <div class="form-group"><label>Descrição</label><input name="descricao" placeholder="Ex.: Cartão do bloco A"></div>
-    <div class="form-group full">
-      <label>Vincular ao quarto</label>
-      <select name="quarto_id">
-        <option value="">Sem quarto vinculado</option>
-        {% for quarto in quartos %}
-          <option value="{{ quarto.id }}">
-            Quarto {{ quarto.numero }} — {{ quarto.categoria or 'Sem categoria' }}
-          </option>
-        {% endfor %}
-      </select>
-      <small style="color:#64748b">O cartão só poderá ser entregue a uma reserva deste quarto.</small>
-    </div>
-    <div class="form-group full"><label>Observações</label><textarea name="observacoes"></textarea></div>
-    <div class="form-group full"><button class="btn btn-primary" type="submit">Salvar cartão</button></div>
-  </form>
-</div></div>
-
-<div class="modal" id="modalEntrega"><div class="modal-card">
-  <div class="modal-head">
-    <h3>Entregar cartão</h3>
-    <button type="button" class="close" onclick="fecharModal('modalEntrega')">X</button>
-  </div>
-
-  <form method="post" action="{{ url_for('entregar_cartao') }}" class="form-grid" id="formEntregaCartao">
-
-    <div class="form-group full">
-      <label>Buscar colaborador por nome ou CPF *</label>
-      <input
-        type="text"
-        id="buscaColaboradorCartao"
-        placeholder="Digite o nome ou CPF do colaborador"
-        autocomplete="off"
-      >
-      <div id="resultadoBuscaColaborador" class="resultado-busca-colaborador"></div>
-    </div>
-
-    <input type="hidden" name="reserva_id" id="reservaIdCartao" required>
-
-    <div id="colaboradorSelecionado" class="colaborador-selecionado form-group full">
-      <div>
-        <small>Colaborador</small>
-        <strong id="dadosNomeColaborador">-</strong>
-      </div>
-
-      <div>
-        <small>CPF</small>
-        <strong id="dadosCpfColaborador">-</strong>
-      </div>
-
-      <div>
-        <small>Quarto</small>
-        <strong id="dadosQuartoColaborador">-</strong>
-      </div>
-
-      <div>
-        <small>Reserva</small>
-        <strong id="dadosReservaColaborador">-</strong>
-      </div>
-
-      <div>
-        <small>Status da reserva</small>
-        <strong id="dadosStatusColaborador">-</strong>
-      </div>
-
-      <div>
-        <small>Cartão atual</small>
-        <strong id="dadosCartaoAtual">Nenhum</strong>
-      </div>
-    </div>
-
-    <div class="form-group full">
-      <label>Cartão disponível *</label>
-      <select name="cartao_id" id="cartaoIdEntrega" required>
-        <option value="">Selecione</option>
-        {% for c in dados %}
-          <option
-            value="{{ c.id }}"
-            data-quarto-id="{{ c.quarto_id or '' }}"
-            data-quarto-numero="{{ c.quarto_vinculado.numero if c.quarto_vinculado else '' }}"
-          >
-            {{ c.codigo }} — {{ c.descricao or 'Sem descrição' }}{% if c.quarto_vinculado %} — Quarto {{ c.quarto_vinculado.numero }}{% endif %}{% if c.status != 'Disponível' %} — {{ c.status }}{% endif %}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="form-group full">
-      <label>Observações</label>
-      <textarea
-        name="observacoes"
-        placeholder="Condição do cartão, responsável presencial etc."
-      ></textarea>
-    </div>
-
-    <div class="form-group full">
-      <button class="btn btn-success" type="submit">
-        Confirmar entrega
-      </button>
-    </div>
-
-  </form>
-</div></div>
-
-<div class="modal" id="modalDevolucao"><div class="modal-card">
-  <div class="modal-head"><h3 id="tituloDevolucao">Devolver cartão</h3><button class="close" onclick="fecharModal('modalDevolucao')">X</button></div>
-  <form method="post" id="formDevolucao" class="form-grid">
-    <div class="form-group full"><label>Observações</label><textarea name="observacoes" placeholder="Informe a condição em que o cartão foi devolvido."></textarea></div>
-    <div class="form-group full"><button class="btn btn-success" type="submit">Registrar devolução</button></div>
-  </form>
-</div></div>
-
-<div class="modal" id="modalOcorrencia"><div class="modal-card">
-  <div class="modal-head"><h3 id="tituloOcorrencia">Ocorrência</h3><button class="close" onclick="fecharModal('modalOcorrencia')">X</button></div>
-  <form method="post" id="formOcorrencia" class="form-grid">
-    <div class="form-group full"><label>Tipo *</label><select name="tipo" required><option value="Perda">Perda</option><option value="Dano">Dano</option><option value="Bloqueio">Bloqueio</option><option value="Liberar">Liberar novamente</option></select></div>
-    <div class="form-group full"><label>Observações *</label><textarea name="observacoes" required placeholder="Descreva o que aconteceu."></textarea></div>
-    <div class="form-group full"><button class="btn btn-warning" type="submit">Registrar ocorrência</button></div>
-  </form>
-</div></div>
-
+<div class="hc hc-modal" id="hcOccurrence" hidden><section class="hc-dialog" role="dialog" aria-modal="true" aria-labelledby="hcOccurrenceTitle" tabindex="-1"><header class="hc-modal-head"><div><h2 id="hcOccurrenceTitle">Registrar ocorrência</h2><p>Descreva o ocorrido para manter o histórico atualizado.</p></div><button type="button" class="hc-btn hc-close" data-close aria-label="Fechar ocorrência">{{ icon('close') }}</button></header><form class="hc-form" id="hcOccurrenceForm" method="post">{{ csrf() }}<div class="hc-field"><label for="hcOccurrenceType">Tipo de ocorrência *</label><select id="hcOccurrenceType" name="tipo" required><option value="Perda">Perda</option><option value="Dano">Dano</option><option value="Bloqueio">Bloqueio</option><option value="Liberar">Liberar novamente</option></select></div><div class="hc-field"><label for="hcOccurrenceNotes">Observações *</label><textarea id="hcOccurrenceNotes" name="observacoes" required placeholder="Descreva o que aconteceu e a providência adotada."></textarea></div><footer class="hc-form-footer"><button type="button" class="hc-btn" data-close>Cancelar</button><button type="submit" class="hc-btn hc-primary">Registrar ocorrência</button></footer></form></section></div>
 <script>
-function abrirModal(id){
-    document.getElementById(id).classList.add('open');
-
-    if(id === 'modalEntrega'){
-        setTimeout(() => {
-            const campo = document.getElementById('buscaColaboradorCartao');
-            if(campo) campo.focus();
-        }, 100);
+(function(){
+  'use strict';
+  const page=document.getElementById('hcCards');
+  const modals=Array.from(document.querySelectorAll('.hc-modal'));
+  const guestInput=document.getElementById('hcGuestSearch');
+  const results=document.getElementById('hcGuestResults');
+  const searchStatus=document.getElementById('hcSearchStatus');
+  const reservation=document.getElementById('hcReservationId');
+  const selected=document.getElementById('hcSelectedGuest');
+  const cardSelect=document.getElementById('hcDeliveryCard');
+  const error=document.getElementById('hcDeliveryError');
+  const submit=document.getElementById('hcDeliverSubmit');
+  const searchUrl={{ url_for('buscar_colaborador_cartao')|tojson }};
+  let active=null,opener=null,oldOverflow='',timer=null,controller=null,searchVersion=0,chosen=null;
+  function cancelSearch(){clearTimeout(timer);searchVersion++;if(controller)controller.abort();controller=null;}
+  function hideResults(){results.hidden=true;guestInput.setAttribute('aria-expanded','false');}
+  function resetChoice(){
+    chosen=null;reservation.value='';selected.hidden=true;cardSelect.value='';error.hidden=true;submit.disabled=false;
+    Array.from(cardSelect.options).slice(1).forEach(option=>{option.disabled=option.dataset.available!=='true';});
+    document.getElementById('hcCardHelp').textContent='A lista acompanha os filtros da página. Se faltar um cartão, feche esta janela e limpe os filtros.';
+  }
+  function openModal(id,trigger){
+    const modal=document.getElementById(id);if(!modal)return;
+    if(active)closeModal(false);
+    opener=trigger;active=modal;oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
+    if(id==='hcDelivery'){cancelSearch();document.getElementById('hcDeliveryForm').reset();guestInput.value='';resetChoice();hideResults();searchStatus.textContent='';}
+    if(trigger.dataset.action){
+      const form=modal.querySelector('form');form.reset();form.action=trigger.dataset.action;
+      if(id==='hcOccurrence'){document.getElementById('hcOccurrenceNotes').required=true;document.querySelector('label[for=hcOccurrenceNotes]').textContent='Observações *';}
+      modal.querySelector('h2').textContent=(id==='hcReturn'?'Devolver cartão ':'Ocorrência no cartão ')+trigger.dataset.code;
     }
-}
-
-function fecharModal(id){
-    document.getElementById(id).classList.remove('open');
-
-    if(id === 'modalEntrega'){
-        limparSelecaoColaborador();
+    modal.hidden=false;
+    const initial=id==='hcDelivery'?guestInput:(modal.querySelector('input:not([type=hidden]),select,textarea')||modal.querySelector('button'));
+    (initial||modal.querySelector('[role=dialog]')).focus();
+  }
+  function closeModal(restore=true){
+    if(!active)return;if(active.id==='hcDelivery')cancelSearch();active.hidden=true;active=null;hideResults();document.body.style.overflow=oldOverflow;if(restore&&opener&&opener.isConnected)opener.focus();
+  }
+  page.addEventListener('click',event=>{const trigger=event.target.closest('[data-open]');if(trigger)openModal(trigger.dataset.open,trigger);});
+  modals.forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal||event.target.closest('[data-close]'))closeModal();}));
+  document.addEventListener('keydown',event=>{
+    if(!active)return;
+    if(event.key==='Escape'){event.preventDefault();closeModal();return;}
+    if(event.key==='Tab'){
+      const nodes=Array.from(active.querySelectorAll('button:not(:disabled),input:not([type=hidden]):not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]')).filter(node=>node.getClientRects().length);
+      const first=nodes[0],last=nodes[nodes.length-1];if(!first)return;
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     }
-}
-
-function prepararDevolucao(id,codigo){
-    document.getElementById('tituloDevolucao').textContent =
-        'Devolver cartão ' + codigo;
-
-    document.getElementById('formDevolucao').action =
-        '/cartoes/' + id + '/devolver';
-
-    abrirModal('modalDevolucao');
-}
-
-function prepararOcorrencia(id,codigo){
-    document.getElementById('tituloOcorrencia').textContent =
-        'Ocorrência no cartão ' + codigo;
-
-    document.getElementById('formOcorrencia').action =
-        '/cartoes/' + id + '/ocorrencia';
-
-    abrirModal('modalOcorrencia');
-}
-
-const campoBuscaColaborador =
-    document.getElementById('buscaColaboradorCartao');
-
-const resultadoBuscaColaborador =
-    document.getElementById('resultadoBuscaColaborador');
-
-const reservaIdCartao =
-    document.getElementById('reservaIdCartao');
-
-const colaboradorSelecionado =
-    document.getElementById('colaboradorSelecionado');
-
-let timerBuscaColaborador = null;
-
-if(campoBuscaColaborador){
-    campoBuscaColaborador.addEventListener('input', function(){
-        clearTimeout(timerBuscaColaborador);
-
-        const termo = this.value.trim();
-
-        reservaIdCartao.value = '';
-        colaboradorSelecionado.style.display = 'none';
-
-        if(termo.length < 2){
-            resultadoBuscaColaborador.innerHTML = '';
-            resultadoBuscaColaborador.classList.remove('aberto');
-            return;
-        }
-
-        timerBuscaColaborador = setTimeout(function(){
-            buscarColaboradorCartao(termo);
-        }, 350);
-    });
-}
-
-function buscarColaboradorCartao(termo){
-    resultadoBuscaColaborador.innerHTML =
-        '<div class="busca-status">Buscando colaborador...</div>';
-
-    resultadoBuscaColaborador.classList.add('aberto');
-
-    fetch(
-        "{{ url_for('buscar_colaborador_cartao') }}?q=" +
-        encodeURIComponent(termo)
-    )
-    .then(response => {
-        if(!response.ok){
-            throw new Error('Erro na busca');
-        }
-
-        return response.json();
-    })
-    .then(dados => {
-        if(!dados.length){
-            resultadoBuscaColaborador.innerHTML =
-                '<div class="busca-status">Nenhuma reserva ativa encontrada.</div>';
-            return;
-        }
-
-        resultadoBuscaColaborador.innerHTML = '';
-
-        dados.forEach(item => {
-            const botao = document.createElement('button');
-            botao.type = 'button';
-            botao.className = 'item-colaborador';
-
-            const dadosPessoa = document.createElement('span');
-
-            const nome = document.createElement('strong');
-            nome.textContent = item.nome;
-            dadosPessoa.appendChild(nome);
-
-            const cpf = document.createElement('small');
-            cpf.textContent = 'CPF: ' + (item.cpf || 'Não informado');
-            dadosPessoa.appendChild(cpf);
-
-            const reserva = document.createElement('small');
-            reserva.textContent =
-                'Reserva #' + item.reserva_id +
-                ' — ' + item.status_reserva;
-            dadosPessoa.appendChild(reserva);
-
-            if(item.cartao_atual){
-                const aviso = document.createElement('small');
-                aviso.className = 'aviso-cartao';
-                aviso.textContent =
-                    'Já possui o cartão ' + item.cartao_atual;
-                dadosPessoa.appendChild(aviso);
-            }
-
-            const quarto = document.createElement('span');
-            quarto.className = 'quarto-badge';
-            quarto.textContent = 'Quarto ' + item.quarto;
-
-            botao.appendChild(dadosPessoa);
-            botao.appendChild(quarto);
-
-            botao.addEventListener('click', function(){
-                selecionarColaboradorCartao(item);
-            });
-
-            resultadoBuscaColaborador.appendChild(botao);
-        });
-    })
-    .catch(() => {
-        resultadoBuscaColaborador.innerHTML =
-            '<div class="busca-status erro">Erro ao buscar colaborador.</div>';
-    });
-}
-
-function selecionarColaboradorCartao(item){
-    campoBuscaColaborador.value =
-        item.nome + ' — CPF ' + (item.cpf || 'não informado');
-
-    reservaIdCartao.value = item.reserva_id;
-
-    document.getElementById('dadosNomeColaborador').textContent =
-        item.nome;
-
-    document.getElementById('dadosCpfColaborador').textContent =
-        item.cpf || 'Não informado';
-
-    document.getElementById('dadosQuartoColaborador').textContent =
-        'Quarto ' + item.quarto;
-
-    document.getElementById('dadosReservaColaborador').textContent =
-        '#' + item.reserva_id;
-
-    document.getElementById('dadosStatusColaborador').textContent =
-        item.status_reserva;
-
-    document.getElementById('dadosCartaoAtual').textContent =
-        item.cartao_atual || 'Nenhum';
-
-    selecionarCartaoDoQuarto(item.quarto_id, item.quarto);
-
-    colaboradorSelecionado.style.display = 'grid';
-    resultadoBuscaColaborador.classList.remove('aberto');
-}
-
-function selecionarCartaoDoQuarto(quartoId, quartoNumero){
-    const select = document.getElementById('cartaoIdEntrega');
-    if(!select) return;
-
-    select.value = '';
-    select.options[0].textContent = 'Selecione';
-
-    const opcoes = Array.from(select.options).slice(1);
-
-    const cartaoDoQuarto = opcoes.find(option => {
-        const idVinculado = option.dataset.quartoId || '';
-        const numeroVinculado = option.dataset.quartoNumero || '';
-        const mesmoId = quartoId && String(idVinculado) === String(quartoId);
-        const mesmoNumero = quartoNumero && String(numeroVinculado) === String(quartoNumero);
-        const mesmoTexto = option.textContent
-            .replace(/\s+/g, ' ')
-            .includes('Quarto ' + String(quartoNumero).trim());
-        return mesmoId || mesmoNumero || mesmoTexto;
-    });
-
-    if(cartaoDoQuarto){
-        cartaoDoQuarto.selected = true;
-        select.selectedIndex = cartaoDoQuarto.index;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-}
-
-function limparSelecaoColaborador(){
-    if(campoBuscaColaborador){
-        campoBuscaColaborador.value = '';
-    }
-
-    if(reservaIdCartao){
-        reservaIdCartao.value = '';
-    }
-
-    if(resultadoBuscaColaborador){
-        resultadoBuscaColaborador.innerHTML = '';
-        resultadoBuscaColaborador.classList.remove('aberto');
-    }
-
-    if(colaboradorSelecionado){
-        colaboradorSelecionado.style.display = 'none';
-    }
-
-    const select = document.getElementById('cartaoIdEntrega');
-    if(select){
-        select.value = '';
-        select.options[0].textContent = 'Selecione';
-    }
-}
-
-const formEntregaCartao =
-    document.getElementById('formEntregaCartao');
-
-if(formEntregaCartao){
-    formEntregaCartao.addEventListener('submit', function(event){
-        if(!reservaIdCartao.value){
-            event.preventDefault();
-            alert('Pesquise e selecione um colaborador antes de confirmar.');
-            campoBuscaColaborador.focus();
-        }
-    });
-}
-
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', event => {
-        if(event.target === modal){
-            fecharModal(modal.id);
-        }
-    });
-});
-
-document.addEventListener('click', function(event){
-    if(
-        resultadoBuscaColaborador &&
-        campoBuscaColaborador &&
-        !resultadoBuscaColaborador.contains(event.target) &&
-        event.target !== campoBuscaColaborador
-    ){
-        resultadoBuscaColaborador.classList.remove('aberto');
-    }
-});
-
-document.addEventListener('keydown', function(event){
-    if(event.key === 'Escape'){
-        document.querySelectorAll('.modal.open').forEach(modal => {
-            fecharModal(modal.id);
-        });
-    }
-});
+  });
+  function status(message){searchStatus.textContent=message;}
+  function displayMessage(message){results.replaceChildren();const p=document.createElement('p');p.className='hc-result-status';p.textContent=message;results.appendChild(p);results.hidden=false;guestInput.setAttribute('aria-expanded','true');status(message);}
+  async function searchGuest(term,version){
+    controller=new AbortController();displayMessage('Buscando reservas em andamento…');
+    try{
+      const url=new URL(searchUrl,location.href);url.searchParams.set('q',term);
+      const response=await fetch(url,{signal:controller.signal,headers:{Accept:'application/json'},credentials:'same-origin'});
+      if(!response.ok)throw new Error('Busca indisponível');const data=await response.json();
+      if(version!==searchVersion||!active||active.id!=='hcDelivery')return;
+      if(!Array.isArray(data))throw new Error('Resposta inválida');
+      results.replaceChildren();
+      if(!data.length){displayMessage('Nenhuma reserva ativa encontrada.');return;}
+      data.forEach(item=>{
+        const button=document.createElement('button');button.type='button';button.className='hc-result';
+        const body=document.createElement('span');const name=document.createElement('strong');name.textContent=item.nome||'Sem nome';body.appendChild(name);
+        const details=document.createElement('small');details.textContent='CPF: '+(item.cpf||'Não informado')+' · Reserva #'+item.reserva_id+' · '+item.status_reserva;body.appendChild(details);
+        if(item.cartao_atual){const warning=document.createElement('small');warning.className='hc-warn-text';warning.textContent='Já possui o cartão '+item.cartao_atual;body.appendChild(warning);}
+        const room=document.createElement('span');room.className='hc-pill';room.textContent='Quarto '+item.quarto;button.append(body,room);
+        button.addEventListener('click',()=>selectGuest(item));results.appendChild(button);
+      });
+      results.hidden=false;guestInput.setAttribute('aria-expanded','true');status(data.length+' reserva(s) encontrada(s). Selecione o colaborador.');
+    }catch(err){if(err.name!=='AbortError'&&version===searchVersion&&active&&active.id==='hcDelivery')displayMessage('Não foi possível buscar. Confira sua conexão e tente novamente.');}
+  }
+  function selectGuest(item){
+    cancelSearch();chosen=item;reservation.value=item.reserva_id;guestInput.value=item.nome||'';
+    const values={nome:item.nome,cpf:item.cpf||'Não informado',quarto:item.quarto,reserva:'#'+item.reserva_id,status:item.status_reserva,cartao:item.cartao_atual||'Nenhum'};
+    Object.keys(values).forEach(key=>{selected.querySelector('[data-guest="'+key+'"]').textContent=values[key];});selected.hidden=false;hideResults();
+    cardSelect.value='';const eligible=[];
+    Array.from(cardSelect.options).slice(1).forEach(option=>{option.disabled=option.dataset.available!=='true'||Boolean(option.dataset.room&&option.dataset.room!==String(item.quarto_id));if(!option.disabled)eligible.push(option);});
+    const linked=eligible.filter(option=>option.dataset.room===String(item.quarto_id));
+    if(linked.length===1)cardSelect.value=linked[0].value;else if(eligible.length===1)cardSelect.value=eligible[0].value;
+    const hasCard=Boolean(item.cartao_atual);submit.disabled=hasCard||!eligible.length;
+    error.hidden=!hasCard;error.textContent=hasCard?'Este colaborador já possui um cartão em uso. Regularize a entrega anterior antes de continuar.':'';
+    document.getElementById('hcCardHelp').textContent=eligible.length?'Somente cartões disponíveis, sem vínculo fixo ou vinculados ao quarto selecionado, podem ser escolhidos.':'Não há cartão compatível nesta lista. Confira os filtros da página e a disponibilidade dos cartões.';
+    status('Reserva selecionada. Confira os dados antes da entrega.');
+  }
+  guestInput.addEventListener('input',()=>{cancelSearch();resetChoice();hideResults();status('');const term=guestInput.value.trim();if(term.length<2)return;const version=searchVersion;timer=setTimeout(()=>searchGuest(term,version),350);});
+  document.getElementById('hcDeliveryForm').addEventListener('submit',event=>{
+    const option=cardSelect.selectedOptions[0];
+    if(!chosen||!reservation.value||chosen.cartao_atual||!option||!option.value||option.disabled){event.preventDefault();error.textContent='Selecione uma reserva e um cartão disponível compatível antes de confirmar.';error.hidden=false;if(!chosen)guestInput.focus();else cardSelect.focus();}
+  });
+  document.getElementById('hcOccurrenceType').addEventListener('change',event=>{const required=event.target.value!=='Liberar';document.getElementById('hcOccurrenceNotes').required=required;document.querySelector('label[for=hcOccurrenceNotes]').textContent='Observações'+(required?' *':' (opcional)');});
+  document.addEventListener('click',event=>{if(active&&active.id==='hcDelivery'&&!results.contains(event.target)&&event.target!==guestInput)hideResults();});
+}());
 </script>
 {% endblock %}

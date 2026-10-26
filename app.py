@@ -20,14 +20,25 @@ from reportlab.lib.units import mm
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # No Railway serÃ¡ /app/data. No computador continuarÃ¡ usando a pasta local.
-DATA_DIR = os.environ.get(
-    'RAILWAY_VOLUME_MOUNT_PATH',
-    BASE_DIR
-)
+VOLUME_MOUNT = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH')
+EM_RAILWAY = bool(os.environ.get('RAILWAY_PROJECT_ID') or os.environ.get('RAILWAY_ENVIRONMENT'))
+if EM_RAILWAY and not VOLUME_MOUNT:
+    raise RuntimeError(
+        'HOTEL PRO: volume persistente nao conectado. '
+        'O servidor foi bloqueado para impedir a criacao de outro banco temporario.'
+    )
+DATA_DIR = VOLUME_MOUNT or BASE_DIR
 
 UPLOAD_DIR = os.path.join(DATA_DIR, 'uploads')
 BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
 DATABASE_PATH = os.path.join(DATA_DIR, 'hotel.db')
+# No Railway, a recuperacao do backup DEVE anteceder o deploy desta versao.
+# Nao criar automaticamente um banco vazio dentro de um volume novo.
+if EM_RAILWAY and not os.path.isfile(DATABASE_PATH):
+    raise RuntimeError(
+        'HOTEL PRO: banco nao encontrado no volume em ' + DATABASE_PATH + '. '
+        'Recupere o backup hotel.db no volume antes de iniciar o servidor.'
+    )
 
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -666,7 +677,7 @@ def login():
 
     return render_template('login.html')
     
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     auditar('Logout')
     session.clear()
@@ -976,10 +987,7 @@ def reservas():
             dt_saida - dt_entrada
         ).total_seconds() / 3600
 
-        diarias = max(
-            1,
-            int((horas + 23) // 24)
-        )
+        diarias = calcular_diarias(entrada, saida)
 
         valor_total = max(
             0,
@@ -1184,7 +1192,7 @@ def calendario():
     reservas = Reserva.query.order_by(Reserva.data_entrada).all()
     return render_template('calendario.html', reservas=reservas, quartos=Quarto.query.order_by(Quarto.numero).all())
 
-@app.route('/checkin/<int:id>')
+@app.route('/checkin/<int:id>', methods=['GET', 'POST'])
 @login_required
 @permissao_necessaria('reservas')
 def checkin(id):
@@ -1279,12 +1287,8 @@ def checkout(id):
         flash(mensagem, 'success')
         return redirect(url_for('reservas'))
 
-    dias = max(
-        1,
-        (datetime.fromisoformat(reserva.data_saida) -
-         datetime.fromisoformat(reserva.data_entrada)).days
-    )
-    total_diarias = dias * reserva.valor_diaria - (reserva.desconto or 0)
+    dias = calcular_diarias(reserva.data_entrada, reserva.data_saida)
+    total_diarias = max(0, dias * reserva.valor_diaria - (reserva.desconto or 0))
     total = total_diarias + total_consumos
 
     return render_template(
@@ -1381,7 +1385,7 @@ def quarto_historico(quarto_id):
         'historico': historico
     })
 
-@app.route('/bloquear_quarto/<int:id>')
+@app.route('/bloquear_quarto/<int:id>', methods=['GET', 'POST'])
 @login_required
 @permissao_necessaria('quartos')
 def bloquear_quarto(id):
@@ -1424,7 +1428,7 @@ def quarto_status(id, status):
     flash(f'Quarto {quarto.numero} atualizado para {status}.', 'success')
     return redirect(url_for('quartos'))
 
-@app.route('/desbloquear_quarto/<int:id>')
+@app.route('/desbloquear_quarto/<int:id>', methods=['GET', 'POST'])
 @login_required
 @permissao_necessaria('quartos')
 def desbloquear_quarto(id):
@@ -1566,6 +1570,10 @@ def usuarios():
 
         if not nome or not nome_usuario or not senha:
             flash('Preencha nome, usuÃ¡rio e senha.', 'warning')
+            return redirect(url_for('usuarios'))
+
+        if len(senha) < 12 or len(senha) > 128:
+            flash('A senha deve ter de 12 a 128 caracteres.', 'warning')
             return redirect(url_for('usuarios'))
 
         if perfil not in PERFIS_DISPONIVEIS:
@@ -2208,12 +2216,24 @@ def importar(modelo):
 @login_required
 @permissao_necessaria('backup')
 def backup():
-    src = os.path.join(BASE_DIR, 'hotel.db')
-    nome = f'hotel_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db'
+    import sqlite3
+    from pathlib import Path
+    from contextlib import closing
+    nome = f'hotel_backup_{datetime.now().strftime("%Y%m%d_%H%M%S_%f")}.db'
     destino = os.path.join(BACKUP_DIR, nome)
-    if os.path.exists(src): shutil.copy2(src, destino)
-    auditar('Gerou backup','backup','',nome)
-    return send_file(destino, as_attachment=True, download_name=nome)
+    if not os.path.isfile(DATABASE_PATH):
+        flash('Banco atual não encontrado. Backup não foi gerado.', 'danger')
+        return redirect(url_for('dashboard'))
+    try:
+        with closing(sqlite3.connect(Path(DATABASE_PATH).as_uri() + '?mode=ro', uri=True)) as origem:
+            with closing(sqlite3.connect(destino)) as copia:
+                origem.backup(copia)
+        auditar('Gerou backup', 'backup', '', nome)
+        return send_file(destino, as_attachment=True, download_name=nome)
+    except Exception:
+        app.logger.exception('Não foi possível gerar o backup consistente do banco atual.')
+        flash('Não foi possível gerar o backup. Tente novamente.', 'danger')
+        return redirect(url_for('dashboard'))
 
 @app.route('/recibo/<int:id>')
 @login_required
@@ -2825,11 +2845,14 @@ def recibo(id):
 def seed():
     admin = Usuario.query.filter_by(usuario='admin').first()
 
-    if not admin:
+    if not admin and Usuario.query.count() == 0:
+        senha_inicial = os.environ.get('INITIAL_ADMIN_PASSWORD', '')
+        if len(senha_inicial) < 12:
+            raise RuntimeError('Banco sem usuários: configure INITIAL_ADMIN_PASSWORD com pelo menos 12 caracteres para criar o primeiro administrador.')
         admin = Usuario(
             nome='Administrador',
             usuario='admin',
-            senha_hash=generate_password_hash('admin123'),
+            senha_hash=generate_password_hash(senha_inicial),
             perfil='Administrador',
             ativo=True
         )
@@ -2897,11 +2920,35 @@ def executar_migracoes_simples():
     db.session.commit()
 
 
-with app.app_context():
-    db.create_all()
-    executar_migracoes_simples()
-    seed()
+from reservas_edicao import registrar_edicao_reservas
+registrar_edicao_reservas(globals())
+
+from hotel_privacidade import configurar_privacidade
+configurar_privacidade(globals())
+from hotel_retencao import registrar_retencao
+servico_retencao = registrar_retencao(globals())
+
+# ================= PORTAL DE HOSPEDAGEM EXTERNA =================
+from hotel_portal import registrar_portal
+portal_externo = registrar_portal(globals())
+
+from hotel_configuracoes import registrar_configuracoes
+servico_configuracoes = registrar_configuracoes(globals())
+
+from hotel_transparencia import registrar_transparencia
+servico_transparencia = registrar_transparencia(globals())
+# ================= FIM DO PORTAL =================
+
+with portal_externo.inicializacao_exclusiva():
+    with app.app_context():
+        db.create_all()
+        executar_migracoes_simples()
+        seed()
+        servico_retencao.inicializar()
+        portal_externo.inicializar()
+        servico_configuracoes.inicializar()
+        servico_transparencia.inicializar()
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

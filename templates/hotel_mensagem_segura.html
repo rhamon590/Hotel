@@ -1,0 +1,1 @@
+{% extends 'hotel_legal_base.html' %}{% block content %}<div class="narrow panel"><h1 style="font-size:30px">{{ titulo }}</h1><p role="alert">{{ mensagem }}</p><a class="btn" href="{{ url_for('dashboard') if session.get('usuario_id') else url_for('login') }}">Voltar ao sistema</a></div>{% endblock %}

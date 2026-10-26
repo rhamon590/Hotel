@@ -19,4 +19,11 @@ instance/
 .idea/
 
 .DS_Store
-Thumbs.db
+Thumbs.db.hotel_portal_init.lock
+.hotel_portal_vapid.pem
+.hotel_session_key
+*.pem
+backup_codigo_*/
+planilha_importacao_hospedes.xlsx
+
+.hotel_portal_init.lock

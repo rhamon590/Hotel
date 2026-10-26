@@ -1,0 +1,367 @@
+{% extends 'hotel_legal_base.html' %}
+
+{% block content %}
+<style>
+  .hotel-confirm {
+    --hc-ink: #142337;
+    --hc-muted: #526176;
+    --hc-border: #e1e7ef;
+    --hc-green: #08745b;
+    width: 100%;
+    max-width: 720px;
+    margin: clamp(24px, 5vw, 56px) auto;
+    padding: 0 16px;
+    color: var(--hc-ink);
+    font-family: inherit;
+    color-scheme: light;
+  }
+
+  .hotel-confirm,
+  .hotel-confirm * { box-sizing: border-box; }
+
+  .hotel-confirm__card {
+    overflow: hidden;
+    border: 1px solid var(--hc-border);
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 20px 60px -28px rgba(15, 30, 50, .3);
+  }
+
+  .hotel-confirm__header {
+    padding: clamp(24px, 5vw, 40px);
+    border-top: 4px solid #32b58b;
+    background:
+      radial-gradient(ellipse at top right, #234c50 0, transparent 65%),
+      #142337;
+    color: #fff;
+  }
+
+  .hotel-confirm__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .hotel-confirm__icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .08);
+    color: #a4ebd0;
+  }
+
+  .hotel-confirm__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 999px;
+    color: #e5edf5;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .hotel-confirm__badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #f0cc7e;
+  }
+
+  .hotel-confirm__eyebrow {
+    display: block;
+    margin-bottom: 10px;
+    color: #a4ebd0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .hotel-confirm h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(26px, 5vw, 36px);
+    font-weight: 700;
+    letter-spacing: -.035em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .hotel-confirm__subtitle {
+    margin: 14px 0 0;
+    color: #cbd6e3;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .hotel-confirm__body { padding: clamp(24px, 5vw, 40px); }
+
+  .hotel-confirm__notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid var(--hc-border);
+    border-radius: 16px;
+    background: #f6f8fb;
+  }
+
+  .hotel-confirm__notice > svg {
+    flex: 0 0 22px;
+    margin-top: 2px;
+    color: var(--hc-green);
+  }
+
+  .hotel-confirm__notice h2 {
+    margin: 0 0 6px;
+    color: var(--hc-ink);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .hotel-confirm__notice p {
+    margin: 0;
+    color: var(--hc-muted);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .hotel-confirm__form { margin: 28px 0 0; }
+
+  .hotel-confirm__actions {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 12px;
+  }
+
+  .hotel-confirm .hotel-confirm__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 52px;
+    margin: 0;
+    padding: 14px 18px;
+    border: 1px solid var(--hc-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--hc-ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    white-space: normal;
+    cursor: pointer;
+    appearance: none;
+    transition: background-color .18s, border-color .18s, box-shadow .18s;
+  }
+
+  .hotel-confirm .hotel-confirm__button--primary {
+    border-color: var(--hc-green);
+    background: var(--hc-green);
+    color: #fff;
+    box-shadow: 0 5px 12px -5px rgba(8, 116, 91, .45);
+  }
+
+  @media (hover: hover) {
+    .hotel-confirm .hotel-confirm__button--secondary:hover {
+      border-color: #b8c4d2;
+      background: #f3f6fa;
+    }
+    .hotel-confirm .hotel-confirm__button--primary:hover:not(:disabled) {
+      border-color: #065f4b;
+      background: #065f4b;
+    }
+  }
+
+  .hotel-confirm .hotel-confirm__button:focus-visible {
+    outline: 3px solid #128166;
+    outline-offset: 4px;
+  }
+
+  .hotel-confirm .hotel-confirm__button:disabled {
+    opacity: .8;
+    cursor: wait;
+    box-shadow: none;
+  }
+
+  .hotel-confirm__spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, .4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: hotel-confirm-spin .75s linear infinite;
+  }
+
+  .hotel-confirm__form[data-submitting="true"] .hotel-confirm__spinner {
+    display: inline-block;
+  }
+
+  .hotel-confirm__form[data-submitting="true"] .hotel-confirm__arrow {
+    display: none;
+  }
+
+  .hotel-confirm__hint {
+    margin: 18px 0 0;
+    color: var(--hc-muted);
+    font-size: 12px;
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  .hotel-confirm__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @keyframes hotel-confirm-spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    .hotel-confirm__card { border-radius: 20px; }
+    .hotel-confirm__notice { gap: 10px; padding: 16px; }
+    .hotel-confirm__actions { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hotel-confirm .hotel-confirm__button { transition: none; }
+    .hotel-confirm__spinner { animation: none; }
+  }
+</style>
+
+<section class="hotel-confirm" aria-labelledby="hotel-confirm-title">
+  <article class="hotel-confirm__card">
+    <header class="hotel-confirm__header">
+      <div class="hotel-confirm__top">
+        <div class="hotel-confirm__icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/>
+            <path d="M13 2v7h7M8 13h8M8 17h5"/>
+          </svg>
+        </div>
+        <span class="hotel-confirm__badge">Aguardando confirmação</span>
+      </div>
+
+      <span class="hotel-confirm__eyebrow">Confirmação de operação</span>
+      <h1 id="hotel-confirm-title">{{ titulo }}</h1>
+      <p class="hotel-confirm__subtitle">
+        Revise a operação antes de prosseguir.
+      </p>
+    </header>
+
+    <div class="hotel-confirm__body">
+      <div class="hotel-confirm__notice">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 11v5M12 7.5v.1"/>
+        </svg>
+        <div>
+          <h2>Confirme para continuar</h2>
+          <p id="hotel-confirm-description">
+            Abrir esta página não altera os dados. A solicitação será enviada
+            somente quando você selecionar <strong>Confirmar operação</strong>.
+          </p>
+        </div>
+      </div>
+
+      <form id="hotel-confirm-form" class="hotel-confirm__form"
+            method="post" action="{{ destino }}"
+            aria-describedby="hotel-confirm-description">
+        <input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">
+
+        <div class="hotel-confirm__actions">
+          <a class="hotel-confirm__button hotel-confirm__button--secondary"
+             href="{{ url_for('dashboard') }}">
+            Cancelar
+          </a>
+          <button class="hotel-confirm__button hotel-confirm__button--primary"
+                  type="submit" data-confirm-button>
+            <span class="hotel-confirm__spinner" aria-hidden="true"></span>
+            <span data-confirm-label>Confirmar operação</span>
+            <svg class="hotel-confirm__arrow" width="18" height="18"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+
+      <p class="hotel-confirm__hint">
+        Ao cancelar, você retorna ao painel.
+      </p>
+      <p class="hotel-confirm__status" role="status"
+         aria-live="polite" aria-atomic="true" id="hotel-confirm-status"></p>
+    </div>
+  </article>
+</section>
+
+<script>
+  (() => {
+    const form = document.getElementById("hotel-confirm-form");
+    if (!form) return;
+
+    const button = form.querySelector("[data-confirm-button]");
+    const label = form.querySelector("[data-confirm-label]");
+    const status = document.getElementById("hotel-confirm-status");
+    const originalLabel = label.textContent;
+
+    const reset = () => {
+      delete form.dataset.submitting;
+      form.removeAttribute("aria-busy");
+      button.disabled = false;
+      label.textContent = originalLabel;
+      status.textContent = "";
+    };
+
+    form.addEventListener("submit", (event) => {
+      if (event.defaultPrevented) return;
+
+      if (form.dataset.submitting === "true") {
+        event.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = "true";
+      form.setAttribute("aria-busy", "true");
+      button.disabled = true;
+      label.textContent = "Enviando...";
+      status.textContent = "Enviando sua confirmação. Aguarde.";
+
+      queueMicrotask(() => {
+        if (event.defaultPrevented) reset();
+      });
+    });
+
+    window.addEventListener("pageshow", reset);
+  })();
+</script>
+{% endblock %}

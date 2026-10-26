@@ -1,602 +1,153 @@
 {% extends 'base.html' %}
-
-{% set page_title = 'Calendário Visual' %}
-{% set page_subtitle = 'Mapa visual de reservas por quarto' %}
+{% set page_title='Calendário de reservas' %}
+{% set page_subtitle='Reservas por quarto, com datas e horários de cada estadia.' %}
+{% macro icone(nome) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if nome == 'bed' %}<path d="M3 18V8m18 10V8M3 14h18M3 18v3m18-3v3M3 10h18v8H3zM6 10V5h12v5M7 10V8h4v2m2 0V8h4v2"/>{% elif nome == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>{% elif nome == 'users' %}<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/>{% elif nome == 'arrow' %}<path d="M5 12h14m-5-5 5 5-5 5"/>{% elif nome == 'plus' %}<path d="M12 5v14M5 12h14"/>{% elif nome == 'download' %}<path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/>{% elif nome == 'upload' %}<path d="M12 16V3m-4 4 4-4 4 4M4 16v5h16v-5"/>{% elif nome == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>{% elif nome == 'list' %}<path d="M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1"/>{% elif nome == 'lock' %}<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/>{% elif nome == 'check' %}<path d="m5 12 4 4L19 6"/>{% elif nome == 'close' %}<path d="m6 6 12 12M18 6 6 18"/>{% elif nome == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9v.1"/>{% endif %}</svg>
+{%- endmacro %}
+{% macro token_form() -%}{% if csrf_token is defined %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endif %}{%- endmacro %}
 
 {% block content %}
-
-<div class="calendar-page">
-
-    <div class="panel calendar-panel">
-
-        <div class="panel-header calendar-header">
-            <div>
-                <span class="page-label">Calendário Visual</span>
-                <h2>Reservas por quarto</h2>
-                <p>Acompanhe reservas, hóspedes, datas de entrada, saída e status de cada quarto.</p>
-            </div>
-
-            <a href="{{ url_for('reservas') }}" class="btn btn-new">
-                + Nova reserva
-            </a>
-        </div>
-
-        <div class="calendar-legend">
-            <span><i class="status-dot reservado"></i> Reservado</span>
-            <span><i class="status-dot confirmado"></i> Confirmado</span>
-            <span><i class="status-dot ocupado"></i> Ocupado</span>
-            <span><i class="status-dot cancelado"></i> Cancelado</span>
-            <span><i class="status-dot finalizado"></i> Finalizado</span>
-        </div>
-
-        {% if quartos %}
-
-            <div class="timeline">
-
-                {% for q in quartos %}
-
-                    {% set reservas_quarto = [] %}
-
-                    {% for r in reservas %}
-                        {% if r.quarto_id == q.id %}
-                            {% set _ = reservas_quarto.append(r) %}
-                        {% endif %}
-                    {% endfor %}
-
-                    <div class="timeline-row">
-
-                        <div class="room-info">
-                            <div class="room-icon">
-                                {{ q.numero }}
-                            </div>
-
-                            <div>
-                                <strong>Quarto {{ q.numero }}</strong>
-                                <small>
-                                    {{ q.categoria or 'Sem categoria' }}
-
-                                    {% if q.status %}
-                                        · {{ q.status }}
-                                    {% endif %}
-                                </small>
-
-                                <span class="room-count">
-                                    {{ reservas_quarto|length }} reserva(s)
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="room-reservas">
-
-                            {% if reservas_quarto %}
-
-                                {% for r in reservas_quarto %}
-
-                                    {% set status_original = r.status or 'Reservado' %}
-                                    {% set status = status_original|lower|trim %}
-                                    {% set status_class = status
-                                        |replace(' ', '-')
-                                        |replace('á', 'a')
-                                        |replace('à', 'a')
-                                        |replace('ã', 'a')
-                                        |replace('â', 'a')
-                                        |replace('é', 'e')
-                                        |replace('ê', 'e')
-                                        |replace('í', 'i')
-                                        |replace('ó', 'o')
-                                        |replace('ô', 'o')
-                                        |replace('õ', 'o')
-                                        |replace('ú', 'u')
-                                        |replace('ç', 'c')
-                                    %}
-
-                                    <div class="reservation-card {{ status_class }}">
-
-                                        <div class="reservation-top">
-                                            <div>
-                                                <strong>
-                                                    {{ r.hospede.nome if r.hospede else 'Hóspede não informado' }}
-                                                </strong>
-                                                <small>Reserva do quarto {{ q.numero }}</small>
-                                            </div>
-
-                                            <span class="badge {{ status_class }}">
-                                                {{ status_original }}
-                                            </span>
-                                        </div>
-
-                                        <div class="reservation-dates">
-                                            <div>
-                                                <span>Entrada</span>
-                                                <strong>{{ r.data_entrada }}</strong>
-                                            </div>
-
-                                            <div>
-                                                <span>Saída</span>
-                                                <strong>{{ r.data_saida }}</strong>
-                                            </div>
-                                        </div>
-
-                                        {% if r.observacoes %}
-                                            <p class="reservation-note">
-                                                {{ r.observacoes }}
-                                            </p>
-                                        {% endif %}
-
-                                    </div>
-
-                                {% endfor %}
-
-                            {% else %}
-
-                                <div class="empty-reservation">
-                                    <strong>Disponível</strong>
-                                    <span>Nenhuma reserva para este quarto.</span>
-                                </div>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-            </div>
-
-        {% else %}
-
-            <div class="empty-state">
-                <div class="empty-icon">🏨</div>
-                <h3>Nenhum quarto cadastrado</h3>
-                <p>Cadastre quartos para visualizar o calendário de reservas.</p>
-
-                <a href="{{ url_for('quartos') }}" class="btn btn-new">
-                    Cadastrar quarto
-                </a>
-            </div>
-
-        {% endif %}
-
-    </div>
-
+{% set acesso_reservas=tem_acesso('reservas') if tem_acesso is defined else (session.get('perfil') or '')|lower in ['administrador','rh'] %}
+{% set acesso_quartos=tem_acesso('quartos') if tem_acesso is defined else (session.get('perfil') or '')|lower in ['administrador','rh'] %}
+{% set payload=namespace(quartos=[],reservas=[]) %}
+{% for q in quartos %}{% set _=payload.quartos.append({'id':q.id,'numero':q.numero,'categoria':q.categoria,'andar':q.andar,'capacidade':q.capacidade,'status':q.status}) %}{% endfor %}
+{% for r in reservas %}{% set _=payload.reservas.append({'id':r.id,'quarto_id':r.quarto_id,'hospede':r.hospede.nome if r.hospede else 'Hóspede não informado','entrada':r.data_entrada,'saida':r.data_saida,'status':r.status or 'Reservado','observacoes':r.observacoes}) %}{% endfor %}
+<div class="cv-page" id="cvPage">
+  <section class="cv-hero"><div><span class="cv-eyebrow">RECEPÇÃO / PLANEJAMENTO DE ESTADIAS</span><h2>Reservas no tempo.<br><span>Uma visão por quarto.</span></h2><p>Consulte entradas, saídas e hospedagens que compartilham a mesma acomodação.</p></div><div class="cv-hero-side"><span class="cv-live"><i></i> Agenda de hospedagens</span>{% if acesso_reservas %}<a class="cv-btn cv-primary" href="{{ url_for('reservas') }}">{{ icone('plus') }} Nova reserva</a>{% endif %}</div></section>
+  <section class="cv-stats" aria-label="Resumo das reservas filtradas"><div class="cv-stat"><span class="cv-stat-icon">{{ icone('clock') }}</span><div><span>Reservas exibidas</span><strong id="cvStatTotal">—</strong><small>No período e nos filtros selecionados</small></div></div><div class="cv-stat"><span class="cv-stat-icon cv-blue">{{ icone('bed') }}</span><div><span>Quartos com registros</span><strong id="cvStatRooms">—</strong><small>Com reservas nesta consulta</small></div></div><div class="cv-stat"><span class="cv-stat-icon cv-green">{{ icone('arrow') }}</span><div><span>Entradas no período</span><strong id="cvStatIn">—</strong><small>Conforme as datas das reservas exibidas</small></div></div><div class="cv-stat"><span class="cv-stat-icon cv-amber">{{ icone('arrow') }}</span><div><span>Saídas no período</span><strong id="cvStatOut">—</strong><small>Previsões registradas nas reservas</small></div></div></section>
+  <section class="cv-panel cv-agenda" aria-labelledby="cvAgendaTitle">
+    <div class="cv-agenda-head"><div><span class="cv-eyebrow">AGENDA POR QUARTO</span><h2 id="cvAgendaTitle">Planeje a próxima chegada.</h2><p>Clique em uma reserva para consultar o período completo.</p></div><div class="cv-view" aria-label="Modo de visualização"><button type="button" data-view="timeline" class="is-active" aria-pressed="true">{{ icone('grid') }} Linha do tempo</button><button type="button" data-view="list" aria-pressed="false">{{ icone('list') }} Lista</button></div></div>
+    <div class="cv-period"><div class="cv-date-nav"><button class="cv-icon-btn" type="button" id="cvPrev" aria-label="Período anterior" title="Período anterior">←</button><button class="cv-btn cv-soft" type="button" id="cvToday">Hoje</button><button class="cv-icon-btn" type="button" id="cvNext" aria-label="Próximo período" title="Próximo período">→</button></div><strong id="cvRange" aria-live="polite">Selecione um período</strong><div class="cv-date-fields"><label for="cvStart">A partir de<input id="cvStart" type="date" required></label><label for="cvSpan">Exibir<select id="cvSpan"><option value="7">7 dias</option><option value="14">14 dias</option><option value="30">30 dias</option></select></label></div></div>
+    <div class="cv-filters"><div class="cv-search">{{ icone('search') }}<label class="cv-sr" for="cvSearch">Buscar hóspede, número do quarto, categoria ou andar</label><input id="cvSearch" type="search" placeholder="Buscar hóspede, quarto ou categoria…" autocomplete="off"></div><label class="cv-sr" for="cvStatus">Status da reserva</label><select id="cvStatus"><option value="">Todos os status</option></select><label class="cv-only"><input id="cvOnly" type="checkbox"> Só quartos com reservas</label></div>
+    <div class="cv-info-line"><p id="cvResults" role="status" aria-live="polite"></p><button id="cvClear" type="button" class="cv-text-btn" hidden>Limpar filtros</button><span>{{ icone('info') }} Linhas separadas indicam registros simultâneos no mesmo quarto.</span></div>
+    <div class="cv-legend" aria-label="Legenda de status"><span><i class="cv-color-reservado"></i>Reservado</span><span><i class="cv-color-confirmado"></i>Confirmado</span><span><i class="cv-color-hospedado"></i>Hospedado / ocupado</span><span><i class="cv-color-finalizado"></i>Finalizado</span><span><i class="cv-color-cancelado"></i>Cancelado</span></div>
+    <div id="cvTimeline" class="cv-timeline" tabindex="0" aria-label="Linha do tempo. Role horizontalmente para consultar os dias e verticalmente para ver os quartos."></div>
+    <div class="cv-list-wrap" id="cvList" hidden><table class="cv-table"><caption class="cv-sr">Reservas exibidas no período selecionado</caption><thead><tr><th scope="col">Hóspede / quarto</th><th scope="col">Entrada</th><th scope="col">Saída</th><th scope="col">Status</th><th scope="col"><span class="cv-sr">Ações</span></th></tr></thead><tbody id="cvListBody"></tbody></table></div>
+    <div class="cv-empty" id="cvEmpty" hidden><span>{{ icone('bed') }}</span><h3 id="cvEmptyTitle">Nenhum registro para exibir</h3><p id="cvEmptyText">Ajuste o período ou os filtros da consulta.</p>{% if acesso_quartos %}<a class="cv-btn cv-soft" id="cvEmptyLink" href="{{ url_for('quartos') }}" hidden>Cadastrar quarto {{ icone('plus') }}</a>{% endif %}</div>
+    <div id="cvInvalid" class="cv-invalid" hidden></div>
+    <p class="cv-footnote">O status de cada quarto representa sua situação atual. A agenda apresenta os registros de reserva; não confirma disponibilidade para uma nova hospedagem.</p>
+  </section>
+  <noscript><section class="cv-panel cv-fallback"><h2>Reservas cadastradas</h2><p>Ative o JavaScript para navegar pela linha do tempo e usar os filtros.</p><ul>{% for r in reservas %}<li>{{ r.hospede.nome if r.hospede else 'Hóspede não informado' }} · Quarto {{ r.quarto.numero if r.quarto else r.quarto_id }} · {{ r.data_entrada }} → {{ r.data_saida }} · {{ r.status }}</li>{% else %}<li>Nenhuma reserva cadastrada.</li>{% endfor %}</ul></section></noscript>
 </div>
-
+<dialog id="cvDialog" class="cv-dialog" aria-labelledby="cvDialogTitle"><div class="cv-modal-head"><div><span class="cv-eyebrow" id="cvReservationCode">DETALHES DA RESERVA</span><h2 id="cvDialogTitle">Reserva</h2><p id="cvDialogSubtitle"></p></div><button id="cvClose" class="cv-icon-btn" type="button" aria-label="Fechar detalhes">{{ icone('close') }}</button></div><div class="cv-modal-scroll"><span class="cv-badge" id="cvDialogStatus"></span><div class="cv-date-cards"><div><span>Entrada registrada</span><strong id="cvDEntry"></strong><small id="cvDEntryTime"></small></div><div><span>Saída registrada</span><strong id="cvDExit"></strong><small id="cvDExitTime"></small></div></div><dl class="cv-details"><div><dt>Quarto</dt><dd id="cvDRoom"></dd></div><div><dt>Categoria</dt><dd id="cvDCategory"></dd></div><div><dt>Andar</dt><dd id="cvDFloor"></dd></div><div><dt>Capacidade do quarto</dt><dd id="cvDCapacity"></dd></div></dl><section class="cv-note"><h3>Observações</h3><p id="cvDNote"></p></section><p class="cv-dialog-note">As datas representam o período registrado da reserva. Não substituem a confirmação de check-in ou check-out.</p></div><div class="cv-modal-foot">{% if acesso_reservas %}<a class="cv-btn cv-soft" href="{{ url_for('reservas') }}">Abrir reservas {{ icone('arrow') }}</a>{% else %}<span>Consulta da agenda de hospedagens</span>{% endif %}<button class="cv-btn cv-primary" type="button" id="cvCloseBottom">Concluir consulta {{ icone('check') }}</button></div></dialog>
+<script id="cvData" type="application/json">{{ {'quartos':payload.quartos,'reservas':payload.reservas}|tojson }}</script>
 <style>
-.calendar-page{
-    width:100%;
-}
+main:has(#cvPage)>.page-heading{display:none}
+.cv-page,.cv-dialog{--cv-bg:var(--surface,#0f172a);--cv-soft:var(--surface-2,#152136);--cv-text:var(--text,#f1f5f9);--cv-muted:var(--muted,#94a3b8);--cv-border:var(--border,rgba(148,163,184,.17));--cv-blue:#60a5fa;--cv-green:#34d399;--cv-amber:#e9bd64;--cv-radius:20px;color:var(--cv-text);font-family:inherit;font-size:14px;line-height:1.6}.cv-page *,.cv-dialog *{box-sizing:border-box}.cv-page{display:grid;gap:22px;margin-bottom:26px}.cv-page svg,.cv-dialog svg{width:19px;height:19px;flex-shrink:0}.cv-page button,.cv-dialog button,.cv-page input,.cv-page select,.cv-page textarea{font:inherit}.cv-page [hidden],.cv-dialog [hidden]{display:none!important}.cv-hero{display:flex;justify-content:space-between;gap:24px;padding:32px 34px;border:1px solid var(--cv-border);border-radius:var(--cv-radius);background:radial-gradient(ellipse at right top,rgba(59,130,246,.12),transparent 60%),var(--cv-bg)}.cv-eyebrow{display:block;font-size:10px;font-weight:750;letter-spacing:1.9px;color:var(--cv-muted)}.cv-hero h2{font-size:clamp(29px,3.5vw,43px);letter-spacing:-1.4px;line-height:1.12;margin:17px 0 15px;font-weight:650}.cv-hero h2 span{color:var(--cv-blue)}.cv-hero p{margin:0;color:var(--cv-muted);font-size:13px;max-width:420px}.cv-hero-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:28px}.cv-live{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--cv-muted);white-space:nowrap}.cv-live i{width:6px;height:6px;border-radius:50%;background:var(--cv-green);box-shadow:0 0 0 4px rgba(52,211,153,.09)}.cv-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:43px;padding:10px 16px;border:1px solid transparent;border-radius:10px;font-size:12px!important;font-weight:650!important;text-decoration:none;cursor:pointer;line-height:1.3;transition:background .18s,border-color .18s,transform .18s;white-space:nowrap}.cv-btn:hover{transform:translateY(-1px)}.cv-primary{background:#2563eb;color:#fff}.cv-primary:hover{background:#1d4ed8}.cv-soft{background:var(--cv-soft);border-color:var(--cv-border);color:var(--cv-text)}.cv-soft:hover{border-color:#6281a5}.cv-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.cv-stat{display:flex;gap:14px;padding:22px 20px;border:1px solid var(--cv-border);border-radius:16px;background:var(--cv-bg)}.cv-stat-icon{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border:1px solid var(--cv-border);border-radius:11px;color:var(--cv-muted);background:var(--cv-soft)}.cv-stat-icon.cv-blue{color:var(--cv-blue);background:rgba(96,165,250,.08)}.cv-stat-icon.cv-green{color:var(--cv-green);background:rgba(52,211,153,.08)}.cv-stat-icon.cv-amber{color:var(--cv-amber);background:rgba(233,189,100,.08)}.cv-stat>div>span{display:block;color:var(--cv-muted);font-size:11px}.cv-stat strong{display:block;font-size:30px;font-weight:650;line-height:1.35;font-variant-numeric:tabular-nums;letter-spacing:-1px}.cv-stat small{display:block;color:var(--cv-muted);font-size:10px;margin-top:4px}.cv-panel{background:var(--cv-bg);border:1px solid var(--cv-border);border-radius:var(--cv-radius);overflow:hidden}.cv-panel summary{display:flex;align-items:center;gap:13px;padding:19px 24px;cursor:pointer;list-style:none}.cv-panel summary::-webkit-details-marker{display:none}.cv-panel summary strong,.cv-panel summary small{display:block}.cv-panel summary strong{font-size:13px}.cv-panel summary small{color:var(--cv-muted);font-size:11px;margin-top:2px}.cv-summary-icon{width:35px;height:35px;border-radius:10px;background:var(--cv-soft);display:grid;place-items:center;color:var(--cv-blue)}.cv-chevron{margin-left:auto;color:var(--cv-muted);font-size:21px;transition:transform .2s}.cv-panel[open] .cv-chevron{transform:rotate(180deg)}.cv-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding:24px;border-top:1px solid var(--cv-border)}.cv-field label{display:block;margin:0 0 7px;font-size:11px;font-weight:650;color:var(--cv-text)}.cv-field label span,.cv-focv-bottom>span>span{color:#f0a574}.cv-page input,.cv-page select,.cv-page textarea{display:block;width:100%;min-height:43px;border:1px solid var(--cv-border);border-radius:9px;background:var(--cv-soft);color:var(--cv-text);padding:10px 12px;font-size:12px;outline:none}.cv-page textarea{resize:vertical}.cv-page input::placeholder,.cv-page textarea::placeholder{color:var(--cv-muted);opacity:.8}.cv-page input:focus,.cv-page select:focus,.cv-page textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.11)}.cv-page select{color-scheme:dark}.cv-span{grid-column:span 3}.cv-focv-bottom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:2px}.cv-focv-bottom>span{color:var(--cv-muted);font-size:10px}.cv-map{padding:26px}.cv-map-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:25px}.cv-map-head h2{margin:7px 0 6px;font-size:22px;font-weight:650;letter-spacing:-.6px}.cv-map-head p{margin:0;font-size:12px;color:var(--cv-muted)}.cv-exports{display:flex;gap:8px}.cv-filters{display:grid;grid-template-columns:minmax(200px,1fr) 190px 170px auto;gap:10px;padding:14px;background:var(--cv-soft);border:1px solid var(--cv-border);border-radius:13px}.cv-search{position:relative}.cv-search svg{position:absolute;left:12px;top:12px;color:var(--cv-muted);width:18px;height:18px}.cv-search input{padding-left:39px;background:var(--cv-bg)}.cv-filter-field select{background:var(--cv-bg);height:43px}.cv-view{display:flex;gap:3px;padding:4px;border:1px solid var(--cv-border);border-radius:9px;background:var(--cv-bg)}.cv-view button{display:grid;place-items:center;width:34px;border:0;border-radius:6px;background:transparent;color:var(--cv-muted);cursor:pointer}.cv-view button.is-active{background:var(--cv-soft);color:var(--cv-blue)}.cv-view svg{width:16px;height:16px}.cv-result-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}.cv-result-row p{margin:0;color:var(--cv-muted);font-size:11px}.cv-text-btn{padding:0;border:0;background:none;color:var(--cv-blue);font-size:11px!important;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.cv-result-note{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--cv-muted);font-size:10px}.cv-result-note svg{width:13px;height:13px}.cv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}.cv-card{--room-color:var(--cv-green);display:block;width:100%;padding:20px;text-align:left;color:var(--cv-text);background:var(--cv-soft);border:1px solid var(--cv-border);border-radius:15px;position:relative;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;overflow:hidden}.cv-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--room-color);opacity:.75}.cv-card:hover{border-color:var(--room-color);transform:translateY(-3px);box-shadow:0 9px 22px rgba(0,0,0,.12)}.cv-state-reservado{--room-color:#60a5fa}.cv-state-parcialmente-ocupado{--room-color:#a78bfa}.cv-state-lotado,.cv-state-ocupado{--room-color:#fb7185}.cv-state-em-limpeza{--room-color:#fbbf24}.cv-state-em-manutencao{--room-color:#c084fc}.cv-state-bloqueado{--room-color:#94a3b8}.cv-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.cv-door{flex-shrink:0;display:flex;align-items:center;gap:9px}.cv-door>svg{color:var(--cv-muted);width:23px;height:23px}.cv-door>span{display:block;color:var(--cv-muted);font-size:8px;font-weight:700;letter-spacing:1.6px}.cv-door strong{white-space:nowrap;display:block;color:var(--cv-text);font-size:25px;letter-spacing:-.7px;line-height:1.2;overflow-wrap:anywhere}.cv-pill{display:inline-flex;align-items:center;gap:5px;max-width:150px;padding:5px 8px;border:1px solid var(--cv-border);border-radius:30px;font-size:9px;line-height:1.4;color:var(--room-color,var(--cv-blue));font-weight:650}.cv-pill i{display:block;flex-shrink:0;width:5px;height:5px;border-radius:50%;background:currentColor}.cv-card-category{display:block;margin-top:20px;font-size:13px;font-weight:650}.cv-card-category small{display:block;font-size:10px;font-weight:400;color:var(--cv-muted);margin-top:2px}.cv-occupancy{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:19px;padding:12px 0;border-top:1px solid var(--cv-border);border-bottom:1px solid var(--cv-border)}.cv-occupancy>span{display:block}.cv-occupancy small{display:block;color:var(--cv-muted);font-size:9px;font-weight:400}.cv-occupancy strong{display:block;font-size:18px;line-height:1.4;font-weight:600;font-variant-numeric:tabular-nums}.cv-vacancy strong{color:var(--cv-green)}.cv-progress-label{display:block;color:var(--cv-muted);font-size:9px;margin:12px 0 7px}.cv-progress{display:block;width:100%;height:4px;border:none;border-radius:8px;overflow:hidden;background:rgba(148,163,184,.13);color:var(--room-color);accent-color:var(--room-color)}.cv-progress::-webkit-progress-bar{background:rgba(148,163,184,.13);border-radius:8px}.cv-progress::-webkit-progress-value{background:var(--room-color);border-radius:8px}.cv-progress::-moz-progress-bar{background:var(--room-color);border-radius:8px}.cv-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}.cv-card-bottom small{display:block;font-size:9px;color:var(--cv-muted);font-weight:400}.cv-card-bottom strong{display:block;font-size:13px;font-weight:650}.cv-card-cta{display:flex;align-items:center;gap:6px;color:var(--cv-muted);font-size:10px}.cv-card-cta svg{width:14px;height:14px}.cv-empty{text-align:center;padding:45px 20px}.cv-empty>span{display:grid;place-items:center;width:56px;height:56px;border-radius:18px;background:var(--cv-soft);color:var(--cv-muted);margin:0 auto 15px}.cv-empty svg{width:27px;height:27px}.cv-empty h3{font-size:17px;margin:0 0 7px}.cv-empty p{font-size:12px;color:var(--cv-muted);margin:0 0 18px}.cv-import-form{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:22px 24px;border-top:1px solid var(--cv-border)}.cv-import-form>.cv-field{flex:1;max-width:600px}.cv-field>small{display:block;color:var(--cv-muted);font-size:10px;margin-top:8px}.cv-import-form input{padding:8px}.cv-import-form input::file-selector-button{padding:6px 10px;border:0;border-radius:5px;margin-right:10px;background:rgba(96,165,250,.13);color:var(--cv-text);font:inherit;cursor:pointer}.cv-danger-area{color:var(--cv-muted);font-size:11px}.cv-danger-area summary{cursor:pointer;padding:4px 0}.cv-danger-area>div{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:10px;border:1px solid rgba(251,113,133,.2);border-radius:13px;padding:18px 22px}.cv-danger-area p{margin:0}.cv-danger-area p strong{display:block;color:#f28b9d;font-size:12px}.cv-danger-area p span{display:block;margin-top:4px;max-width:700px;font-size:11px}.cv-danger-area form{margin:0}.cv-danger{border-color:rgba(251,113,133,.25);background:rgba(251,113,133,.08);color:#f58d9f}.cv-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.cv-page a:focus-visible,.cv-page button:focus-visible,.cv-page summary:focus-visible,.cv-dialog button:focus-visible{outline:3px solid #60a5fa;outline-offset:4px}.cv-grid.is-list{grid-template-columns:1fr}.cv-grid.is-list .cv-card{display:grid;grid-template-columns:1.4fr .8fr 1fr .8fr;gap:20px;align-items:center;padding:18px 22px}.cv-grid.is-list .cv-card-category{margin:0}.cv-grid.is-list .cv-occupancy{margin:0;border:none;padding:0}.cv-grid.is-list .cv-progress-label,.cv-grid.is-list .cv-progress{display:none}.cv-grid.is-list .cv-card-bottom{margin:0}.cv-grid.is-list .cv-door strong{font-size:21px}
+.cv-dialog{padding:0;border:1px solid var(--cv-border);border-radius:22px;background:var(--cv-bg);width:min(780px,calc(100% - 28px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);color:var(--cv-text);box-shadow:0 28px 100px rgba(0,0,0,.4);overflow:hidden}.cv-dialog[open]{display:flex;flex-direction:column}.cv-dialog::backdrop{background:rgba(2,8,20,.76);backdrop-filter:blur(7px)}.cv-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px 28px;border-bottom:1px solid var(--cv-border)}.cv-modal-head h2{font-size:27px;letter-spacing:-.7px;margin:6px 0 3px;color:var(--cv-text)}.cv-modal-head p{margin:0;font-size:11px;color:var(--cv-muted)}.cv-icon-btn{display:grid;place-items:center;width:33px;height:33px;flex-shrink:0;border:1px solid var(--cv-border);border-radius:10px;background:var(--cv-soft);color:var(--cv-muted);cursor:pointer}.cv-modal-scroll{padding:22px 28px;overflow:auto;min-height:0}.cv-modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 20px}.cv-modal-stats>div{padding:13px;border:1px solid var(--cv-border);border-radius:10px;background:var(--cv-soft)}.cv-modal-stats small{display:block;color:var(--cv-muted);font-size:10px}.cv-modal-stats strong{font-size:22px;font-weight:650}.cv-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.cv-detail-grid section{padding:15px;background:var(--cv-soft);border:1px solid var(--cv-border);border-radius:11px}.cv-dialog h3{font-size:12px;font-weight:650;margin:0 0 6px;color:var(--cv-text)}.cv-detail-grid p{font-size:12px;color:var(--cv-muted);margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.cv-operations{padding:18px 0;border-bottom:1px solid var(--cv-border);margin-bottom:20px}.cv-operations p{font-size:11px;color:var(--cv-muted);margin:0}.cv-operation-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.cv-operation-actions form{margin:0}.cv-operation-actions .cv-btn{min-height:37px;font-size:11px!important;padding:8px 12px}.cv-history-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:12px}.cv-history-head h3{display:flex;gap:7px;align-items:center;margin:0}.cv-history-head svg{width:16px;height:16px;color:var(--cv-muted)}.cv-history-item{padding:13px 15px;border:1px solid var(--cv-border);border-radius:11px;background:var(--cv-soft);margin-top:9px}.cv-history-item>strong{display:block;font-size:12px;overflow-wrap:anywhere}.cv-history-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px}.cv-history-meta span{font-size:10px;color:var(--cv-muted)}.cv-history-message{padding:20px;border:1px dashed var(--cv-border);border-radius:12px;color:var(--cv-muted);font-size:12px;text-align:center}.cv-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--cv-border);padding:18px 28px;flex-shrink:0}.cv-modal-foot>span{font-size:10px;color:var(--cv-muted)}.cv-modal-foot strong{display:block;font-size:19px;font-weight:650;color:var(--cv-text)}.cv-btn:disabled{opacity:.5;cursor:wait;transform:none}.cv-btn.is-loading:before{content:"";width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:cv-spin .7s linear infinite}.cv-btn.is-loading svg{display:none}@keyframes cv-spin{to{transform:rotate(360deg)}}html[data-theme=light] .cv-page,html[data-theme=light] .cv-dialog{--cv-blue:#2563eb;--cv-green:#047857;--cv-amber:#a76607}html[data-theme=light] .cv-page select{color-scheme:light}html[data-theme=light] .cv-card{background:#fff}html[data-theme=light] .cv-state-reservado{--room-color:#2563eb}html[data-theme=light] .cv-state-parcialmente-ocupado{--room-color:#7c3aed}html[data-theme=light] .cv-state-lotado,html[data-theme=light] .cv-state-ocupado{--room-color:#be123c}html[data-theme=light] .cv-state-em-limpeza{--room-color:#a16207}html[data-theme=light] .cv-state-em-manutencao{--room-color:#9333ea}html[data-theme=light] .cv-danger{color:#b42342}html[data-theme=light] .cv-danger-area p strong{color:#b42342}@media(min-width:1500px){.cv-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:1150px){.cv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cv-filters{grid-template-columns:minmax(180px,1fr) 160px 150px}.cv-view{display:none}.cv-grid.is-list .cv-card{grid-template-columns:1fr 1fr}.cv-result-note{margin-left:0}}@media(max-width:760px){.cv-hero{padding:25px;flex-direction:column}.cv-hero h2{font-size:34px}.cv-hero-side{flex-direction:row;align-items:center;gap:15px}.cv-live{font-size:10px}.cv-map{padding:20px}.cv-map-head{align-items:flex-start}.cv-map-head h2{font-size:20px}.cv-map-head .cv-exports{flex-direction:column}.cv-filters{grid-template-columns:1fr 1fr;padding:10px}.cv-search{grid-column:1/-1}.cv-form{grid-template-columns:1fr 1fr}.cv-span{grid-column:1/-1}.cv-import-form{flex-direction:column;align-items:stretch}.cv-import-form>.cv-field{max-width:none}.cv-stat{padding:16px;gap:10px}.cv-stat-icon{width:32px;height:32px}.cv-stat strong{font-size:26px}.cv-stat small{font-size:9px}.cv-danger-area>div{align-items:flex-start;flex-direction:column}.cv-result-note{font-size:9px}.cv-dialog .cv-modal-head{padding:22px}.cv-modal-scroll{padding:20px 22px}.cv-modal-foot{padding:16px 22px}.cv-modal-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:450px){.cv-page{gap:16px}.cv-hero{padding:22px}.cv-hero-side{align-items:flex-start;flex-direction:column;gap:18px}.cv-hero-side .cv-btn{width:100%}.cv-stats{gap:10px}.cv-stat{padding:14px 12px;display:block}.cv-stat-icon{margin-bottom:10px}.cv-panel summary{padding:17px}.cv-panel summary small{font-size:10px}.cv-form{grid-template-columns:1fr;padding:18px}.cv-map{padding:17px}.cv-map-head{flex-direction:column}.cv-map-head .cv-exports{flex-direction:row}.cv-grid{grid-template-columns:1fr}.cv-detail-grid{grid-template-columns:1fr}.cv-modal-foot .cv-btn{padding:10px;font-size:10px!important}.cv-dialog{width:calc(100% - 18px);border-radius:17px}.cv-dialog .cv-modal-head,.cv-modal-scroll{padding:18px}.cv-operation-actions{display:grid;grid-template-columns:1fr 1fr}.cv-operation-actions .cv-btn{width:100%}.cv-modal-foot{padding:15px 18px}}@media(prefers-reduced-motion:reduce){.cv-page *,.cv-dialog *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
-.calendar-panel{
-    position:relative;
-    overflow:hidden;
-    background:
-        radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,.12), transparent 35%),
-        #0f172a;
-    color:#f8fafc;
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:24px;
-    padding:24px;
-    box-shadow:0 25px 70px rgba(2,6,23,.35);
-}
+.cv-agenda{padding:26px}.cv-agenda-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}.cv-agenda-head h2{font-size:23px;letter-spacing:-.6px;font-weight:650;margin:7px 0 5px}.cv-agenda-head p{font-size:12px;color:var(--cv-muted);margin:0}.cv-view{display:flex;gap:3px;padding:4px;border-radius:10px;border:1px solid var(--cv-border);background:var(--cv-soft)}.cv-view button{display:flex;align-items:center;gap:7px;min-height:34px;padding:7px 10px;background:none;border:0;border-radius:6px;cursor:pointer;color:var(--cv-muted);font-size:10px!important}.cv-view svg{width:15px;height:15px}.cv-view button.is-active{color:var(--cv-text);background:var(--cv-bg);box-shadow:0 1px 3px #0001}.cv-period{display:flex;align-items:center;gap:18px;padding:16px 0 20px;border-bottom:1px solid var(--cv-border);margin-bottom:20px;flex-wrap:wrap}.cv-date-nav{display:flex;align-items:center;gap:6px}.cv-icon-btn{display:grid;place-items:center;width:34px;height:36px;flex-shrink:0;border:1px solid var(--cv-border);background:var(--cv-soft);border-radius:9px;color:var(--cv-text);font-size:16px;cursor:pointer}.cv-date-nav .cv-btn{min-height:36px;padding:7px 12px}.cv-period>strong{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.3px}.cv-date-fields{display:flex;align-items:center;gap:10px;margin-left:auto}.cv-date-fields label{font-size:9px;color:var(--cv-muted);display:flex;align-items:center;gap:8px}.cv-date-fields input,.cv-date-fields select{min-height:36px;padding:7px 10px;font-size:11px;color-scheme:dark}.cv-date-fields input{max-width:150px}.cv-date-fields select{width:95px}.cv-filters{display:grid;grid-template-columns:minmax(200px,1fr) 180px auto;gap:12px;align-items:center;padding:13px;background:var(--cv-soft);border:1px solid var(--cv-border);border-radius:12px}.cv-filters>.cv-search input,.cv-filters>select{background:var(--cv-bg)}.cv-only{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--cv-muted);white-space:nowrap;cursor:pointer}.cv-page .cv-only input{width:14px;height:14px;min-height:0;margin:0;padding:0;accent-color:#2563eb}.cv-info-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:17px 0;color:var(--cv-muted);font-size:10px}.cv-info-line p{margin:0}.cv-info-line>span{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:9px}.cv-info-line svg{width:13px;height:13px}.cv-legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 16px}.cv-legend>span{display:inline-flex;gap:6px;align-items:center;font-size:9px;color:var(--cv-muted)}.cv-legend i{width:6px;height:6px;background:var(--booking);border-radius:50%}.cv-color-reservado{--booking:#60a5fa;--booking-bg:rgba(59,130,246,.13)}.cv-color-confirmado{--booking:#a78bfa;--booking-bg:rgba(139,92,246,.13)}.cv-color-hospedado{--booking:#34d399;--booking-bg:rgba(16,185,129,.13)}.cv-color-finalizado{--booking:#94a3b8;--booking-bg:rgba(148,163,184,.10)}.cv-color-cancelado{--booking:#fb879e;--booking-bg:rgba(244,63,94,.08)}.cv-color-outro{--booking:#fbbf24;--booking-bg:rgba(251,191,36,.10)}.cv-timeline{--cv-room:196px;--cv-day:82px;border:1px solid var(--cv-border);border-radius:13px;max-height:640px;overflow:auto;position:relative;scrollbar-width:thin;scrollbar-color:#6681a060 transparent}.cv-sheet{min-width:100%}.cv-axis{display:flex;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--cv-border);background:var(--cv-bg)}.cv-axis-room{flex:0 0 var(--cv-room);width:var(--cv-room);position:sticky;left:0;z-index:6;display:flex;align-items:center;background:var(--cv-soft);padding:16px;font-size:9px;letter-spacing:1px;font-weight:650;border-right:1px solid var(--cv-border)}.cv-days{display:grid}.cv-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:78px;border-right:1px solid var(--cv-border);color:var(--cv-muted)}.cv-day>span{font-size:9px;text-transform:uppercase}.cv-day strong{font-size:18px;line-height:1.2;letter-spacing:-.4px;font-weight:600;color:var(--cv-text);font-variant-numeric:tabular-nums}.cv-day small{font-size:8px}.cv-day.is-weekend{background:rgba(148,163,184,.04)}.cv-day.is-today{background:rgba(59,130,246,.1)}.cv-day.is-today strong,.cv-day.is-today small{color:var(--cv-blue)}.cv-room-row{display:flex;border-bottom:1px solid var(--cv-border);margin:0!important}.cv-room-row:last-child{border-bottom:0}.cv-room-info{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;position:sticky;left:0;z-index:3;width:var(--cv-room);flex:0 0 var(--cv-room);padding:15px 17px;background:var(--cv-bg);border-right:1px solid var(--cv-border);gap:2px;overflow-wrap:anywhere}.cv-room-info>strong{font-size:12px;font-weight:650;color:var(--cv-text)}.cv-room-info>small{font-size:9px;color:var(--cv-muted)}.cv-room-status{font-size:8px;color:var(--cv-muted);padding:1px 6px;background:var(--cv-soft);border:1px solid var(--cv-border);border-radius:4px;margin:3px 0}.cv-room-count{font-size:8px;color:var(--cv-muted)}.cv-track{position:relative;flex:1;min-width:0;background-image:linear-gradient(to right,transparent calc(100% - 1px),var(--cv-border) calc(100% - 1px));background-size:var(--cv-day) 100%}.cv-today-strip{position:absolute;top:0;bottom:0;width:var(--cv-day);background:rgba(59,130,246,.04);pointer-events:none}.cv-no-bookings{position:absolute;left:17px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--cv-muted);opacity:.75;white-space:nowrap;pointer-events:none}.cv-booking{position:absolute;display:flex;flex-direction:column;justify-content:center;gap:2px;height:39px;min-width:0;padding:6px 9px;border:1px solid var(--booking);border-left:3px solid var(--booking);border-radius:7px;background:var(--booking-bg);color:var(--booking);text-align:left;cursor:pointer;overflow:hidden;transition:filter .15s,box-shadow .15s;z-index:1}.cv-booking strong{display:block;font-size:9px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;flex-shrink:0;max-width:100%}.cv-booking>span{display:block;max-width:100%;font-size:7px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;opacity:.85}.cv-booking:hover{filter:brightness(1.18);box-shadow:0 0 0 2px var(--booking-bg)}.cv-booking.continues-before{border-top-left-radius:1px;border-bottom-left-radius:1px;border-left-width:1px}.cv-booking.continues-after{border-top-right-radius:1px;border-bottom-right-radius:1px}.cv-booking.cv-color-cancelado{border-style:dashed}.cv-footnote{font-size:10px;line-height:1.7;color:var(--cv-muted);margin:18px 0 0}.cv-list-wrap{overflow:auto;border:1px solid var(--cv-border);border-radius:12px}.cv-table{width:100%;text-align:left;border-collapse:collapse;font-size:11px}.cv-table th{font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--cv-muted);font-weight:650;background:var(--cv-soft);padding:13px 16px;white-space:nowrap}.cv-table td{padding:14px 16px;border-top:1px solid var(--cv-border);vertical-align:middle}.cv-table td>strong{display:block;font-size:11px;font-weight:650;overflow-wrap:anywhere}.cv-table td>small{display:block;font-size:9px;color:var(--cv-muted);margin-top:3px}.cv-detail-btn{background:var(--cv-soft);border:1px solid var(--cv-border);color:var(--cv-text);border-radius:7px;padding:7px 9px;font-size:10px!important;cursor:pointer;white-space:nowrap}.cv-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--booking,#64748b);background:var(--booking-bg,rgba(148,163,184,.1));color:var(--booking,var(--cv-muted));border-radius:25px;font-size:9px;font-weight:650;white-space:nowrap}.cv-badge:before{content:"";width:4px;height:4px;border-radius:50%;background:currentColor}.cv-invalid{padding:15px 18px;margin-top:18px;border:1px solid rgba(233,189,100,.25);border-radius:10px;background:rgba(233,189,100,.05);color:var(--cv-muted);font-size:11px}.cv-invalid summary{cursor:pointer;font-weight:600;color:var(--cv-text)}.cv-invalid p{font-size:10px;margin:8px 0}.cv-invalid .cv-text-btn{display:block;margin:7px 0}.cv-fallback{padding:24px}.cv-fallback h2{font-size:18px}.cv-fallback li,.cv-fallback p{font-size:12px}.cv-dialog .cv-modal-head h2{font-size:24px;max-width:550px;overflow-wrap:anywhere}.cv-date-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.cv-date-cards>div{padding:17px;border:1px solid var(--cv-border);border-radius:12px;background:var(--cv-soft)}.cv-date-cards span{display:block;font-size:9px;color:var(--cv-muted)}.cv-date-cards strong{display:block;font-size:20px;font-weight:650;letter-spacing:-.5px;margin-top:5px;overflow-wrap:anywhere}.cv-date-cards small{display:block;font-size:12px;color:var(--cv-blue);margin-top:3px}.cv-details{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:0 0 22px;padding-bottom:22px;border-bottom:1px solid var(--cv-border)}.cv-details dt{font-size:9px;color:var(--cv-muted);text-transform:uppercase;letter-spacing:.5px}.cv-details dd{font-size:12px;margin:4px 0 0;overflow-wrap:anywhere}.cv-dialog .cv-note h3{font-size:12px;margin:0 0 8px}.cv-note p{font-size:12px;color:var(--cv-muted);white-space:pre-wrap;overflow-wrap:anywhere;margin:0;padding:15px;background:var(--cv-soft);border-radius:10px}.cv-dialog-note{font-size:10px;color:var(--cv-muted);line-height:1.6;margin:18px 0 0}.cv-modal-foot>span{font-size:10px;color:var(--cv-muted)}html[data-theme=light] .cv-page,html[data-theme=light] .cv-dialog{--booking-bg:rgba(59,130,246,.07)}html[data-theme=light] .cv-color-reservado{--booking:#1d4ed8;--booking-bg:#eff6ff}html[data-theme=light] .cv-color-confirmado{--booking:#7c3aed;--booking-bg:#f5f3ff}html[data-theme=light] .cv-color-hospedado{--booking:#047857;--booking-bg:#ecfdf5}html[data-theme=light] .cv-color-finalizado{--booking:#64748b;--booking-bg:#f1f5f9}html[data-theme=light] .cv-color-cancelado{--booking:#be123c;--booking-bg:#fff1f2}html[data-theme=light] .cv-color-outro{--booking:#a16207;--booking-bg:#fffbeb}html[data-theme=light] .cv-date-fields input{color-scheme:light}@media(max-width:1050px){.cv-date-fields{width:100%;margin-left:0}.cv-date-fields label:first-child{margin-right:auto}.cv-info-line>span{margin-left:0}.cv-filters{grid-template-columns:1fr 180px}.cv-only{grid-column:1/-1}}@media(max-width:760px){.cv-agenda{padding:20px}.cv-agenda-head{flex-direction:column;align-items:flex-start}.cv-agenda-head h2{font-size:21px}.cv-period{gap:14px}.cv-period>strong{font-size:12px}.cv-filters{grid-template-columns:1fr}.cv-filters>.cv-search{min-width:0}.cv-only{padding:2px}.cv-view{width:100%}.cv-view button{flex:1;justify-content:center}.cv-table{min-width:660px}.cv-modal-foot .cv-btn{font-size:10px!important;padding:10px}.cv-timeline{max-height:560px}.cv-legend{gap:8px 12px}}@media(max-width:450px){.cv-hero h2{font-size:31px}.cv-hero .cv-live{white-space:normal}.cv-agenda{padding:16px}.cv-period>strong{width:100%}.cv-date-fields{gap:8px}.cv-date-fields label{flex-direction:column;align-items:flex-start;gap:4px}.cv-date-fields label:first-child{flex:1}.cv-date-fields input{width:100%;max-width:none}.cv-date-fields select{width:100px}.cv-date-cards{gap:9px}.cv-date-cards>div{padding:13px}.cv-date-cards strong{font-size:17px}.cv-dialog .cv-modal-head h2{font-size:20px}.cv-info-line>span{line-height:1.6}.cv-day{min-height:70px}.cv-room-info{padding:12px}.cv-room-info>strong{font-size:11px}.cv-axis-room{padding:12px;font-size:8px}}
 
-.calendar-panel::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(135deg, rgba(255,255,255,.06), transparent 35%);
-    pointer-events:none;
-}
+.cv-booking.is-short{padding:0;border-width:1px}.cv-booking.is-short>*{display:none}.cv-booking strong{font-size:10px}.cv-booking>span{font-size:8px}
 
-.calendar-header{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-    margin-bottom:22px;
-}
+.cv-agenda-head .cv-view{flex-shrink:0}.cv-view button{width:auto;white-space:nowrap}.cv-invalid summary{padding:0;display:block}.cv-invalid summary:before{content:"+ ";color:var(--cv-blue)}.cv-invalid details[open]>summary:before{content:"− "}
 
-.page-label{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:8px;
-    padding:7px 12px;
-    border-radius:999px;
-    color:#bfdbfe;
-    background:rgba(59,130,246,.14);
-    border:1px solid rgba(96,165,250,.25);
-    font-size:12px;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-}
-
-.calendar-header h2{
-    color:#ffffff;
-    font-size:30px;
-    line-height:1.15;
-    margin:0;
-}
-
-.calendar-header p{
-    color:#cbd5e1;
-    margin-top:8px;
-    max-width:720px;
-}
-
-.btn-new{
-    white-space:nowrap;
-    background:linear-gradient(135deg, #2563eb, #3b82f6);
-    color:#fff !important;
-    border:none;
-    border-radius:14px;
-    padding:13px 18px;
-    font-weight:800;
-    text-decoration:none;
-    box-shadow:0 14px 30px rgba(37,99,235,.35);
-    transition:.25s;
-}
-
-.btn-new:hover{
-    transform:translateY(-2px);
-    box-shadow:0 18px 40px rgba(37,99,235,.45);
-}
-
-.calendar-legend{
-    position:relative;
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    padding:15px;
-    margin-bottom:24px;
-    border-radius:18px;
-    background:rgba(15,23,42,.72);
-    border:1px solid rgba(148,163,184,.2);
-    backdrop-filter:blur(12px);
-}
-
-.calendar-legend span{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    color:#e2e8f0;
-    font-size:13px;
-    font-weight:800;
-    padding:8px 11px;
-    border-radius:999px;
-    background:rgba(255,255,255,.045);
-}
-
-.status-dot{
-    width:11px;
-    height:11px;
-    border-radius:50%;
-    display:inline-block;
-    box-shadow:0 0 0 4px rgba(255,255,255,.06);
-}
-
-.status-dot.reservado{background:#3b82f6;}
-.status-dot.confirmado{background:#22c55e;}
-.status-dot.ocupado{background:#f59e0b;}
-.status-dot.cancelado{background:#ef4444;}
-.status-dot.finalizado{background:#94a3b8;}
-
-.timeline{
-    position:relative;
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-.timeline-row{
-    display:grid;
-    grid-template-columns:260px 1fr;
-    gap:18px;
-    background:rgba(30,41,59,.82);
-    border:1px solid rgba(148,163,184,.18);
-    border-radius:22px;
-    padding:18px;
-    transition:.25s ease;
-}
-
-.timeline-row:hover{
-    transform:translateY(-3px);
-    border-color:rgba(96,165,250,.65);
-    box-shadow:0 18px 45px rgba(15,23,42,.45);
-}
-
-.room-info{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    min-width:0;
-    padding-right:18px;
-    border-right:1px solid rgba(148,163,184,.22);
-}
-
-.room-icon{
-    width:58px;
-    height:58px;
-    flex:0 0 58px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:18px;
-    color:#fff;
-    font-size:20px;
-    font-weight:900;
-    background:linear-gradient(135deg, #2563eb, #06b6d4);
-    box-shadow:0 12px 26px rgba(37,99,235,.32);
-}
-
-.room-info strong{
-    display:block;
-    color:#fff;
-    font-size:18px;
-    margin-bottom:4px;
-}
-
-.room-info small{
-    display:block;
-    color:#cbd5e1;
-    font-size:13px;
-}
-
-.room-count{
-    display:inline-flex;
-    margin-top:10px;
-    padding:6px 10px;
-    border-radius:999px;
-    background:rgba(255,255,255,.07);
-    color:#e2e8f0;
-    font-size:12px;
-    font-weight:800;
-}
-
-.room-reservas{
-    display:flex;
-    flex-wrap:wrap;
-    gap:14px;
-    align-items:stretch;
-}
-
-.reservation-card{
-    position:relative;
-    width:330px;
-    min-height:150px;
-    overflow:hidden;
-    border-radius:20px;
-    padding:16px;
-    color:#fff;
-    background:linear-gradient(135deg, rgba(51,65,85,.95), rgba(30,41,59,.95));
-    border:1px solid rgba(148,163,184,.22);
-    transition:.25s ease;
-    box-shadow:0 14px 28px rgba(2,6,23,.22);
-}
-
-.reservation-card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:radial-gradient(circle at top right, rgba(255,255,255,.22), transparent 38%);
-    opacity:.55;
-    pointer-events:none;
-}
-
-.reservation-card:hover{
-    transform:translateY(-3px) scale(1.01);
-    box-shadow:0 20px 45px rgba(2,6,23,.32);
-}
-
-.reservation-card.reservado{
-    background:linear-gradient(135deg, #1d4ed8, #2563eb);
-    border-color:#60a5fa;
-}
-
-.reservation-card.confirmado{
-    background:linear-gradient(135deg, #15803d, #16a34a);
-    border-color:#4ade80;
-}
-
-.reservation-card.ocupado{
-    background:linear-gradient(135deg, #b45309, #ea580c);
-    border-color:#fbbf24;
-}
-
-.reservation-card.cancelado{
-    background:linear-gradient(135deg, #991b1b, #dc2626);
-    border-color:#f87171;
-}
-
-.reservation-card.finalizado{
-    background:linear-gradient(135deg, #374151, #4b5563);
-    border-color:#94a3b8;
-}
-
-.reservation-top{
-    position:relative;
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:12px;
-    margin-bottom:15px;
-}
-
-.reservation-top strong{
-    color:#fff;
-    font-size:16px;
-    line-height:1.25;
-}
-
-.reservation-top small{
-    display:block;
-    margin-top:4px;
-    color:rgba(255,255,255,.78);
-    font-size:12px;
-    font-weight:600;
-}
-
-.badge{
-    flex:0 0 auto;
-    padding:7px 11px;
-    border-radius:999px;
-    color:#fff;
-    background:rgba(15,23,42,.35);
-    border:1px solid rgba(255,255,255,.24);
-    font-size:10px;
-    font-weight:900;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-}
-
-.reservation-dates{
-    position:relative;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
-
-.reservation-dates div{
-    padding:10px;
-    border-radius:14px;
-    background:rgba(15,23,42,.24);
-    border:1px solid rgba(255,255,255,.13);
-}
-
-.reservation-dates span{
-    display:block;
-    margin-bottom:4px;
-    color:rgba(255,255,255,.76);
-    font-size:11px;
-    font-weight:800;
-    text-transform:uppercase;
-}
-
-.reservation-dates strong{
-    color:#fff;
-    font-size:13px;
-}
-
-.reservation-note{
-    position:relative;
-    margin-top:12px;
-    padding:11px;
-    border-radius:14px;
-    background:rgba(15,23,42,.25);
-    border:1px solid rgba(255,255,255,.12);
-    color:#fff;
-    font-size:13px;
-    line-height:1.5;
-}
-
-.empty-reservation{
-    width:100%;
-    min-height:96px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:5px;
-    padding:18px;
-    background:rgba(15,23,42,.62);
-    border:2px dashed rgba(148,163,184,.35);
-    color:#e2e8f0;
-    border-radius:18px;
-}
-
-.empty-reservation strong{
-    color:#86efac;
-    font-size:16px;
-}
-
-.empty-reservation span{
-    color:#cbd5e1;
-    font-size:13px;
-}
-
-.empty-state{
-    position:relative;
-    text-align:center;
-    padding:70px 24px;
-    background:rgba(30,41,59,.75);
-    border:1px solid rgba(148,163,184,.18);
-    border-radius:24px;
-    color:white;
-}
-
-.empty-icon{
-    width:78px;
-    height:78px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin:0 auto 18px;
-    border-radius:24px;
-    background:rgba(59,130,246,.15);
-    border:1px solid rgba(96,165,250,.28);
-    font-size:38px;
-}
-
-.empty-state h3{
-    font-size:24px;
-    margin-bottom:8px;
-}
-
-.empty-state p{
-    color:#cbd5e1;
-    margin-bottom:22px;
-}
-
-@media(max-width:900px){
-    .calendar-header{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    .timeline-row{
-        grid-template-columns:1fr;
-    }
-
-    .room-info{
-        border-right:none;
-        border-bottom:1px solid rgba(148,163,184,.22);
-        padding-right:0;
-        padding-bottom:16px;
-    }
-
-    .reservation-card{
-        width:100%;
-    }
-}
-
-@media(max-width:560px){
-    .calendar-panel{
-        padding:16px;
-        border-radius:18px;
-    }
-
-    .calendar-header h2{
-        font-size:24px;
-    }
-
-    .calendar-legend{
-        gap:8px;
-    }
-
-    .calendar-legend span{
-        width:100%;
-    }
-
-    .room-info{
-        align-items:flex-start;
-    }
-
-    .reservation-dates{
-        grid-template-columns:1fr;
-    }
-}
 </style>
+<script>
+(function(){
+  'use strict';
+  const payload=JSON.parse(document.getElementById('cvData').textContent);
+  const byId=new Map(payload.quartos.map(q=>[String(q.id),q]));
+  const startInput=document.getElementById('cvStart'),spanInput=document.getElementById('cvSpan');
+  const search=document.getElementById('cvSearch'),statusInput=document.getElementById('cvStatus'),onlyInput=document.getElementById('cvOnly');
+  const timeline=document.getElementById('cvTimeline'),list=document.getElementById('cvList'),listBody=document.getElementById('cvListBody');
+  const dialog=document.getElementById('cvDialog');let mode='timeline',focusBefore=null,lastWidth=0;
+  const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const statusKey=s=>{const key=normalize(s);return key==='ocupado'?'hospedado':key;};
+  const known=new Set(['reservado','confirmado','hospedado','finalizado','cancelado']);
+  const statusClass=s=>'cv-color-'+(known.has(statusKey(s))?statusKey(s):'outro');
+  function node(tag,className,text){const el=document.createElement(tag);if(className)el.className=className;if(text!==undefined)el.textContent=text;return el;}
+  function parseDate(raw){
+    const s=String(raw||'').trim();
+    const m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,6})?)?)?$/);
+    if(m){const y=Number(m[1]),mo=Number(m[2])-1,d=Number(m[3]),h=Number(m[4]||0),mi=Number(m[5]||0),sec=Number(m[6]||0);if(y<100||mo<0||mo>11||d<1||h>23||mi>59||sec>59)return null;const dt=new Date(y,mo,d,h,mi,sec);return dt.getFullYear()===y&&dt.getMonth()===mo&&dt.getDate()===d?dt:null;}
+    if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(s)){const dt=new Date(s);return Number.isNaN(dt.getTime())?null:dt;}
+    return null;
+  }
+  const reservations=payload.reservas.map(r=>({...r,start:parseDate(r.entrada),end:parseDate(r.saida),room:byId.get(String(r.quarto_id))}));
+  const valid=reservations.filter(r=>r.room&&r.start&&r.end&&r.end>r.start);
+  const invalid=reservations.filter(r=>!r.room||!r.start||!r.end||r.end<=r.start);
+  const dateLabel=dt=>new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short'}).format(dt).replace(/\./g,'');
+  const dateFull=dt=>new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(dt);
+  const timeLabel=dt=>new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit'}).format(dt);
+  const dateKey=dt=>[dt.getFullYear(),String(dt.getMonth()+1).padStart(2,'0'),String(dt.getDate()).padStart(2,'0')].join('-');
+  function dayStart(dt){return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());}
+  function addDays(dt,amount){const n=new Date(dt);n.setDate(n.getDate()+amount);return n;}
+  let start=dayStart(new Date());startInput.value=dateKey(start);
+  const statuses=Array.from(new Set(payload.reservas.map(r=>r.status||'Reservado'))).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  statuses.forEach(s=>{const o=node('option','',s);o.value=s;statusInput.append(o);});
+  function dayPosition(dt){return (Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate())-Date.UTC(start.getFullYear(),start.getMonth(),start.getDate()))/86400000+(dt.getHours()*3600+dt.getMinutes()*60+dt.getSeconds())/86400;}
+  function matchBooking(r,terms){const text=normalize([r.hospede,r.room.numero,r.room.categoria,r.room.andar,'#'+r.id].join(' '));return terms.every(t=>text.includes(t))&&(!statusInput.value||r.status===statusInput.value);}
+  function openReservation(r,button){
+    focusBefore=button;const q=r.room;
+    function text(id,value){document.getElementById(id).textContent=value||'Não informado';}
+    text('cvReservationCode','RESERVA #'+r.id);text('cvDialogTitle',r.hospede||'Hóspede não informado');text('cvDialogSubtitle',q?'Quarto '+q.numero+' · '+(q.categoria||'Sem categoria'):'Quarto não encontrado');
+    const badge=document.getElementById('cvDialogStatus');badge.textContent=r.status;badge.className='cv-badge '+statusClass(r.status);
+    text('cvDEntry',r.start?dateFull(r.start):r.entrada||'Data não informada');text('cvDEntryTime',r.start?timeLabel(r.start):'Não foi possível interpretar a data');
+    text('cvDExit',r.end?dateFull(r.end):r.saida||'Data não informada');text('cvDExitTime',r.end?timeLabel(r.end):'Não foi possível interpretar a data');
+    text('cvDRoom',q?q.numero:r.quarto_id);text('cvDCategory',q?.categoria);text('cvDFloor',q?.andar);text('cvDCapacity',q?String(q.capacidade||0)+' pessoa(s)':'Não informada');text('cvDNote',r.observacoes||'Nenhuma observação registrada.');
+    if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');document.getElementById('cvClose').focus();
+  }
+  function close(){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');if(focusBefore?.isConnected)focusBefore.focus();}
+  document.getElementById('cvClose').addEventListener('click',close);document.getElementById('cvCloseBottom').addEventListener('click',close);dialog.addEventListener('cancel',event=>{event.preventDefault();close();});dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)close();});
+  function render(){
+    const days=Number(spanInput.value),end=addDays(start,days),terms=normalize(search.value).split(/\s+/).filter(Boolean);
+    const period=valid.filter(r=>r.start<end&&r.end>start&&matchBooking(r,terms));
+    const groups=payload.quartos.map(room=>({room,reservas:period.filter(r=>String(r.quarto_id)===String(room.id))})).filter(group=>{
+      const roomText=normalize([group.room.numero,group.room.categoria,group.room.andar].join(' '));
+      return (!onlyInput.checked||group.reservas.length)&&(!terms.length||terms.every(t=>roomText.includes(t))||group.reservas.length);
+    });
+    const shown=groups.flatMap(g=>g.reservas);
+    document.getElementById('cvStatTotal').textContent=shown.length;document.getElementById('cvStatRooms').textContent=groups.filter(g=>g.reservas.length).length;
+    document.getElementById('cvStatIn').textContent=shown.filter(r=>r.start>=start&&r.start<end).length;document.getElementById('cvStatOut').textContent=shown.filter(r=>r.end>=start&&r.end<end).length;
+    document.getElementById('cvRange').textContent=dateFull(start)+' — '+dateFull(addDays(end,-1));
+    document.getElementById('cvResults').textContent=shown.length+' reserva(s) em '+groups.length+' quarto(s) exibido(s)';
+    document.getElementById('cvClear').hidden=!(search.value||statusInput.value||onlyInput.checked);
+    const empty=document.getElementById('cvEmpty');empty.hidden=mode==='timeline'?groups.length>0:shown.length>0;
+    document.getElementById('cvEmptyTitle').textContent=payload.quartos.length?'Nenhum registro para exibir':'Nenhum quarto cadastrado';
+    document.getElementById('cvEmptyText').textContent=payload.quartos.length?'Ajuste o período ou os filtros da consulta.':'Cadastre os quartos para organizar a agenda de hospedagens.';
+    const emptyLink=document.getElementById('cvEmptyLink');if(emptyLink)emptyLink.hidden=payload.quartos.length>0;
+    timeline.hidden=mode!=='timeline'||!groups.length;list.hidden=mode!=='list'||!shown.length;
+    const dayWidth=Math.max(window.innerWidth<600?72:82,Math.floor((timeline.clientWidth-(window.innerWidth<600?148:196))/days));
+    timeline.style.setProperty('--cv-day',dayWidth+'px');timeline.style.setProperty('--cv-room',window.innerWidth<600?'148px':'196px');
+    const sheet=node('div','cv-sheet');sheet.style.width='calc(var(--cv-room) + '+days+' * var(--cv-day))';
+    const header=node('div','cv-axis');const corner=node('div','cv-axis-room','QUARTO / CATEGORIA');header.append(corner);const dates=node('div','cv-days');dates.style.gridTemplateColumns='repeat('+days+', var(--cv-day))';
+    for(let i=0;i<days;i++){const dt=addDays(start,i);const isToday=dateKey(dt)===dateKey(new Date());const day=node('div','cv-day'+(isToday?' is-today':'')+([0,6].includes(dt.getDay())?' is-weekend':''));day.append(node('span','',new Intl.DateTimeFormat('pt-BR',{weekday:'short'}).format(dt).replace('.','')),node('strong','',String(dt.getDate()).padStart(2,'0')),node('small','',isToday?'Hoje':new Intl.DateTimeFormat('pt-BR',{month:'short'}).format(dt).replace('.','')));dates.append(day);}
+    header.append(dates);sheet.append(header);
+    const todayIndex=dayPosition(dayStart(new Date()));
+    groups.forEach(({room,reservas})=>{
+      const sorted=reservas.slice().sort((a,b)=>a.start-b.start||a.end-b.end||Number(a.id)-Number(b.id));const lanes=[];const placed=sorted.map(r=>{let lane=lanes.findIndex(stop=>stop<=r.start.getTime());if(lane<0)lane=lanes.length;lanes[lane]=r.end.getTime();return {r,lane};});
+      const row=node('section','cv-room-row');const info=node('div','cv-room-info');const roomTitle=node('strong','','Quarto '+room.numero);roomTitle.id='cvRoom'+room.id;row.setAttribute('aria-labelledby',roomTitle.id);
+      info.append(roomTitle,node('small','',room.categoria||'Sem categoria'),node('span','cv-room-status',(room.status||'Sem status').replace('manutenÃ§Ã£o','manutenção')),node('span','cv-room-count',reservas.length+' reserva(s) · cap. '+(room.capacidade||0)));row.append(info);
+      const track=node('div','cv-track');track.style.minHeight=Math.max(88,lanes.length*45+20)+'px';
+      if(todayIndex>=0&&todayIndex<days){const today=node('span','cv-today-strip');today.style.left=todayIndex*dayWidth+'px';track.append(today);}
+      if(!placed.length)track.append(node('span','cv-no-bookings','Sem reservas neste período'));
+      placed.forEach(({r,lane})=>{
+        const left=Math.max(0,dayPosition(r.start)),right=Math.min(days,dayPosition(r.end));const bar=node('button','cv-booking '+statusClass(r.status));bar.type='button';bar.style.left=(left*dayWidth+2)+'px';bar.style.top=(10+lane*45)+'px';const width=Math.max(2,(right-left)*dayWidth-4);bar.style.width=width+'px';if(width<24)bar.classList.add('is-short');
+        if(r.start<start)bar.classList.add('continues-before');if(r.end>end)bar.classList.add('continues-after');
+        const label=(r.hospede||'Hóspede não informado')+' · Quarto '+room.numero+' · '+dateFull(r.start)+' '+timeLabel(r.start)+' até '+dateFull(r.end)+' '+timeLabel(r.end)+' · '+r.status;
+        bar.title=label;bar.setAttribute('aria-label',label);bar.dataset.reservation=String(r.id);
+        const dateText=dateKey(r.start)===dateKey(r.end)?timeLabel(r.start)+'–'+timeLabel(r.end):dateLabel(r.start)+' → '+dateLabel(r.end);
+        bar.append(node('strong','',(r.start<start?'← ':'')+(r.hospede||'Hóspede não informado')),node('span','',dateText+' · '+r.status));bar.addEventListener('click',()=>openReservation(r,bar));track.append(bar);
+      });
+      row.append(track);sheet.append(row);
+    });
+    const previousScroll=timeline.scrollLeft;timeline.replaceChildren(sheet);timeline.scrollLeft=previousScroll;
+    listBody.replaceChildren();shown.slice().sort((a,b)=>a.start-b.start||String(a.room.numero).localeCompare(String(b.room.numero),'pt-BR',{numeric:true})).forEach(r=>{
+      const row=node('tr');const name=node('td');name.append(node('strong','',r.hospede),node('small','','Quarto '+r.room.numero+' · '+(r.room.categoria||'Sem categoria')));
+      const entry=node('td');entry.append(node('span','',dateFull(r.start)),node('small','',timeLabel(r.start)));const exit=node('td');exit.append(node('span','',dateFull(r.end)),node('small','',timeLabel(r.end)));const status=node('td');status.append(node('span','cv-badge '+statusClass(r.status),r.status));const action=node('td');const button=node('button','cv-detail-btn','Ver reserva →');button.type='button';button.setAttribute('aria-label','Consultar reserva '+r.id+' de '+r.hospede);button.addEventListener('click',()=>openReservation(r,button));action.append(button);row.append(name,entry,exit,status,action);listBody.append(row);
+    });
+  }
+  const invalidBox=document.getElementById('cvInvalid');
+  if(invalid.length){invalidBox.hidden=false;const details=node('details');const summary=node('summary','',invalid.length+' registro(s) sem período válido ou quarto correspondente');details.append(summary,node('p','','Esses registros não foram posicionados na agenda. Consulte os dados cadastrados para conferir.'));invalid.forEach(r=>{const button=node('button','cv-text-btn','Reserva #'+r.id+' · '+(r.hospede||'Hóspede não informado'));button.type='button';button.addEventListener('click',()=>openReservation(r,button));details.append(button);});invalidBox.append(details);}
+  startInput.addEventListener('change',()=>{const next=parseDate(startInput.value);if(next){start=dayStart(next);timeline.scrollLeft=0;render();}else startInput.value=dateKey(start);});
+  spanInput.addEventListener('change',()=>{timeline.scrollLeft=0;render();});search.addEventListener('input',render);statusInput.addEventListener('change',render);onlyInput.addEventListener('change',render);
+  document.getElementById('cvPrev').addEventListener('click',()=>{start=addDays(start,-Number(spanInput.value));startInput.value=dateKey(start);timeline.scrollLeft=0;render();});document.getElementById('cvNext').addEventListener('click',()=>{start=addDays(start,Number(spanInput.value));startInput.value=dateKey(start);timeline.scrollLeft=0;render();});document.getElementById('cvToday').addEventListener('click',()=>{start=dayStart(new Date());startInput.value=dateKey(start);timeline.scrollLeft=0;render();});
+  document.getElementById('cvClear').addEventListener('click',()=>{search.value='';statusInput.value='';onlyInput.checked=false;render();search.focus();});
+  document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{mode=button.dataset.view;document.querySelectorAll('[data-view]').forEach(b=>{const active=b===button;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));});render();}));
+  let resizeFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{const width=timeline.clientWidth;if(width!==lastWidth){lastWidth=width;render();}});});
+  render();lastWidth=timeline.clientWidth;
+}());
 
+</script>
 {% endblock %}

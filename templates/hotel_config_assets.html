@@ -1,0 +1,3 @@
+<link rel="stylesheet" href="{{ url_for('static',filename='css/hotel_configuracoes.css') }}">
+<script id="hc-state" type="application/json">{{ {'nome':conta_identidade.nome,'subtitulo':conta_identidade.subtitulo,'logo':url_for('hotel_config_logo') if conta_identidade.logo else None,'tema':conta_perfil.tema if conta_perfil and conta_perfil.tema!='padrao' else conta_identidade.tema,'compacto':conta_perfil.compacto if conta_perfil else False,'movimento':conta_perfil.movimento if conta_perfil else True,'temaUrl':url_for('hotel_conta_tema')}|tojson }}</script>
+<script src="{{ url_for('static',filename='js/hotel_configuracoes.js') }}" defer></script>

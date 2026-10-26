@@ -1,424 +1,62 @@
 {% extends 'base.html' %}
-
-{% set page_title = 'Usuários e Permissões' %}
-{% set page_subtitle = 'Cadastre usuários e defina os módulos disponíveis para cada perfil.' %}
-
-{% block extra_css %}
-<style>
-    .usuarios-page {
-        display: grid;
-        gap: 20px;
-    }
-
-    .usuarios-panel {
-        padding: 24px;
-        border: 1px solid var(--border);
-        border-radius: 22px;
-        background: var(--surface);
-        box-shadow: var(--shadow);
-    }
-
-    .usuarios-panel-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 20px;
-    }
-
-    .usuarios-panel-header h2 {
-        margin: 0;
-        font-size: 20px;
-    }
-
-    .usuarios-panel-header p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-    }
-
-    .form-grid {
-        display: grid;
-        grid-template-columns: 1.2fr 1fr 1fr 1fr auto;
-        gap: 12px;
-        align-items: end;
-    }
-
-    .form-group {
-        display: grid;
-        gap: 7px;
-    }
-
-    .form-group label {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--muted);
-    }
-
-    .form-control {
-        width: 100%;
-        min-height: 44px;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--surface);
-        color: var(--text);
-        outline: none;
-        transition: .2s;
-    }
-
-    .form-control:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
-    }
-
-    .password-box {
-        position: relative;
-    }
-
-    .password-box .form-control {
-        padding-right: 46px;
-    }
-
-    .password-toggle {
-        position: absolute;
-        top: 50%;
-        right: 8px;
-        transform: translateY(-50%);
-        width: 34px;
-        height: 34px;
-        display: grid;
-        place-items: center;
-        border: 0;
-        border-radius: 9px;
-        background: transparent;
-        color: var(--muted);
-        cursor: pointer;
-    }
-
-    .password-toggle:hover {
-        background: rgba(37, 99, 235, .10);
-        color: #2563eb;
-    }
-
-    .perfil-info {
-        margin-top: 16px;
-        padding: 14px 16px;
-        border: 1px solid rgba(37, 99, 235, .18);
-        border-radius: 14px;
-        background: rgba(37, 99, 235, .07);
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.55;
-    }
-
-    .perfil-info strong {
-        color: var(--text);
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-    }
-
-    .usuarios-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .usuarios-table th,
-    .usuarios-table td {
-        padding: 13px 12px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        white-space: nowrap;
-    }
-
-    .usuarios-table th {
-        color: var(--muted);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-    }
-
-    .usuarios-table td {
-        font-size: 13px;
-    }
-
-    .perfil-badge,
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 27px;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 800;
-    }
-
-    .perfil-administrador {
-        background: rgba(124, 58, 237, .12);
-        color: #7c3aed;
-    }
-
-    .perfil-rh {
-        background: rgba(37, 99, 235, .12);
-        color: #2563eb;
-    }
-
-    .perfil-porteiro {
-        background: rgba(245, 158, 11, .15);
-        color: #b45309;
-    }
-
-    .status-ativo {
-        background: rgba(22, 163, 74, .12);
-        color: #15803d;
-    }
-
-    .status-inativo {
-        background: rgba(220, 38, 38, .12);
-        color: #b91c1c;
-    }
-
-    .empty-state {
-        padding: 34px 16px;
-        text-align: center;
-        color: var(--muted);
-    }
-
-    @media (max-width: 1100px) {
-        .form-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .form-grid .submit-area {
-            grid-column: 1 / -1;
-        }
-
-        .form-grid .submit-area .btn {
-            width: 100%;
-        }
-    }
-
-    @media (max-width: 650px) {
-        .usuarios-panel {
-            padding: 18px;
-        }
-
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .usuarios-panel-header {
-            flex-direction: column;
-        }
-    }
-</style>
-{% endblock %}
-
+{% set page_title='Usuários e permissões' %}
+{% set page_subtitle='Contas de acesso e perfis do sistema' %}
 {% block content %}
-<div class="usuarios-page">
+<style>
+.hp{--p-bg:var(--surface,#fff);--p-soft:var(--surface-2,#f8fafc);--p-text:var(--text,#0f172a);--p-muted:var(--muted,#64748b);--p-line:var(--border,#e2e8f0);--p-blue:#1d4ed8;--p-green:#15803d;--p-amber:#92400e;--p-red:#b91c1c;color:var(--p-text);line-height:1.5}
+html[data-theme=dark] .hp{--p-blue:#93b4ff;--p-green:#86efac;--p-amber:#fcd38d;--p-red:#fca5a5}
+.hp-page{max-width:1500px;padding:26px clamp(14px,3vw,36px) 40px;margin:auto}.hp *{box-sizing:border-box}.hp [hidden],.hp[hidden]{display:none!important}.hp :is(h1,h2,h3,p){margin:0}.hp :is(button,input,select,textarea){font:inherit}.hp svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.hp a{color:inherit}.hp :is(a,button,input,select):focus-visible{outline:3px solid #60a5fa;outline-offset:3px}
+.hp-hero{background:linear-gradient(120deg,#13243e,#173252 70%,#20516a);border:1px solid #355675;border-radius:21px;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden}.hp-hero:after{content:'';position:absolute;width:300px;height:300px;border:1px solid #ffffff16;border-radius:50%;right:50px;top:-150px;pointer-events:none}.hp-hero>*{position:relative;z-index:1}.hp-kicker{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.15em;color:#bad5ec;margin-bottom:10px}.hp h1{font-size:clamp(24px,3vw,32px);letter-spacing:-.04em;line-height:1.2;overflow-wrap:anywhere}.hp-hero p{font-size:12px;color:#c9daeb;margin-top:10px;max-width:640px}.hp h2{font-size:17px;font-weight:800;letter-spacing:-.02em}.hp h3{font-size:14px;font-weight:750}.hp-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}.hp .hp-btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:41px;padding:10px 14px;border:1px solid var(--p-line);border-radius:10px;background:var(--p-bg);color:var(--p-text);text-decoration:none;font-size:12px;font-weight:750;line-height:1.5;cursor:pointer;white-space:nowrap;transition:background .15s,transform .15s}.hp .hp-btn:hover{background:var(--p-soft);transform:translateY(-1px)}.hp .hp-primary{color:#fff;background:#2563eb;border-color:#2563eb}.hp .hp-primary:hover{background:#1d4ed8}.hp .hp-inverse{color:#fff;background:#ffffff0c;border-color:#ffffff35}.hp .hp-inverse:hover{background:#ffffff20}.hp .hp-btn:disabled{opacity:.55;cursor:wait;transform:none}.hp .hp-small{font-size:11px;min-height:34px;padding:7px 11px}.hp .hp-full{width:100%}
+.hp-panel{background:var(--p-bg);border:1px solid var(--p-line);border-radius:17px;margin-bottom:20px;overflow:hidden}.hp-panel-head{padding:20px 22px;border-bottom:1px solid var(--p-line);display:flex;align-items:center;justify-content:space-between;gap:14px}.hp-sub{color:var(--p-muted);font-size:12px;margin-top:5px!important}.hp-pad{padding:22px}.hp-count{padding:5px 9px;font-size:10px;font-weight:700;color:var(--p-muted);background:var(--p-soft);border:1px solid var(--p-line);border-radius:7px;white-space:nowrap}.hp-muted{color:var(--p-muted)}.hp-help{font-size:11px;color:var(--p-muted)}
+.hp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:22px}.hp-stat{background:var(--p-bg);border:1px solid var(--p-line);border-radius:16px;padding:21px;min-width:0}.hp-stat-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:var(--p-muted);font-weight:750}.hp-stat-top svg{color:var(--p-blue)}.hp-stat strong{display:block;font-size:clamp(24px,2.6vw,33px);line-height:1.25;letter-spacing:-.04em;margin:14px 0 8px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.hp-stat p{font-size:11px;color:var(--p-muted)}.hp-stat[data-tone=good] .hp-stat-top svg{color:var(--p-green)}.hp-stat[data-tone=warn] .hp-stat-top svg{color:var(--p-amber)}
+.hp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.hp-export{padding:20px;border:1px solid var(--p-line);background:var(--p-bg);border-radius:13px;display:flex;flex-direction:column;gap:12px}.hp-export-top{display:flex;align-items:center;gap:11px}.hp-icon{display:grid;place-items:center;width:37px;height:40px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:9px;color:var(--p-blue);flex-shrink:0}.hp-export p{font-size:12px;color:var(--p-muted);flex:1}.hp-export .hp-btn{flex:1}.hp-toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:17px 22px;border-bottom:1px solid var(--p-line);background:var(--p-soft)}
+.hp-field{display:flex;flex-direction:column;gap:7px;min-width:0}.hp-field.grow{flex:1;min-width:220px}.hp-field label{font-size:11px;font-weight:750;color:var(--p-muted)}.hp input:not([type=hidden]),.hp select{display:block;width:100%;min-height:43px;padding:10px 12px;border:1px solid var(--p-line);border-radius:9px;background:var(--p-bg);color:var(--p-text);font-size:12px;line-height:1.5}.hp input::placeholder{color:var(--p-muted);opacity:.85}.hp-search{position:relative}.hp-search svg{position:absolute;top:13px;left:12px;width:17px;height:17px;color:var(--p-muted)}.hp-search input{padding-left:38px!important}.hp-form{display:grid;gap:17px}.hp-two{display:grid;grid-template-columns:1fr 1fr;gap:15px}.hp-password{position:relative}.hp-password input{padding-right:48px!important}.hp .hp-eye{position:absolute;right:5px;top:5px;border:0;min-height:33px;height:33px;width:33px;background:transparent;padding:6px;color:var(--p-muted)}.hp .hp-eye:hover{background:var(--p-soft)}.hp-form-footer{border-top:1px solid var(--p-line);padding-top:18px;display:flex;justify-content:flex-end;gap:10px;align-items:center}.hp-hint{display:flex;gap:10px;padding:13px 15px;background:var(--p-soft);border:1px solid var(--p-line);border-radius:11px;color:var(--p-muted);font-size:12px}.hp-hint svg{color:var(--p-blue);margin-top:1px}.hp-hint strong{color:var(--p-text)}.hp-warning{color:var(--p-amber)}.hp-error{color:var(--p-red);font-size:12px;border:1px solid currentColor;padding:12px 14px;border-radius:10px;background:var(--p-soft)}
+.hp-table-wrap{overflow:auto}.hp table{width:100%;border-collapse:collapse;background:var(--p-bg);color:var(--p-text)}.hp th,.hp td{padding:15px 20px;border-bottom:1px solid var(--p-line);text-align:left;font-size:12px;vertical-align:middle;line-height:1.5}.hp th{background:var(--p-soft);color:var(--p-muted);font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:800;white-space:nowrap}.hp tr:last-child td{border-bottom:0}.hp tbody tr:hover{background:var(--p-soft)}.hp .hp-right{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.hp-person{display:flex;align-items:center;gap:11px}.hp-avatar{display:grid;place-items:center;flex-shrink:0;width:35px;height:35px;border-radius:10px;background:var(--p-soft);color:var(--p-blue);border:1px solid var(--p-line);font-weight:800;font-size:12px}.hp-person strong{display:block;font-size:12px}.hp-person small{display:block;font-size:10px;color:var(--p-muted);margin-top:3px}.hp-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--p-line);border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap;background:var(--p-soft);color:var(--p-muted)}.hp-pill:before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}.hp-pill[data-tone=good]{color:var(--p-green)}.hp-pill[data-tone=blue]{color:var(--p-blue)}.hp-pill[data-tone=warn]{color:var(--p-amber)}.hp-empty{padding:36px 18px;text-align:center;font-size:12px;color:var(--p-muted)}.hp-empty strong{display:block;font-size:15px;color:var(--p-text);margin-bottom:5px}
+.hp-users-layout{display:grid;grid-template-columns:minmax(300px,.75fr) minmax(0,1.5fr);gap:20px;align-items:start}.hp-users-layout>section{min-width:0}.hp-users-table{min-width:570px}.hp-profile-info{margin-top:16px}.hp-profile-info h3{margin-bottom:5px}.hp-profile-info ul{margin:9px 0 0;padding-left:17px;font-size:11px;color:var(--p-muted)}.hp-profile-info p{font-size:12px;color:var(--p-muted)}.hp-user-stats{grid-template-columns:repeat(3,1fr)}.hp-users-count{padding:12px 22px;border-top:1px solid var(--p-line);font-size:11px;color:var(--p-muted)}
+.hp-checkout-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:20px;align-items:start}.hp-checkout-layout>div,.hp-checkout-layout>aside{min-width:0}.hp-reservation{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;margin:0}.hp-reservation dt{font-size:10px;color:var(--p-muted);text-transform:uppercase;font-weight:750;letter-spacing:.05em;margin-bottom:7px}.hp-reservation dd{margin:0;font-size:12px;font-weight:700;overflow-wrap:anywhere}.hp-reservation .hp-guest{grid-column:1/-1;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--p-line);padding-bottom:16px}.hp-reservation .hp-guest strong{display:block;font-size:17px;letter-spacing:-.02em}.hp-reservation .hp-guest small{color:var(--p-muted);font-size:11px}.hp-bill{display:grid;gap:14px}.hp-bill-line{display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:12px}.hp-bill-line span{color:var(--p-muted)}.hp-bill-line strong{font-variant-numeric:tabular-nums;white-space:nowrap}.hp-bill-total{display:block;padding-top:18px;border-top:1px solid var(--p-line);margin-top:4px}.hp-bill-total span{font-size:11px;text-transform:uppercase;letter-spacing:.07em}.hp-bill-total strong{display:block;font-size:32px;letter-spacing:-.04em;margin-top:5px;color:var(--p-text)}.hp-method{padding:11px 13px;background:var(--p-soft);border-radius:9px;border:1px solid var(--p-line);display:flex;justify-content:space-between;gap:10px;font-size:11px}.hp-method span{color:var(--p-muted)}.hp-consumos{min-width:520px}
+@media(max-width:1100px){.hp-grid{grid-template-columns:1fr 1fr}.hp-users-layout{grid-template-columns:1fr}.hp-users-layout .hp-form{grid-template-columns:1fr 1fr}.hp-users-layout .hp-form-footer,.hp-users-layout .hp-profile-info{grid-column:1/-1}.hp-hero{align-items:flex-start;flex-direction:column}}
+@media(max-width:780px){.hp-page{padding-top:14px}.hp-hero{padding:22px 19px;border-radius:16px}.hp-stats{grid-template-columns:1fr;gap:10px}.hp-stat{padding:17px 19px}.hp-stat strong{font-size:28px;margin:9px 0 5px}.hp-grid,.hp-checkout-layout{grid-template-columns:1fr}.hp-users-layout .hp-form{grid-template-columns:1fr}.hp-user-stats{grid-template-columns:repeat(3,1fr)}.hp-user-stats .hp-stat{padding:14px 12px}.hp-user-stats .hp-stat strong{font-size:25px}.hp-panel-head,.hp-pad{padding:18px}.hp-toolbar{padding:15px;gap:10px}.hp-field.grow{min-width:180px}.hp-toolbar .hp-field{flex:1;min-width:130px}.hp-toolbar .hp-field.grow{flex-basis:100%}.hp-two{grid-template-columns:1fr}.hp-reservation{grid-template-columns:1fr 1fr;gap:15px}.hp-reservation>div:nth-child(2){grid-column:1/-1}.hp-form-footer{align-items:stretch;flex-direction:column-reverse}.hp-checkout-layout{gap:0}.hp-hero .hp-actions{width:100%}}
+@media(prefers-reduced-motion:reduce){.hp *{animation:none!important;transition:none!important}}
 
-    <section class="usuarios-panel">
-        <div class="usuarios-panel-header">
-            <div>
-                <h2>Novo usuário</h2>
-                <p>Crie uma conta e escolha o perfil de acesso adequado.</p>
-            </div>
+</style>
+{% macro dinheiro(v) -%}{{ '{:,.2f}'.format(v|default(0,true)).replace(',','_').replace('.',',').replace('_','.') }}{%- endmacro %}
+{% macro csrf() %}{% if csrf_token is defined %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endif %}{% endmacro %}
+{% macro icone(n) %}<svg aria-hidden="true" viewBox="0 0 24 24">{% if n=='money' %}<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v1m12 4v1"/>{% elif n=='download' %}<path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/>{% elif n=='search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>{% elif n=='arrow' %}<path d="M5 12h14m-6-6 6 6-6 6"/>{% elif n=='users' %}<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/>{% elif n=='eye' %}<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>{% elif n=='shield' %}<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6zM8 12l3 3 5-6"/>{% elif n=='file' %}<path d="M5 3h9l5 5v13H5zM14 3v6h5M8 13h8m-8 4h5"/>{% elif n=='back' %}<path d="M19 12H5m6-6-6 6 6 6"/>{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>{% endif %}</svg>{% endmacro %}
 
-            <a href="{{ url_for('dashboard') }}" class="btn">
-                ← Voltar aos módulos
-            </a>
-        </div>
-
-        <form method="POST" action="{{ url_for('usuarios') }}" class="form-grid" id="usuarioForm">
-
-            <div class="form-group">
-                <label for="nome">Nome completo</label>
-                <input
-                    class="form-control"
-                    id="nome"
-                    name="nome"
-                    type="text"
-                    placeholder="Digite o nome completo"
-                    maxlength="120"
-                    autocomplete="name"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="usuario">Usuário</label>
-                <input
-                    class="form-control"
-                    id="usuario"
-                    name="usuario"
-                    type="text"
-                    placeholder="Digite o usuário"
-                    maxlength="60"
-                    autocomplete="username"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="senha">Senha</label>
-
-                <div class="password-box">
-                    <input
-                        class="form-control"
-                        id="senha"
-                        name="senha"
-                        type="password"
-                        placeholder="Digite uma senha"
-                        minlength="6"
-                        maxlength="120"
-                        autocomplete="new-password"
-                        required
-                    >
-
-                    <button
-                        type="button"
-                        class="password-toggle"
-                        id="passwordToggle"
-                        aria-label="Mostrar senha"
-                        title="Mostrar senha"
-                    >
-                        👁️
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="perfil">Perfil de acesso</label>
-
-                <select class="form-control" id="perfil" name="perfil" required>
-                    <option value="" disabled selected>Selecione o perfil</option>
-                    <option value="Administrador">Administrador</option>
-                    <option value="RH">RH</option>
-                    <option value="Porteiro">Porteiro</option>
-                </select>
-            </div>
-
-            <div class="submit-area">
-                <button type="submit" class="btn primary">
-                    Criar usuário
-                </button>
-            </div>
-        </form>
-
-        <div class="perfil-info" id="perfilInfo">
-            <strong>Selecione um perfil</strong> para visualizar os módulos permitidos.
-        </div>
-    </section>
-
-    <section class="usuarios-panel">
-        <div class="usuarios-panel-header">
-            <div>
-                <h2>Usuários cadastrados</h2>
-                <p>Consulte os usuários, perfis e situação de acesso.</p>
-            </div>
-        </div>
-
-        <div class="table-wrapper">
-            <table class="usuarios-table">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Usuário</th>
-                        <th>Perfil</th>
-                        <th>Situação</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for u in dados %}
-                    {% set perfil_usuario = (u.perfil or '')|lower %}
-                    <tr>
-                        <td>{{ u.nome }}</td>
-                        <td>{{ u.usuario }}</td>
-                        <td>
-                            <span class="perfil-badge perfil-{{ perfil_usuario }}">
-                                {{ u.perfil }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if u.ativo %}
-                            <span class="status-badge status-ativo">Ativo</span>
-                            {% else %}
-                            <span class="status-badge status-inativo">Inativo</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="empty-state">
-                            Nenhum usuário cadastrado.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-</div>
-{% endblock %}
-
-{% block extra_js %}
+{% set lista=dados|list %}
+{% set ativos=lista|selectattr('ativo')|list|length %}
+<main class="hp hp-page" id="hpUsers">
+ <header class="hp-hero"><div><span class="hp-kicker">Administração · Controle de acesso</span><h1>Usuários e permissões</h1><p>Crie contas individuais e atribua o perfil adequado às atividades de cada pessoa.</p></div><a class="hp-btn hp-inverse" href="{{ url_for('dashboard') }}">{{ icone('back') }}Voltar aos módulos</a></header>
+ <section class="hp-stats hp-user-stats" aria-label="Resumo dos usuários">{% for label,value in [('Total de contas',lista|length),('Contas ativas',ativos),('Contas inativas',(lista|length)-ativos)] %}<div class="hp-stat"><div class="hp-stat-top"><span>{{ label }}</span></div><strong>{{ value }}</strong></div>{% endfor %}</section>
+ <div class="hp-users-layout">
+  <section class="hp-panel" aria-labelledby="hpUserFormTitle"><div class="hp-panel-head"><div><h2 id="hpUserFormTitle">Novo usuário</h2><p class="hp-sub">Os campos abaixo são obrigatórios.</p></div>{{ icone('users') }}</div><div class="hp-pad"><form method="post" action="{{ url_for('usuarios') }}" class="hp-form" id="hpUserForm">{{ csrf() }}
+   <div class="hp-field"><label for="hpUserName">Nome completo</label><input id="hpUserName" name="nome" maxlength="120" autocomplete="name" required placeholder="Nome da pessoa responsável"></div>
+   <div class="hp-field"><label for="hpUserLogin">Usuário de acesso</label><input id="hpUserLogin" name="usuario" maxlength="60" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="Ex.: joao.silva"></div>
+   <div class="hp-field"><label for="hpUserPassword">Senha inicial</label><div class="hp-password"><input id="hpUserPassword" name="senha" type="password" minlength="12" maxlength="128" autocomplete="new-password" aria-describedby="hpPasswordHelp" required placeholder="De 12 a 128 caracteres"><button type="button" class="hp-btn hp-eye" id="hpUserEye" aria-label="Mostrar senha" aria-pressed="false">{{ icone('eye') }}</button></div><p class="hp-help" id="hpPasswordHelp">Use uma senha longa e exclusiva. Compartilhe a credencial somente com o titular da conta.</p></div>
+   <div class="hp-field"><label for="hpUserProfile">Perfil de acesso</label><select name="perfil" id="hpUserProfile" required aria-controls="hpProfileInfo"><option value="" selected disabled>Selecione o perfil</option>{% for perfil in perfis|default(['Administrador','RH','Porteiro']) %}<option value="{{ perfil }}">{{ perfil }}</option>{% endfor %}</select></div>
+   <div class="hp-hint hp-profile-info" id="hpProfileInfo" role="status" aria-live="polite">{{ icone('shield') }}<div><h3 id="hpProfileTitle">Defina as permissões</h3><p id="hpProfileText">Selecione um perfil para consultar os módulos disponíveis.</p></div></div>
+   <div class="hp-form-footer"><button type="submit" class="hp-btn hp-primary">{{ icone('users') }}Criar usuário</button></div>
+  </form></div></section>
+  <section class="hp-panel" aria-labelledby="hpUserListTitle"><div class="hp-panel-head"><div><h2 id="hpUserListTitle">Usuários cadastrados</h2><p class="hp-sub">Consulte os perfis e a situação das contas.</p></div><span class="hp-count">{{ lista|length }} conta(s)</span></div>
+   <form class="hp-toolbar" id="hpUserFilters" role="search"><div class="hp-field grow"><label for="hpUserSearch">Nome ou usuário</label><div class="hp-search">{{ icone('search') }}<input id="hpUserSearch" type="search" placeholder="Pesquisar pessoa ou login"></div></div><div class="hp-field"><label for="hpFilterProfile">Perfil</label><select id="hpFilterProfile"><option value="">Todos</option><option>Administrador</option><option>RH</option><option>Porteiro</option></select></div><div class="hp-field"><label for="hpFilterStatus">Situação</label><select id="hpFilterStatus"><option value="">Todas</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div><button type="reset" class="hp-btn hp-small">Limpar</button></form>
+   <div class="hp-table-wrap" role="region" aria-label="Lista de usuários" tabindex="0"><table class="hp-users-table"><thead><tr><th scope="col">Pessoa / usuário</th><th scope="col">Perfil</th><th scope="col">Situação</th></tr></thead><tbody>{% for u in lista %}<tr class="hp-user-row" data-profile="{{ (u.perfil or '')|trim|lower }}" data-status="{{ 'ativo' if u.ativo else 'inativo' }}"><td><div class="hp-person"><span class="hp-avatar" aria-hidden="true">{{ (u.nome or '?')[:1]|upper }}</span><div><strong>{{ u.nome }}</strong><small>{{ u.usuario }}</small></div></div></td><td><span class="hp-pill" data-tone="{{ 'blue' if (u.perfil or '')|lower=='administrador' else 'warn' if (u.perfil or '')|lower=='porteiro' else 'neutral' }}">{{ u.perfil or 'Sem perfil' }}</span></td><td><span class="hp-pill" data-tone="{{ 'good' if u.ativo else 'neutral' }}">{{ 'Ativo' if u.ativo else 'Inativo' }}</span></td></tr>{% endfor %}</tbody></table></div>
+   <div class="hp-empty" id="hpUsersEmpty" {% if lista %}hidden{% endif %}><strong>Nenhum usuário encontrado</strong><p>Cadastre uma conta ou ajuste os filtros da pesquisa.</p></div><p class="hp-users-count" id="hpUserResult" role="status" aria-live="polite">{{ lista|length }} conta(s) exibida(s).</p>
+  </section>
+ </div>
+</main>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const perfilSelect = document.getElementById("perfil");
-        const perfilInfo = document.getElementById("perfilInfo");
-        const senhaInput = document.getElementById("senha");
-        const passwordToggle = document.getElementById("passwordToggle");
-
-        const permissoes = {
-            Administrador: {
-                titulo: "Administrador",
-                descricao: "Acesso completo a todos os módulos, usuários, auditoria e backup."
-            },
-            RH: {
-                titulo: "RH",
-                descricao: "Acesso aos módulos Hóspedes, Quartos, Reservas e Governança."
-            },
-            Porteiro: {
-                titulo: "Porteiro",
-                descricao: "Acesso aos módulos Controle de cartões e Calendário."
-            }
-        };
-
-        perfilSelect.addEventListener("change", function () {
-            const configuracao = permissoes[this.value];
-
-            if (!configuracao) {
-                perfilInfo.innerHTML =
-                    "<strong>Selecione um perfil</strong> para visualizar os módulos permitidos.";
-                return;
-            }
-
-            perfilInfo.innerHTML =
-                "<strong>" + configuracao.titulo + ":</strong> " +
-                configuracao.descricao;
-        });
-
-        passwordToggle.addEventListener("click", function () {
-            const mostrar = senhaInput.type === "password";
-
-            senhaInput.type = mostrar ? "text" : "password";
-            passwordToggle.textContent = mostrar ? "🙈" : "👁️";
-            passwordToggle.setAttribute(
-                "aria-label",
-                mostrar ? "Ocultar senha" : "Mostrar senha"
-            );
-            passwordToggle.setAttribute(
-                "title",
-                mostrar ? "Ocultar senha" : "Mostrar senha"
-            );
-
-            senhaInput.focus();
-        });
-    });
+(function(){
+ 'use strict';const root=document.getElementById('hpUsers');const password=root.querySelector('#hpUserPassword');const eye=root.querySelector('#hpUserEye');
+ eye.addEventListener('click',()=>{const show=password.type==='password';password.type=show?'text':'password';eye.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');eye.setAttribute('aria-pressed',String(show));password.focus();});
+ const profiles={Administrador:['Administrador','Acesso a todos os módulos, incluindo usuários, auditoria e backup.'],RH:['Recursos humanos','Dashboard, Hóspedes, Quartos, Reservas e Governança.'],Porteiro:['Portaria','Dashboard, Controle de cartões e Calendário.']};
+ root.querySelector('#hpUserProfile').addEventListener('change',event=>{const info=profiles[event.target.value]||['Perfil selecionado','As permissões são aplicadas pelo servidor conforme o perfil.'];root.querySelector('#hpProfileTitle').textContent=info[0];root.querySelector('#hpProfileText').textContent=info[1];});
+ const form=root.querySelector('#hpUserFilters'),search=root.querySelector('#hpUserSearch'),profile=root.querySelector('#hpFilterProfile'),status=root.querySelector('#hpFilterStatus'),rows=Array.from(root.querySelectorAll('.hp-user-row'));
+ function normalize(v){return v.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');}
+ const texts=rows.map(row=>normalize(row.querySelector('td').textContent));
+ function filter(){const terms=normalize(search.value.trim()).split(/\s+/).filter(Boolean);let count=0;rows.forEach((row,i)=>{row.hidden=!terms.every(term=>texts[i].includes(term))||Boolean(profile.value&&row.dataset.profile!==profile.value.toLowerCase())||Boolean(status.value&&row.dataset.status!==status.value);if(!row.hidden)count++;});root.querySelector('#hpUsersEmpty').hidden=count>0;root.querySelector('#hpUserResult').textContent=count+' de '+rows.length+' conta(s) exibida(s).';}
+ search.addEventListener('input',filter);profile.addEventListener('change',filter);status.addEventListener('change',filter);form.addEventListener('submit',event=>event.preventDefault());form.addEventListener('reset',()=>{search.value='';profile.value='';status.value='';filter();});filter();
+ root.querySelector('#hpUserForm').addEventListener('submit',event=>{const login=root.querySelector('#hpUserLogin'),name=root.querySelector('#hpUserName');login.value=login.value.trim();name.value=name.value.trim();if(!login.value||!name.value){event.preventDefault();(!name.value?name:login).reportValidity();}});
+ window.addEventListener('pageshow',()=>{password.type='password';eye.setAttribute('aria-label','Mostrar senha');eye.setAttribute('aria-pressed','false');});
+}());
 </script>
 {% endblock %}

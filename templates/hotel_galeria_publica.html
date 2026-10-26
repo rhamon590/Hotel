@@ -1,0 +1,9 @@
+{% set fotos_publicas=galeria_fotos(quarto.id) %}
+{% if fotos_publicas %}
+<section class="hg-public" data-hg-gallery aria-label="Fotos da acomodação">
+  <figure class="hg-main-photo"><img data-hg-main src="{{ url_for('hotel_galeria_foto',quarto_id=quarto.id,token=fotos_publicas[0].token) }}" alt="{{ fotos_publicas[0].alternativo }}"><figcaption data-hg-caption>{{ fotos_publicas[0].alternativo }}</figcaption></figure>
+  {% if fotos_publicas|length > 1 %}<div class="hg-thumbnails" role="group" aria-label="Escolher foto">
+    {% for f in fotos_publicas %}<button type="button" class="hg-thumb" aria-pressed="{{ 'true' if loop.first else 'false' }}" aria-label="Ver foto {{ loop.index }}: {{ f.alternativo }}" data-hg-src="{{ url_for('hotel_galeria_foto',quarto_id=quarto.id,token=f.token) }}" data-hg-alt="{{ f.alternativo }}"><img src="{{ url_for('hotel_galeria_foto',quarto_id=quarto.id,token=f.token) }}" alt="" loading="lazy"></button>{% endfor %}
+  </div>{% endif %}<p class="hg-counter" data-hg-counter role="status" aria-live="polite">Foto 1 de {{ fotos_publicas|length }}</p>
+</section>
+{% else %}<div class="pp-gallery">{{ cama() }}</div>{% endif %}

@@ -1,0 +1,23 @@
+<details class="hc-menu" id="hc-account-menu"><summary aria-label="Abrir opções da minha conta"><span class="hc-avatar hc-avatar-small">{% if conta_perfil and conta_perfil.foto %}<img src="{{ url_for('hotel_conta_foto') }}" alt="">{% else %}{{ conta_iniciais }}{% endif %}</span><span class="hc-menu-name">{{ session.get('nome') }}<small>{{ session.get('perfil')|capitalize }}</small></span><span aria-hidden="true">⌄</span></summary><nav aria-label="Opções da conta"><div class="hc-menu-label">SEU ESPAÇO</div><a href="{{ url_for('hotel_conta') }}">Minha conta <span>→</span></a><a href="{{ url_for('hotel_conta',aba='preferencias') }}">Preferências</a><a href="{{ url_for('hotel_conta',aba='seguranca') }}">Segurança e acessos</a>{% if conta_admin %}<div class="hc-menu-label">ADMINISTRAÇÃO</div><a href="{{ url_for('hotel_administracao') }}">Configurações do sistema <span>→</span></a>{% endif %}<a class="hc-menu-exit" href="{{ url_for('logout') }}">Sair da conta</a></nav></details>
+
+<link rel="stylesheet" href="{{ url_for('static',filename='css/hotel_configuracoes_discretas.css') }}">
+{% if conta_admin %}
+<a id="hc-settings-admin-link" class="hc-settings-gear" href="{{ url_for('hotel_administracao') }}" aria-label="Configurações do sistema" title="Configurações do sistema"{% if request.endpoint in ['hotel_administracao','portal_configurar','hotel_transparencia_admin'] %} aria-current="page"{% endif %}>
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 3-.6 2.1-2 .9-1.9-.5-2 3.5 1.4 1.6v2.8L3 15l2 3.5 1.9-.5 2 .9.6 2.1h4.1l.6-2.1 2-.9 1.9.5 2-3.5-1.4-1.6v-2.8l1.4-1.6-2-3.5-1.9.5-2-.9-.6-2.1Z"/><circle cx="11.55" cy="12" r="3.2"/></svg>
+</a>
+<script>
+(function(){
+  function posicionar(){
+    var gear=document.getElementById('hc-settings-admin-link');
+    var menu=document.getElementById('hc-account-menu');
+    var box=document.querySelector('.main-header .userbox');
+    if(!gear||!box)return;
+    if(menu&&menu.parentElement===box)menu.insertAdjacentElement('afterend',gear);
+    else box.insertBefore(gear,box.firstChild);
+    gear.setAttribute('data-hc-mounted','1');
+  }
+  posicionar();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',posicionar,{once:true});
+}());
+</script>
+{% endif %}

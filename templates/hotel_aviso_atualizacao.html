@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% set page_title='Atualização de segurança' %}
+{% set page_subtitle='Orientações de acesso e proteção das informações.' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hotel_aviso_atualizacao.css') }}">
+<div class="ha-welcome" aria-hidden="true"><span>HOTEL PRO</span><h2>Um cuidado a mais.<br>Para proteger todos.</h2><p>Atualização das diretrizes de acesso e privacidade.</p></div>
+<dialog open id="hotel-update-dialog" class="ha-dialog" aria-labelledby="ha-title" aria-describedby="ha-intro">
+  <div class="ha-head">
+    <div class="ha-headline"><span class="ha-brand">HOTEL PRO <span>/ SEGURANÇA</span></span><span class="ha-badge">Ação necessária</span></div>
+    <span class="ha-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8.5 12 2.3 2.3 4.7-4.7"/></svg></span>
+    <p class="ha-kicker">Mais cuidado com as informações</p>
+    <h1 id="ha-title">Atualizamos nossas diretrizes de segurança e privacidade.</h1>
+  </div>
+  <div class="ha-content">
+    <p id="ha-intro">Olá, <strong>{{ session.get('nome') or 'bem-vindo(a)' }}</strong>. Estamos aprimorando o sistema e nossas práticas de uso para fortalecer a proteção das informações e apoiar a adequação à Lei Geral de Proteção de Dados Pessoais — LGPD.</p>
+    <div class="ha-next"><span class="ha-next-icon" aria-hidden="true">↗</span><div><strong>Sua próxima etapa é criar uma nova senha.</strong><p>Conclua a atualização da sua conta para continuar utilizando os módulos.</p></div></div>
+    <div class="ha-rules">
+      <div class="ha-rule"><span aria-hidden="true">01</span><div><h2>Uma senha só sua</h2><p>Escolha uma senha exclusiva, com pelo menos 12 caracteres. Mantenha-a em sigilo e não a compartilhe com colegas ou terceiros.</p></div></div>
+      <div class="ha-rule"><span aria-hidden="true">02</span><div><h2>Cada pessoa, sua própria conta</h2><p>Utilize seu acesso individual para que as operações sejam identificadas corretamente. Consulte e compartilhe dados apenas para suas atividades profissionais e quando autorizado.</p></div></div>
+      <div class="ha-rule"><span aria-hidden="true">03</span><div><h2>Ao terminar, encerre a sessão</h2><p>Esse cuidado é especialmente importante em computadores compartilhados. Evite deixar sua conta aberta para outras pessoas.</p></div></div>
+    </div>
+    <p class="ha-note">Sua colaboração ajuda a proteger as informações de todos.</p>
+  </div>
+  <div class="ha-bottom">
+    <a id="ha-continue" class="ha-primary" href="{{ url_for('hotel_alterar_senha') }}"><span class="ha-spinner" aria-hidden="true"></span><span data-ha-label>Entendi e vou alterar minha senha</span><span class="ha-arrow" aria-hidden="true">→</span></a>
+    <div class="ha-links"><a href="{{ url_for('politica_privacidade') }}" target="_blank" rel="noopener">Consultar Política de Privacidade <span aria-hidden="true">↗</span><span class="ha-sr"> (abre em outra aba)</span></a><a href="{{ url_for('logout') }}">Sair da conta</a></div>
+    <p class="ha-footnote">Este é um comunicado de atualização. A confirmação não representa consentimento para novos usos dos seus dados.</p>
+  </div>
+</dialog>
+<script defer src="{{ url_for('static', filename='js/hotel_aviso_atualizacao.js') }}"></script>
+{% endblock %}

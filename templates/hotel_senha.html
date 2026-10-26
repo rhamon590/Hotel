@@ -1,0 +1,135 @@
+{% extends 'hotel_legal_base.html' %}
+{% set titulo = 'Alterar minha senha' %}
+{% block content %}
+<style>
+.hp-password{--hp-navy:#142b3e;--hp-gold:#edbd53;--hp-line:#dce4eb;max-width:960px;margin:40px auto 48px;display:grid;grid-template-columns:.88fr 1.12fr;border:1px solid var(--hp-line);border-radius:24px;overflow:hidden;background:white;box-shadow:0 20px 65px rgba(19,43,63,.08)}
+.hp-password [hidden]{display:none!important}.hp-password *{box-sizing:border-box}
+.hp-intro{background:radial-gradient(circle at 0 0,rgba(81,133,158,.26),transparent 65%),var(--hp-navy);padding:42px 34px;color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.hp-intro::after{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(255,255,255,.07);border-radius:50%;bottom:-160px;right:-90px;pointer-events:none}
+.hp-lock{width:62px;height:62px;border:1px solid rgba(237,189,83,.35);background:rgba(237,189,83,.08);border-radius:18px;display:grid;place-items:center;color:var(--hp-gold);margin-bottom:32px}.hp-lock svg{width:29px;height:29px}
+.hp-intro .hp-kicker{color:var(--hp-gold)}.hp-kicker{font-size:10px;font-weight:750;letter-spacing:1.7px;text-transform:uppercase;display:block;margin-bottom:12px;color:#657b8c}
+.hp-intro h2{font-size:30px;line-height:1.25;letter-spacing:-.7px;color:#fff;margin:0 0 17px}.hp-intro p{font-size:14px;line-height:1.8;color:#c3d2dd;margin:0 0 24px}
+.hp-tips{padding:0;margin:8px 0 30px;list-style:none;display:grid;gap:17px}.hp-tips li{font-size:12px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;color:#d9e4eb}.hp-dot{height:7px;width:7px;min-width:7px;background:var(--hp-gold);border-radius:50%;margin-top:6px}
+.hp-intro-foot{padding-top:21px;border-top:1px solid rgba(255,255,255,.13);margin-top:auto;font-size:11px;line-height:1.8;color:#a8bdcc}
+.hp-form-panel{padding:40px 38px}.hp-form-panel h1{font-size:29px;line-height:1.2;letter-spacing:-.8px;margin:0 0 10px;color:#183246}.hp-description{font-size:13px;line-height:1.7;color:#64798b;margin:0 0 25px}
+.hp-notice{display:flex;gap:10px;padding:12px 14px;background:#fff8e8;border:1px solid #f1dfa9;border-radius:10px;color:#765913;font-size:12px;line-height:1.7;margin:0 0 24px}.hp-error{padding:12px 14px;border:1px solid #efc4c1;border-radius:10px;background:#fff1ef;color:#9c322b;font-size:13px;margin-bottom:20px}
+.hp-field{margin:0 0 20px}.hp-field label{font-size:12px;color:#294155;font-weight:700;display:block;margin:0 0 8px}.hp-input-wrap{position:relative}.hp-password .hp-field input{display:block;margin:0;width:100%;height:49px;min-height:49px;padding:12px 82px 12px 13px;background:#fbfcfd;border:1px solid #cbd7e1;border-radius:10px;font-size:14px;color:#183246;transition:border-color .15s,box-shadow .15s}.hp-password .hp-field input:focus{outline:none;border-color:#327597;box-shadow:0 0 0 3px rgba(50,117,151,.12);background:#fff}.hp-password .hp-field input[aria-invalid="true"]{border-color:#bd6159}
+.hp-password .hp-reveal{position:absolute;right:6px;top:6px;min-height:37px;padding:7px 10px;border:0;border-radius:6px;background:transparent;color:#35617d;font-size:11px;font-weight:700;cursor:pointer}.hp-reveal:hover{background:#eaf0f5}.hp-password .hp-reveal:focus-visible{outline:2px solid #327597;outline-offset:0}
+.hp-field-meta{display:flex;justify-content:space-between;gap:12px;margin-top:7px;font-size:11px;color:#718393;line-height:1.5}.hp-field-meta span:first-child{min-width:0}.hp-counter{white-space:nowrap;font-variant-numeric:tabular-nums}.hp-checks{padding:13px 14px;border:1px solid #e3eaf0;border-radius:10px;background:#f7f9fb;display:grid;gap:6px;margin:2px 0 23px}.hp-checks p{font-size:11px;line-height:1.6;margin:0;display:flex;gap:8px;color:#627687}.hp-check-indicator{display:inline-block;width:13px;text-align:center;font-weight:750}.hp-checks .hp-met{color:#16704e}.hp-caps{color:#9b6917;font-size:11px;margin-top:6px}
+.hp-password .hp-submit{display:flex;width:100%;min-height:48px;border-radius:10px;font-size:13px;font-weight:700;background:#1d526f;color:#fff;border:1px solid #1d526f;gap:9px;transition:background .15s,transform .15s}.hp-submit:hover{background:#123e57}.hp-submit:active{transform:translateY(1px)}.hp-password .hp-submit:disabled{opacity:.75;cursor:wait}.hp-spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:hp-spin .8s linear infinite}.hp-form-footer{text-align:center;font-size:11px;color:#788998;line-height:1.8;margin:14px 0 0}.hp-back{display:inline-block;margin-top:17px;font-size:12px;color:#46677c;text-decoration:none}.hp-back:hover{text-decoration:underline}.hp-password button:focus-visible,.hp-back:focus-visible{outline:3px solid #c08b1c;outline-offset:3px}
+@keyframes hp-spin{to{transform:rotate(360deg)}}
+@media(max-width:760px){.hp-password{grid-template-columns:1fr;max-width:540px;margin:16px auto 30px;border-radius:19px}.hp-intro{padding:24px 25px}.hp-lock{width:43px;height:43px;border-radius:12px;margin-bottom:18px}.hp-lock svg{width:23px;height:23px}.hp-intro h2{font-size:23px;margin-bottom:8px}.hp-intro p{margin:0;font-size:12px}.hp-tips,.hp-intro-foot{display:none}.hp-form-panel{padding:27px 25px}.hp-form-panel h1{font-size:26px}}
+@media(prefers-reduced-motion:reduce){.hp-password input,.hp-submit{transition:none}.hp-spinner{animation:none}}
+</style>
+<div class="hp-password">
+    <aside class="hp-intro" aria-labelledby="hp-intro-title">
+        <div class="hp-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div>
+        <span class="hp-kicker">Segurança da conta</span>
+        <h2 id="hp-intro-title">Um cuidado a mais<br>com seu acesso.</h2>
+        <p>Escolha uma senha exclusiva para manter o controle da sua conta no sistema.</p>
+        <ul class="hp-tips"><li><span class="hp-dot" aria-hidden="true"></span>Prefira uma frase longa, fácil de lembrar e difícil de adivinhar.</li><li><span class="hp-dot" aria-hidden="true"></span>Evite nomes, datas pessoais e senhas utilizadas em outros serviços.</li><li><span class="hp-dot" aria-hidden="true"></span>Mantenha sua senha em sigilo e use apenas sua própria conta.</li></ul>
+        <div class="hp-intro-foot">ORCA · Gestão de hospedagens<br>Seu acesso merece atenção.</div>
+    </aside>
+    <section class="hp-form-panel" aria-labelledby="hp-title">
+        <span class="hp-kicker">Proteção da sua conta</span>
+        <h1 id="hp-title">Alterar minha senha</h1>
+        <p class="hp-description">Confirme sua senha atual e defina a nova senha de acesso.</p>
+        {% if session.get('_hotel_trocar_senha') %}<div class="hp-notice"><span aria-hidden="true">!</span><span>Para continuar, substitua a senha padrão. Você poderá acessar os demais módulos após a alteração.</span></div>{% endif %}
+        {% if erro %}<div class="hp-error" role="alert">{{ erro }}</div>{% endif %}
+        <form method="post" id="hp-password-form">
+            <input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">
+            <div class="hp-field"><label for="hp-current">Senha atual</label><div class="hp-input-wrap"><input type="password" id="hp-current" name="senha_atual" autocomplete="current-password" autocapitalize="none" spellcheck="false" required><button type="button" class="hp-reveal" data-reveal="hp-current" aria-controls="hp-current" aria-label="Mostrar senha atual" aria-pressed="false" hidden>Mostrar</button></div><p class="hp-caps" id="hp-caps-current" hidden>Caps Lock está ativado.</p></div>
+            <div class="hp-field"><label for="hp-new">Nova senha</label><div class="hp-input-wrap"><input type="password" id="hp-new" name="nova_senha" autocomplete="new-password" autocapitalize="none" spellcheck="false" minlength="12" maxlength="128" aria-describedby="hp-new-help hp-checks" required><button type="button" class="hp-reveal" data-reveal="hp-new" aria-controls="hp-new" aria-label="Mostrar nova senha" aria-pressed="false" hidden>Mostrar</button></div><div class="hp-field-meta"><span id="hp-new-help">Use de 12 a 128 caracteres.</span><span id="hp-length" class="hp-counter" hidden>0 / 12 mín.</span></div><p class="hp-caps" id="hp-caps-new" hidden>Caps Lock está ativado.</p></div>
+            <div class="hp-field"><label for="hp-confirm">Confirme a nova senha</label><div class="hp-input-wrap"><input type="password" id="hp-confirm" name="confirmar_senha" autocomplete="new-password" autocapitalize="none" spellcheck="false" minlength="12" maxlength="128" aria-describedby="hp-confirm-help" required><button type="button" class="hp-reveal" data-reveal="hp-confirm" aria-controls="hp-confirm" aria-label="Mostrar confirmação de senha" aria-pressed="false" hidden>Mostrar</button></div><div class="hp-field-meta"><span id="hp-confirm-help" role="status" aria-live="polite">Digite novamente a senha escolhida.</span></div><p class="hp-caps" id="hp-caps-confirm" hidden>Caps Lock está ativado.</p></div>
+            <div class="hp-checks" id="hp-checks" aria-label="Requisitos da nova senha" hidden><p id="hp-rule-length"><span class="hp-check-indicator" aria-hidden="true">○</span><span>Pelo menos 12 caracteres</span></p><p id="hp-rule-different"><span class="hp-check-indicator" aria-hidden="true">○</span><span>Diferente da senha atual</span></p><p id="hp-rule-match"><span class="hp-check-indicator" aria-hidden="true">○</span><span>Confirmação igual à nova senha</span></p></div>
+            <button class="hp-submit" id="hp-save" type="submit"><span class="hp-spinner" id="hp-spinner" aria-hidden="true" hidden></span><span id="hp-save-label">Salvar nova senha</span><span aria-hidden="true" id="hp-save-arrow">→</span></button>
+            <p class="hp-form-footer">Após salvar, você fará login novamente com a nova senha.</p>
+            {% if not session.get('_hotel_trocar_senha') %}<a class="hp-back" href="{{ url_for('dashboard') }}">← Voltar ao sistema</a>{% endif %}
+        </form>
+    </section>
+</div>
+<script>
+(function () {
+    'use strict';
+    const form = document.getElementById('hp-password-form');
+    if (!form) return;
+    const current = document.getElementById('hp-current');
+    const next = document.getElementById('hp-new');
+    const confirm = document.getElementById('hp-confirm');
+    const length = document.getElementById('hp-length');
+    const help = document.getElementById('hp-confirm-help');
+    const save = document.getElementById('hp-save');
+    let submitting = false;
+    document.querySelectorAll('[data-reveal]').forEach(function (button) {
+        button.hidden = false;
+        const field = document.getElementById(button.dataset.reveal);
+        const label = button.getAttribute('aria-label').replace(/^Mostrar /, '');
+        button.addEventListener('click', function () {
+            const visible = field.type === 'password';
+            field.type = visible ? 'text' : 'password';
+            button.textContent = visible ? 'Ocultar' : 'Mostrar';
+            button.setAttribute('aria-pressed', String(visible));
+            button.setAttribute('aria-label', (visible ? 'Ocultar ' : 'Mostrar ') + label);
+        });
+    });
+    function rule(id, ok) {
+        const row = document.getElementById(id);
+        row.classList.toggle('hp-met', ok);
+        row.querySelector('.hp-check-indicator').textContent = ok ? '✓' : '○';
+        row.setAttribute('aria-label', row.lastElementChild.textContent + (ok ? ': atendido' : ': pendente'));
+    }
+    function update() {
+        const count = Array.from(next.value).length;
+        length.textContent = count < 12 ? count + ' / 12 mín.' : count + ' caracteres';
+        const different = !!next.value && !!current.value && next.value !== current.value;
+        const matches = !!next.value && confirm.value === next.value;
+        rule('hp-rule-length', count >= 12 && count <= 128);
+        rule('hp-rule-different', different);
+        rule('hp-rule-match', matches);
+        next.setCustomValidity(next.value && next.value === current.value ? 'Escolha uma senha diferente da senha atual.' : (next.value && count < 12 ? 'A nova senha deve ter pelo menos 12 caracteres.' : ''));
+        confirm.setCustomValidity(confirm.value && !matches ? 'A confirmação precisa ser igual à nova senha.' : '');
+        if (confirm.value) {
+            help.textContent = matches ? 'As senhas coincidem.' : 'A confirmação ainda está diferente.';
+            help.style.color = matches ? '#16704e' : '#a34238';
+            confirm.setAttribute('aria-invalid', String(!matches));
+        } else {
+            help.textContent = 'Digite novamente a senha escolhida.';
+            help.style.color = '';
+            confirm.removeAttribute('aria-invalid');
+        }
+    }
+    [current, next, confirm].forEach(function (field) {
+        field.addEventListener('input', update);
+        field.addEventListener('change', update);
+        const caps = document.getElementById('hp-caps-' + (field === current ? 'current' : field === next ? 'new' : 'confirm'));
+        function capsState(event) { caps.hidden = !event.getModifierState || !event.getModifierState('CapsLock'); }
+        field.addEventListener('keydown', capsState);
+        field.addEventListener('keyup', capsState);
+        field.addEventListener('blur', function () { caps.hidden = true; });
+    });
+    form.addEventListener('submit', function (event) {
+        update();
+        if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); return; }
+        if (submitting) { event.preventDefault(); return; }
+        submitting = true;
+        save.disabled = true;
+        save.setAttribute('aria-busy', 'true');
+        document.getElementById('hp-spinner').hidden = false;
+        document.getElementById('hp-save-arrow').hidden = true;
+        document.getElementById('hp-save-label').textContent = 'Salvando…';
+    });
+    window.addEventListener('pageshow', function () {
+        submitting = false;
+        save.disabled = false;
+        save.removeAttribute('aria-busy');
+        document.getElementById('hp-spinner').hidden = true;
+        document.getElementById('hp-save-arrow').hidden = false;
+        document.getElementById('hp-save-label').textContent = 'Salvar nova senha';
+        update();
+    });
+    document.getElementById('hp-checks').hidden = false;
+    length.hidden = false;
+    update();
+}());
+</script>
+{% endblock %}

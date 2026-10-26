@@ -1,0 +1,24 @@
+#hc-settings-shortcuts.hc-settings-organized{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:var(--surface,#fff);border-bottom:1px solid var(--border,#dde4ee);box-sizing:border-box;font-family:inherit;color:var(--text,#162638)}
+#hc-settings-shortcuts.hc-settings-organized a{display:inline-flex;align-items:center;text-decoration:none;box-sizing:border-box;min-height:46px;border-radius:13px;gap:12px;line-height:1.4;transition:box-shadow .18s ease,background .18s ease}
+#hc-settings-shortcuts .hc-quick-admin{background:#2563eb;color:#fff;padding:12px 18px;border:1px solid #2563eb;box-shadow:0 5px 15px #2563eb24;min-width:360px;max-width:100%}
+#hc-settings-shortcuts .hc-quick-admin:hover{background:#1d4ed8;box-shadow:0 6px 20px #2563eb30}
+#hc-settings-shortcuts .hc-shortcut-icon{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;background:#ffffff1f;border-radius:11px;flex-shrink:0}
+#hc-settings-shortcuts svg{width:21px;height:21px;flex-shrink:0}#hc-settings-shortcuts .hc-shortcut-icon svg{width:25px;height:25px}
+#hc-settings-shortcuts .hc-shortcut-copy{display:grid;gap:3px;min-width:0}#hc-settings-shortcuts .hc-shortcut-copy strong{font-size:16px;font-weight:800;color:#fff}#hc-settings-shortcuts .hc-shortcut-copy small{font-size:11px;font-weight:500;color:#f0f5ff;white-space:normal}
+#hc-settings-shortcuts .hc-shortcut-arrow{font-size:23px;margin-left:auto;padding-left:10px}
+#hc-settings-shortcuts .hc-quick-account{background:var(--surface-2,#f5f7fb);color:var(--text,#162638);border:1px solid var(--border,#dde4ee);padding:11px 18px;font-size:13px;font-weight:750}
+#hc-settings-shortcuts .hc-quick-account:hover{box-shadow:0 3px 12px #142a4312}#hc-settings-shortcuts a:focus-visible{outline:3px solid #1d4ed8;outline-offset:3px}#hc-settings-shortcuts a[aria-current=page]{outline:2px solid #77a7ff;outline-offset:3px}
+#hc-settings-shortcuts .hc-shortcut-personal{display:grid;gap:4px}#hc-settings-shortcuts .hc-shortcut-personal strong{font-size:14px}#hc-settings-shortcuts .hc-shortcut-personal small{font-size:11px;color:var(--muted,#697b8e)}
+.hc-organized .hc-layout{grid-template-columns:270px minmax(0,1fr)}.hc-organized .hc-nav-caption{padding:12px 12px 9px;font-size:9px;letter-spacing:1.3px;font-weight:800;color:var(--hc-muted,#697b8e)}
+.hc-organized-sidebar .hc-settings-module{gap:11px}.hc-organized-sidebar .hc-settings-module>span:first-of-type{min-width:0;flex:1}.hc-organized-sidebar .hc-settings-module small{display:block;font-size:10px;line-height:1.6;margin-top:4px;font-weight:450;color:var(--hc-muted,#697b8e)}.hc-organized-sidebar .hc-nav-arrow{font-size:14px;flex:0 0 auto;color:var(--hc-muted,#697b8e)}
+@media(max-width:1100px){.hc-organized .hc-layout{grid-template-columns:235px minmax(0,1fr)}}
+@media(max-width:950px){.hc-organized .hc-layout{grid-template-columns:1fr}.hc-organized .hc-organized-sidebar{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.hc-organized .hc-nav-caption{grid-column:1/-1}.hc-organized .hc-sidebar-note{grid-column:1/-1}.hc-organized .hc-admin-link{grid-column:1/-1}.hc-organized .hc-organized-sidebar a{min-width:0}}
+@media(max-width:620px){
+  #hc-settings-shortcuts.hc-settings-organized{padding:12px 16px;gap:10px;align-items:stretch;flex-wrap:wrap}#hc-settings-shortcuts .hc-quick-admin{min-width:0;width:100%;padding:12px 14px}#hc-settings-shortcuts .hc-shortcut-copy strong{font-size:15px}#hc-settings-shortcuts .hc-shortcut-copy small{font-size:10px}#hc-settings-shortcuts .hc-quick-account{min-width:0;padding:10px 14px;margin-left:auto}#hc-settings-shortcuts .hc-shortcut-personal{justify-content:center}
+}
+@media(max-width:400px){.hc-organized .hc-organized-sidebar{grid-template-columns:1fr}.hc-organized .hc-nav-caption,.hc-organized .hc-sidebar-note,.hc-organized .hc-admin-link{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){#hc-settings-shortcuts.hc-settings-organized a{transition:none}}
+@media print{
+  #hc-settings-shortcuts.hc-settings-organized{display:none}
+}
+.hc-organized .hc-organized-sidebar a{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;text-align:left;min-height:46px}.hc-organized .hc-organized-sidebar a svg{flex-shrink:0}.hc-organized .hc-organized-sidebar .hc-settings-module{min-height:66px}

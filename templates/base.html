@@ -1,10 +1,122 @@
 <!doctype html>
-<html lang="pt-br" data-theme="dark">
+<html lang="pt-br" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>{{ page_title or title or 'Hotel PRO' }}</title>
+    <meta name="color-scheme" content="dark light">
+    <!-- Aplica a preferência antes de desenhar a página. -->
+    <script>
+(function () {
+    'use strict';
+    var root = document.documentElement;
+    var preferenceKey = 'hotelpro-theme-choice-v2';
+    var legacyKey = 'hotelpro-theme';
+    var cookieKey = 'hotelpro_theme_v2';
+    function valid(theme) { return theme === 'light' || theme === 'dark'; }
+    function readStorage(type, key) {
+        try { return window[type].getItem(key); } catch (error) { return null; }
+    }
+    function writeStorage(type, key, value) {
+        try { window[type].setItem(key, value); } catch (error) { /* Usa as demais alternativas disponíveis. */ }
+    }
+    function readCookie() {
+        try {
+            var parts = document.cookie.split(';');
+            for (var i = 0; i < parts.length; i++) {
+                var part = parts[i].trim();
+                if (part.indexOf(cookieKey + '=') === 0) return decodeURIComponent(part.slice(cookieKey.length + 1));
+            }
+        } catch (error) { /* Cookies podem estar bloqueados no navegador. */ }
+        return null;
+    }
+    function parse(raw) {
+        try {
+            var state = JSON.parse(raw);
+            if (state && valid(state.theme) && typeof state.updatedAt === 'number' && Number.isFinite(state.updatedAt)) return state;
+        } catch (error) { /* Preferência antiga ou inválida é ignorada. */ }
+        return null;
+    }
+    var candidates = [parse(readStorage('localStorage', preferenceKey)), parse(readStorage('sessionStorage', preferenceKey)), parse(readCookie())];
+    var saved = null;
+    candidates.forEach(function (item) { if (item && (!saved || item.updatedAt >= saved.updatedAt)) saved = item; });
+    var legacy = readStorage('localStorage', legacyKey);
+    var theme = saved ? saved.theme : (valid(legacy) ? legacy : 'light');
+    var updatedAt = saved ? saved.updatedAt : 0;
+
+    function updateIcon() {
+        var isDark = theme === 'dark';
+        var icon = document.getElementById('themeIcon');
+        var button = document.getElementById('themeToggle');
+        if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+        if (button) {
+            var label = isDark ? 'Ativar tema claro' : 'Ativar tema escuro';
+            button.setAttribute('aria-label', label);
+            button.setAttribute('title', label);
+            button.setAttribute('aria-pressed', String(!isDark));
+            button.setAttribute('data-current-theme', theme);
+        }
+    }
+    function paint() {
+        var changed = root.getAttribute('data-theme') !== theme;
+        if (changed) root.setAttribute('data-theme', theme);
+        if (root.style.colorScheme !== theme) root.style.colorScheme = theme;
+        updateIcon();
+        if (changed) document.dispatchEvent(new CustomEvent('hotelpro:themechange', { detail: { theme: theme } }));
+    }
+    function persist() {
+        var value = JSON.stringify({ theme: theme, updatedAt: updatedAt });
+        writeStorage('localStorage', preferenceKey, value);
+        writeStorage('sessionStorage', preferenceKey, value);
+        // Chave antiga mantida para scripts que apenas consultam a preferência.
+        writeStorage('localStorage', legacyKey, theme);
+        try {
+            document.cookie = cookieKey + '=' + encodeURIComponent(value) + '; Path=/; Max-Age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+        } catch (error) { /* Sessão e armazenamento local seguem como alternativas. */ }
+    }
+    function choose(next) {
+        if (!valid(next)) return;
+        theme = next;
+        updatedAt = Math.max(Date.now(), updatedAt + 1);
+        paint();
+        persist();
+    }
+    function toggle() { choose(theme === 'dark' ? 'light' : 'dark'); }
+    function expose() {
+        // Mantém os nomes usados por páginas e integrações existentes.
+        window.toggleTheme = toggle;
+        window.applyHotelTheme = choose;
+        window.updateThemeIcon = updateIcon;
+    }
+    window.hotelThemeController = { restore: paint, expose: expose, getTheme: function () { return theme; } };
+    expose();
+    paint();
+    // Migra a escolha anterior antes que app.js possa sobrescrever a chave antiga.
+    persist();
+
+    // Um clique gera uma única troca, mesmo se app.js registrar outro listener.
+    document.addEventListener('click', function (event) {
+        var target = event.target;
+        var button = target && target.closest ? target.closest('#themeToggle') : null;
+        if (!button) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        toggle();
+    }, true);
+
+    // Escritas diretas de scripts antigos não substituem a escolha desta página.
+    if (typeof MutationObserver === 'function') {
+        new MutationObserver(function () {
+            if (root.getAttribute('data-theme') !== theme || root.style.colorScheme !== theme) paint();
+        }).observe(root, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+    }
+    document.addEventListener('DOMContentLoaded', function () { expose(); paint(); });
+    window.addEventListener('load', function () { expose(); paint(); });
+    window.addEventListener('pageshow', function () { expose(); paint(); });
+    // Sem listener de storage: mudar outra aba não troca o tema desta tela.
+}());
+</script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -293,12 +405,107 @@
                 font-size:12px;
             }
         }
+
+        /* Acabamento e responsividade do layout base. */
+        html { color-scheme:dark; scroll-padding-top:110px; }
+        html[data-theme="light"] { color-scheme:light; }
+        body {
+            background:
+                radial-gradient(ellipse at 10% 0%, rgba(37,99,235,.09), transparent 48%),
+                var(--bg);
+            line-height:1.5;
+            -webkit-font-smoothing:antialiased;
+        }
+        :root { --focus:#60a5fa; --radius:18px; }
+        html[data-theme="light"] { --focus:#1d4ed8; }
+        a, button, input, select, textarea { -webkit-tap-highlight-color:transparent; }
+        :focus-visible { outline:3px solid var(--focus); outline-offset:4px; }
+        .skip-link {
+            position:fixed; top:12px; left:16px; z-index:2000;
+            padding:12px 18px; border-radius:12px; background:var(--surface);
+            color:var(--text); transform:translateY(-160%);
+        }
+        .skip-link:focus { transform:translateY(0); }
+        .main-header {
+            grid-template-columns:auto minmax(0,1fr) auto;
+            gap:24px; padding:16px 28px;
+            box-shadow:0 4px 24px rgba(0,0,0,.06);
+        }
+        .brand { min-width:0; }
+        .brand-logo { flex-shrink:0; }
+        .brand-text strong { font-size:16px; letter-spacing:1.2px; }
+        .brand-text small { font-size:11px; letter-spacing:.6px; }
+        .header-center { text-align:left; border-left:1px solid var(--border); padding-left:24px; }
+        .header-center h1 { font-size:18px; font-weight:700; overflow-wrap:anywhere; }
+        .header-center p { font-size:12px; }
+        .userbox { min-width:0; flex-wrap:wrap; }
+        .user-info { max-width:180px; min-width:0; }
+        .user-info span { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+        .user-info small { font-size:11px; text-transform:capitalize; }
+        .btn { font-weight:650; transition:background .18s, box-shadow .18s, transform .18s; }
+        .btn:disabled, .btn[aria-disabled="true"] { opacity:.5; cursor:not-allowed; transform:none; }
+        .btn.danger { background:rgba(239,68,68,.10); color:#fca5a5; border:1px solid rgba(239,68,68,.25); }
+        html[data-theme="light"] .btn.danger { color:#b91c1c; }
+        .main { min-width:0; }
+        .page-heading {
+            position:relative; overflow:hidden; padding:24px 26px;
+            border-radius:var(--radius); box-shadow:0 8px 30px rgba(0,0,0,.04);
+        }
+        .page-heading::before { content:""; position:absolute; inset:0 auto 0 0; width:4px; background:linear-gradient(#2563eb,#06b6d4); }
+        .page-heading h2 { font-size:clamp(21px,2.5vw,28px); letter-spacing:-.6px; overflow-wrap:anywhere; }
+        .page-heading p { font-size:14px; }
+        .page-heading .btn { flex-shrink:0; }
+        .flash { display:flex; align-items:flex-start; gap:12px; font-size:14px; font-weight:500; background:var(--surface); }
+        .flash-message { flex:1; min-width:0; overflow-wrap:anywhere; }
+        .flash-close {
+            flex-shrink:0; display:grid; place-items:center; width:32px; height:32px;
+            margin:-4px -5px -4px 0; border:0; border-radius:8px; color:inherit;
+            background:transparent; cursor:pointer; font-size:22px; line-height:1;
+        }
+        .flash-close:hover { background:rgba(127,127,127,.15); }
+        .flashwrap:empty { display:none; }
+        @media (max-width:1200px) {
+            .main-header { gap:16px; }
+            .header-center { padding-left:16px; }
+            .user-info { max-width:120px; }
+        }
+        @media (max-width:1000px) {
+            .main-header { grid-template-columns:auto 1fr; }
+            .header-center { display:none; }
+            .userbox { justify-self:end; }
+        }
+        @media (max-width:760px) {
+            .main-header { position:relative; padding:14px 16px; gap:12px; }
+            .page-heading { padding:20px; gap:16px; }
+            .user-info { display:none; }
+        }
+        @media (max-width:520px) {
+            .brand-text { display:block; }
+            .brand-text strong { font-size:13px; letter-spacing:.5px; }
+            .main-header { grid-template-columns:1fr; }
+            .brand { justify-self:start; }
+            .userbox { width:100%; justify-content:flex-start; justify-self:stretch; padding-top:12px; border-top:1px solid var(--border); }
+            .userbox .btn { min-height:44px; font-size:13px; padding:10px 12px; }
+            .userbox .btn.danger { margin-left:auto; }
+        }
+        @media (prefers-reduced-motion:reduce) {
+            .btn, .skip-link { transition:none; }
+            .btn:hover { transform:none; }
+        }
+        @media print {
+            body { background:white; color:black; }
+            .main-header, .skip-link, .flash-close, .page-heading .btn { display:none !important; }
+            .main { width:100% !important; padding:0 !important; }
+            .page-heading { background:white; color:black; box-shadow:none; border:0; padding:0 0 16px; }
+            .page-heading::before { display:none; }
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
+<a class="skip-link" href="#main-content">Pular para o conteúdo</a>
 
 {% set perfil = (session.get('perfil') or '')|lower|trim %}
 {% set endpoint = request.endpoint or '' %}
@@ -317,7 +524,7 @@
         </a>
 
         <div class="header-center">
-            <h1>{{ page_title or 'Hotel PRO' }}</h1>
+            <h1>{{ page_title or title or 'Hotel PRO' }}</h1>
             <p>{{ page_subtitle or 'Sistema de Gestão Hoteleira' }}</p>
         </div>
 
@@ -329,13 +536,13 @@
                 </a>
             {% endif %}
 
-            <button type="button" onclick="toggleTheme()" class="btn ghost">
-                <span id="themeIcon">🌙</span>
+            <button type="button" class="btn ghost" id="themeToggle" aria-label="Ativar tema escuro" aria-pressed="true">
+                <span id="themeIcon" aria-hidden="true">🌙</span>
                 Tema
             </button>
 
             <div class="user-info">
-                <span>{{ session.get('nome') or 'Usuário' }}</span>
+                <span title="{{ session.get('nome') or 'Usuário' }}">{{ session.get('nome') or 'Usuário' }}</span>
                 <small>{{ session.get('perfil') or 'Perfil' }}</small>
             </div>
 
@@ -347,12 +554,12 @@
 
     </header>
 
-    <main class="main">
+    <main class="main" id="main-content" tabindex="-1">
 
         {% if endpoint != 'dashboard' %}
             <section class="page-heading">
                 <div>
-                    <h2>{{ page_title or 'Hotel PRO' }}</h2>
+                    <h2>{{ page_title or title or 'Hotel PRO' }}</h2>
                     <p>{{ page_subtitle or 'Gerencie as informações desta área.' }}</p>
                 </div>
 
@@ -366,7 +573,11 @@
             {% if messages %}
                 <div class="flashwrap">
                     {% for cat,msg in messages %}
-                        <div class="flash {{ cat }}">{{ msg }}</div>
+                        {% set flash_category = cat if cat in ['success', 'danger', 'error', 'warning', 'info'] else 'info' %}
+                        <div class="flash {{ flash_category }}" role="{{ 'alert' if flash_category in ['danger', 'error', 'warning'] else 'status' }}">
+                            <span class="flash-message">{{ msg }}</span>
+                            <button type="button" class="flash-close" aria-label="Fechar mensagem" onclick="this.closest('.flash').remove()">×</button>
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -375,6 +586,7 @@
         {% block content %}{% endblock %}
 
     </main>
+{% include 'hotel_privacidade_rodape.html' %}
 
 </div>
 
@@ -382,32 +594,10 @@
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 <script>
-    function toggleTheme(){
-        const html = document.documentElement;
-        const current = html.getAttribute("data-theme") || "dark";
-        const next = current === "dark" ? "light" : "dark";
-
-        html.setAttribute("data-theme", next);
-        localStorage.setItem("hotelpro-theme", next);
-        updateThemeIcon();
-    }
-
-    function updateThemeIcon(){
-        const theme = document.documentElement.getAttribute("data-theme") || "dark";
-        const icon = document.getElementById("themeIcon");
-
-        if(icon){
-            icon.textContent = theme === "dark" ? "🌙" : "☀️";
-        }
-    }
-
-    const savedTheme = localStorage.getItem("hotelpro-theme");
-
-    if(savedTheme){
-        document.documentElement.setAttribute("data-theme", savedTheme);
-    }
-
-    document.addEventListener("DOMContentLoaded", updateThemeIcon);
+if (window.hotelThemeController) {
+    window.hotelThemeController.expose();
+    window.hotelThemeController.restore();
+}
 </script>
 
 {% block extra_js %}{% endblock %}

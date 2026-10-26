@@ -1,0 +1,8 @@
+.hc-settings-gear{display:none;box-sizing:border-box}
+.main-header .userbox>.hc-settings-gear[data-hc-mounted]{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0;margin:0;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--muted,#63748a);text-decoration:none;box-shadow:none;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.main-header .userbox>.hc-settings-gear svg{width:21px;height:21px;display:block;pointer-events:none}
+.main-header .userbox>.hc-settings-gear:hover{background:var(--surface-2,#f5f7fb);color:var(--text,#162638);border-color:var(--border,#dde4ee)}
+.main-header .userbox>.hc-settings-gear:focus-visible{outline:3px solid #77a7ff;outline-offset:3px;background:var(--surface-2,#f5f7fb);color:var(--text,#162638)}
+.main-header .userbox>.hc-settings-gear[aria-current=page]{background:var(--surface-2,#f5f7fb);color:var(--text,#162638)}
+@media(prefers-reduced-motion:reduce){.main-header .userbox>.hc-settings-gear{transition:none}}
+@media print{.hc-settings-gear{display:none!important}}

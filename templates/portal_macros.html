@@ -1,0 +1,3 @@
+{% macro cama() %}<svg aria-hidden="true" viewBox="0 0 100 100"><path d="M13 76V31m74 45V45H13m4 0V30h31v15m7 0V30h28v15M13 64h74M13 76v7m74-7v7"/></svg>{% endmacro %}
+{% macro csrf() %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endmacro %}
+{% macro status(s) %}<span class="pe-pill" data-status="{{ s }}">{{ s }}</span>{% endmacro %}

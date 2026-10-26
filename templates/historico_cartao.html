@@ -1,26 +1,94 @@
 {% extends 'base.html' %}
-{% block title %}Histórico do Cartão{% endblock %}
+{% set page_title='Histórico do cartão ' ~ cartao.codigo %}
+{% set page_subtitle='Consulta de movimentações e responsáveis' %}
+{% block title %}Histórico do cartão {{ cartao.codigo }}{% endblock %}
 {% block content %}
 <style>
-.hist{padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.btn{background:#0f172a;color:white;text-decoration:none;padding:10px 14px;border-radius:9px;font-weight:700}.summary{background:white;border:1px solid #e2e8f0;border-radius:13px;padding:18px;margin-bottom:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.summary small{color:#64748b}.summary strong{display:block;margin-top:5px}.timeline{position:relative;margin-left:12px;border-left:3px solid #cbd5e1;padding-left:22px}.item{position:relative;background:white;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px}.item:before{content:'';position:absolute;left:-31px;top:20px;width:14px;height:14px;border-radius:50%;background:#0f172a;border:3px solid white}.item h3{margin:0 0 8px}.meta{color:#64748b;font-size:13px}.obs{margin-top:10px;background:#f8fafc;padding:10px;border-radius:8px}@media(max-width:700px){.summary{grid-template-columns:1fr 1fr}.hist{padding:14px}}
+.hc{--hc-bg:var(--surface,#fff);--hc-soft:var(--surface-2,#f8fafc);--hc-text:var(--text,#0f172a);--hc-muted:var(--muted,#64748b);--hc-line:var(--border,#e2e8f0);--hc-blue:#2563eb;--hc-good:#15803d;--hc-warn:#b45309;--hc-bad:#b91c1c;color:var(--hc-text);font-family:inherit;line-height:1.5}
+html[data-theme="dark"] .hc{--hc-blue:#93b4ff;--hc-good:#86efac;--hc-warn:#fcd38d;--hc-bad:#fca5a5}
+.hc-page{max-width:1560px;margin:0 auto;padding:28px clamp(14px,3vw,38px) 40px}
+.hc *{box-sizing:border-box}.hc[hidden],.hc [hidden]{display:none!important}.hc h1,.hc h2,.hc h3,.hc p{margin:0}.hc a{color:inherit}.hc svg{width:19px;height:19px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.hc button,.hc input,.hc select,.hc textarea{font:inherit}
+.hc-hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#12233e,#172f52 65%,#214e6d);color:#fff;border:1px solid #335272;border-radius:22px;padding:28px;display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:22px;box-shadow:0 12px 30px #0f172a12}
+.hc-hero:after{content:'';position:absolute;right:100px;top:-130px;border:1px solid #ffffff13;width:360px;height:360px;border-radius:50%;pointer-events:none}.hc-hero>*{position:relative;z-index:1}.hc-kicker{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#b8d2ef;margin-bottom:10px}.hc-kicker:before{content:'';width:7px;height:7px;border-radius:50%;background:#79d7d2;box-shadow:0 0 0 4px #79d7d216}.hc h1{font-size:clamp(24px,3vw,32px);line-height:1.2;font-weight:800;letter-spacing:-.035em;overflow-wrap:anywhere}.hc-hero p{color:#c5d5e9;font-size:13px;margin-top:10px;max-width:640px}.hc-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;flex-shrink:0}
+.hc .hc-btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid var(--hc-line);border-radius:10px;padding:10px 14px;background:var(--hc-bg);color:var(--hc-text);font-size:12px;font-weight:750;line-height:1.5;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .15s,transform .15s;min-height:40px}.hc .hc-btn:hover{transform:translateY(-1px);background:var(--hc-soft)}.hc .hc-primary{background:#2563eb;border-color:#2563eb;color:#fff}.hc .hc-primary:hover{background:#1d4ed8}.hc .hc-hero-btn{background:#ffffff0d;border-color:#ffffff32;color:#fff}.hc .hc-hero-btn:hover{background:#ffffff20}.hc .hc-accent{background:#dff5f1;color:#125e56;border-color:#dff5f1}.hc .hc-accent:hover{background:#c9eee7}.hc .hc-small{padding:6px 10px;min-height:32px;font-size:11px}.hc .hc-warning{color:var(--hc-warn)}.hc .hc-success{color:var(--hc-good)}.hc .hc-btn:disabled{opacity:.55;cursor:wait;transform:none}.hc :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #60a5fa;outline-offset:3px}
+.hc-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:22px}.hc-stat{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:15px;padding:17px 18px;position:relative;min-width:0}.hc-stat small{font-size:11px;font-weight:700;color:var(--hc-muted)}.hc-stat strong{display:block;font-size:27px;line-height:1.2;margin-top:9px;letter-spacing:-.04em}.hc-stat:before{content:'';position:absolute;top:18px;right:15px;width:7px;height:7px;border-radius:50%;background:var(--hc-muted)}.hc-stat[data-tone="good"]:before{background:#22c55e}.hc-stat[data-tone="blue"]:before{background:#3b82f6}.hc-stat[data-tone="bad"]:before{background:#ef4444}.hc-stat[data-tone="warn"]:before{background:#f59e0b}
+.hc-panel{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:18px;overflow:hidden;margin-bottom:20px}.hc-panel-head{padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--hc-line)}.hc h2{font-size:16px;font-weight:800;letter-spacing:-.02em}.hc-sub{font-size:12px;color:var(--hc-muted);margin-top:4px!important}.hc-count{font-size:11px;background:var(--hc-soft);border:1px solid var(--hc-line);padding:5px 9px;border-radius:7px;color:var(--hc-muted);white-space:nowrap}
+.hc-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:18px 22px;background:var(--hc-soft);border-bottom:1px solid var(--hc-line)}.hc-field{display:flex;flex-direction:column;gap:7px;min-width:0}.hc-field.grow{flex:1;min-width:220px}.hc-field label,.hc-field>span{font-size:11px;font-weight:750;color:var(--hc-muted)}.hc input:not([type=hidden]),.hc select,.hc textarea{display:block;width:100%;min-height:42px;padding:10px 12px;background:var(--hc-bg);color:var(--hc-text);border:1px solid var(--hc-line);border-radius:9px;font-size:12px;line-height:1.5}.hc textarea{min-height:92px;resize:vertical}.hc input::placeholder,.hc textarea::placeholder{color:var(--hc-muted);opacity:.9}.hc-search{position:relative}.hc-search svg{position:absolute;left:12px;top:12px;color:var(--hc-muted);width:17px;height:17px}.hc-search input{padding-left:38px!important}.hc-help{color:var(--hc-muted);font-size:11px}.hc-hint{display:flex;gap:9px;padding:12px 14px;border:1px solid var(--hc-line);background:var(--hc-soft);border-radius:10px;font-size:12px;color:var(--hc-muted)}.hc-hint svg{color:var(--hc-blue);margin-top:1px}.hc-form-error{color:var(--hc-bad);background:var(--hc-soft);border:1px solid currentColor;border-radius:9px;padding:11px 13px;font-size:12px}
+.hc-table-wrap{overflow:auto}.hc table{width:100%;border-collapse:collapse;min-width:1000px;color:var(--hc-text);table-layout:auto;background:var(--hc-bg)}.hc th,.hc td{padding:15px 20px;text-align:left;border-bottom:1px solid var(--hc-line);vertical-align:middle;line-height:1.5;font-size:12px}.hc th{background:var(--hc-soft);color:var(--hc-muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800;white-space:nowrap}.hc tbody tr:last-child td{border-bottom:0}.hc tbody tr:hover{background:var(--hc-soft)}.hc-code{display:flex;align-items:center;gap:10px}.hc-code-icon{display:grid;place-items:center;width:35px;height:39px;border:1px solid var(--hc-line);border-radius:8px;color:var(--hc-blue);background:var(--hc-soft)}.hc-code strong{font-size:13px;overflow-wrap:anywhere}.hc-muted{color:var(--hc-muted)}.hc-description{max-width:240px;overflow-wrap:anywhere}.hc-row-actions{display:flex;gap:6px;flex-wrap:wrap}.hc-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hc-line);padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;line-height:1.5;white-space:nowrap;background:var(--hc-soft);color:var(--hc-muted)}.hc-pill:before{content:'';width:5px;height:5px;background:currentColor;border-radius:50%}.hc-pill[data-tone="good"]{color:var(--hc-good)}.hc-pill[data-tone="blue"]{color:var(--hc-blue)}.hc-pill[data-tone="warn"]{color:var(--hc-warn)}.hc-pill[data-tone="bad"]{color:var(--hc-bad)}
+.hc-empty{text-align:center;padding:42px 20px;color:var(--hc-muted);font-size:13px}.hc-empty strong{display:block;color:var(--hc-text);font-size:15px;margin:8px 0 5px}.hc-empty svg{width:30px;height:30px}.hc-events{padding:8px 22px}.hc-event{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--hc-line)}.hc-event:last-child{border-bottom:0}.hc-event-icon{display:grid;place-items:center;width:33px;height:33px;flex-shrink:0;border:1px solid var(--hc-line);border-radius:10px;color:var(--hc-blue);background:var(--hc-soft)}.hc-event-body{flex:1;min-width:0}.hc-event-title{display:flex;justify-content:space-between;gap:12px;font-size:12px;align-items:center}.hc-event-title a{font-weight:800;text-decoration:none}.hc-event-title a:hover{text-decoration:underline}.hc-event time{color:var(--hc-muted);font-size:11px;white-space:nowrap}.hc-event p{font-size:12px;margin-top:5px;color:var(--hc-muted);overflow-wrap:anywhere}.hc-note{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--hc-text)!important;background:var(--hc-soft);border:1px solid var(--hc-line);padding:11px 13px;border-radius:9px;font-size:12px;margin-top:12px!important}
+.hc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:20px 8px}.hc-summary>div{padding:0 20px;min-width:0;border-right:1px solid var(--hc-line)}.hc-summary>div:last-child{border:0}.hc-summary dt{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--hc-muted);margin-bottom:8px}.hc-summary dd{margin:0;font-size:13px;font-weight:700;overflow-wrap:anywhere}.hc-detail{padding:0 28px 18px;color:var(--hc-muted);font-size:12px}.hc-history-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:26px 0 14px}.hc-history-head p{font-size:12px;color:var(--hc-muted);margin-top:3px}.hc-history-layout{display:grid;grid-template-columns:175px minmax(0,1fr);gap:22px}.hc-history-aside{font-size:12px;color:var(--hc-muted);padding-top:10px}.hc-history-aside strong{display:block;font-size:30px;font-weight:800;color:var(--hc-text);letter-spacing:-.04em}.hc-history-aside p{margin-top:10px;font-size:11px}.hc-timeline{list-style:none;margin:0;padding:0 0 0 24px;border-left:2px solid var(--hc-line)}.hc-entry{position:relative;margin:0 0 16px;background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:15px;padding:20px}.hc-entry:before{content:'';position:absolute;top:25px;left:-32px;width:12px;height:12px;border-radius:50%;background:var(--hc-blue);border:3px solid var(--hc-bg);box-shadow:0 0 0 1px var(--hc-line)}.hc-entry[data-tone="good"]:before{background:var(--hc-good)}.hc-entry[data-tone="bad"]:before{background:var(--hc-bad)}.hc-entry[data-tone="warn"]:before{background:var(--hc-warn)}.hc-entry-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.hc-entry h3{font-size:14px;font-weight:800}.hc-entry time{display:block;font-size:11px;color:var(--hc-muted);margin-top:3px}.hc-entry-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;padding:14px 0 0;border-top:1px solid var(--hc-line)}.hc-entry-grid small{display:block;color:var(--hc-muted);font-size:10px;margin-bottom:5px}.hc-entry-grid span{font-size:12px;font-weight:650;overflow-wrap:anywhere}.hc-entry-footer{font-size:11px;color:var(--hc-muted);margin-top:14px;overflow-wrap:anywhere}
+.hc-modal{position:fixed;inset:0;z-index:2200;background:#071225a8;display:flex;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(5px)}.hc-dialog{background:var(--hc-bg);border:1px solid var(--hc-line);border-radius:20px;width:min(600px,100%);max-height:92dvh;overflow:auto;box-shadow:0 30px 90px #0005}.hc-modal-head{padding:22px 24px;border-bottom:1px solid var(--hc-line);display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.hc-modal-head h2{font-size:19px}.hc-modal-head p{font-size:12px;color:var(--hc-muted);margin-top:5px}.hc .hc-close{min-height:32px;width:32px;padding:5px;flex-shrink:0}.hc-form{padding:22px 24px;display:grid;gap:17px}.hc-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.hc-form-footer{display:flex;justify-content:flex-end;gap:9px;border-top:1px solid var(--hc-line);padding-top:18px}.hc-results{border:1px solid var(--hc-line);border-radius:10px;overflow:auto;max-height:245px;background:var(--hc-bg);margin-top:6px}.hc-result{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--hc-bg);border:0;border-bottom:1px solid var(--hc-line);padding:12px;color:var(--hc-text);cursor:pointer}.hc-result:hover{background:var(--hc-soft)}.hc-result:last-child{border:0}.hc-result strong{display:block;font-size:12px}.hc-result small{display:block;color:var(--hc-muted);font-size:10px;margin-top:4px}.hc-result:disabled{cursor:not-allowed;opacity:.65}.hc-result-status{font-size:12px;color:var(--hc-muted);padding:14px}.hc-selected{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--hc-soft);border:1px solid var(--hc-line);border-radius:12px;padding:15px}.hc-selected small{display:block;font-size:10px;color:var(--hc-muted);margin-bottom:3px}.hc-selected strong{font-size:12px;overflow-wrap:anywhere}.hc-warn-text{color:var(--hc-warn)!important}
+@media(max-width:1150px){.hc-hero{align-items:flex-start;flex-direction:column}.hc-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.hc-page{padding-top:16px}.hc-hero{padding:22px 19px;border-radius:16px;gap:18px}.hc-stats{gap:8px}.hc-stat{padding:14px 12px}.hc-stat strong{font-size:24px}.hc-panel-head{padding:17px}.hc-filters{padding:15px;gap:10px}.hc-filters .hc-field{flex:1;min-width:140px}.hc-filters .hc-field.grow{flex-basis:100%}.hc-summary{grid-template-columns:1fr 1fr;gap:20px 0}.hc-summary>div:nth-child(2){border:0}.hc-history-layout{grid-template-columns:1fr}.hc-history-aside{display:none}.hc-timeline{margin-left:6px;padding-left:20px}.hc-entry{padding:16px}.hc-entry:before{left:-28px}.hc-entry-grid{grid-template-columns:1fr 1fr;gap:13px}.hc-entry-grid>div:first-child{grid-column:1/-1}.hc-entry-head{align-items:flex-start}.hc-events{padding:4px 16px}.hc-event-title{align-items:flex-start;flex-direction:column;gap:4px}.hc-dialog{max-height:94dvh}.hc-modal{padding:10px}.hc-modal-head,.hc-form{padding:19px}.hc-two{grid-template-columns:1fr}.hc-history-head{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.hc *{transition:none!important;animation:none!important}}
+
 </style>
-<div class="hist">
-  <div class="top"><div><h1>Histórico do cartão {{ cartao.codigo }}</h1><p>Rastreabilidade completa de todas as movimentações.</p></div><a class="btn" href="{{ url_for('cartoes') }}">Voltar</a></div>
-  <div class="summary">
-    <div><small>Código</small><strong>{{ cartao.codigo }}</strong></div>
-    <div><small>Status atual</small><strong>{{ cartao.status }}</strong></div>
-    <div><small>Cadastrado por</small><strong>{{ cartao.criado_por }}</strong></div>
-    <div><small>Data de cadastro</small><strong>{{ cartao.criado_em.strftime('%d/%m/%Y %H:%M') }}</strong></div>
-  </div>
-  <div class="timeline">
-    {% for m in movimentacoes %}
-    <div class="item">
-      <h3>{{ m.tipo }} → {{ m.status_resultante }}</h3>
-      <div class="meta">{{ m.data_evento.strftime('%d/%m/%Y às %H:%M') }} • Responsável: {{ m.usuario_responsavel }}</div>
-      <div class="meta">Colaborador: {{ m.hospede.nome if m.hospede else '-' }} • Quarto: {{ m.quarto.numero if m.quarto else '-' }} • Reserva: {{ '#'+m.reserva.id|string if m.reserva else '-' }}</div>
-      {% if m.observacoes %}<div class="obs">{{ m.observacoes }}</div>{% endif %}
+{% set movimentos = movimentacoes|list %}
+{% set tons = {'Disponível':'good','Em uso':'blue','Perdido':'bad','Danificado':'warn','Bloqueado':'neutral'} %}
+<main class="hc hc-page" id="hcHistory">
+  <header class="hc-hero">
+    <div><span class="hc-kicker">Controle de acesso · Rastreabilidade</span><h1>Histórico do cartão {{ cartao.codigo }}</h1><p>Consulte entregas, devoluções e ocorrências, com a identificação de cada responsável.</p></div>
+    <a class="hc-btn hc-hero-btn" href="{{ url_for('cartoes') }}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 5-7 7 7 7M5 12h14"/></svg>Voltar aos cartões</a>
+  </header>
+  <section class="hc-panel" aria-label="Dados do cartão">
+    <dl class="hc-summary">
+      <div><dt>Código do cartão</dt><dd>{{ cartao.codigo }}</dd></div>
+      <div><dt>Status atual</dt><dd><span class="hc-pill" data-tone="{{ tons.get(cartao.status,'neutral') }}">{{ cartao.status or 'Não informado' }}</span></dd></div>
+      <div><dt>Cadastrado por</dt><dd>{{ cartao.criado_por or 'Não informado' }}</dd></div>
+      <div><dt>Data de cadastro</dt><dd>{{ cartao.criado_em.strftime('%d/%m/%Y · %H:%M') if cartao.criado_em else 'Não informada' }}</dd></div>
+    </dl>
+    {% if cartao.descricao %}<p class="hc-detail">{{ cartao.descricao }}</p>{% endif %}
+  </section>
+  <section aria-labelledby="hcTimelineTitle">
+    <div class="hc-history-head"><div><h2 id="hcTimelineTitle">Linha do tempo</h2><p>Movimentações da mais recente para a mais antiga.</p></div><span class="hc-count">{{ movimentos|length }} registro(s)</span></div>
+    <form class="hc-filters" id="hcHistoryFilters" role="search" style="border:1px solid var(--hc-line);border-radius:14px;margin-bottom:22px">
+      <div class="hc-field grow"><label for="hcHistorySearch">Pesquisar no histórico</label><div class="hc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="hcHistorySearch" type="search" placeholder="Colaborador, quarto, reserva, responsável ou observação"></div></div>
+      <div class="hc-field"><label for="hcHistoryType">Movimentação</label><select id="hcHistoryType"><option value="">Todas as movimentações</option>{% for tipo in movimentos|map(attribute='tipo')|unique|sort %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
+      <button type="reset" class="hc-btn">Limpar filtros</button>
+    </form>
+    <div class="hc-history-layout">
+      <aside class="hc-history-aside"><span>Registros exibidos</span><strong id="hcHistoryTotal">{{ movimentos|length }}</strong><p>As observações e os vínculos são apresentados conforme registrados em cada movimentação.</p></aside>
+      <div>
+        <ol class="hc-timeline" id="hcTimeline">
+        {% for m in movimentos %}
+          <li class="hc-entry" data-type="{{ m.tipo }}" data-tone="{{ tons.get(m.status_resultante,'neutral') }}">
+            <div class="hc-entry-head"><div><h3>{{ m.tipo or 'Movimentação' }}</h3><time {% if m.data_evento %}datetime="{{ m.data_evento.isoformat() }}"{% endif %}>{{ m.data_evento.strftime('%d/%m/%Y às %H:%M') if m.data_evento else 'Data não informada' }}</time></div><span class="hc-pill" data-tone="{{ tons.get(m.status_resultante,'neutral') }}">{{ m.status_resultante or 'Não informado' }}</span></div>
+            <div class="hc-entry-grid"><div><small>Colaborador</small><span>{{ m.hospede.nome if m.hospede else 'Sem colaborador vinculado' }}</span></div><div><small>Quarto</small><span>{{ m.quarto.numero if m.quarto else 'Sem vínculo' }}</span></div><div><small>Reserva</small><span>{% if m.reserva %}#{{ m.reserva.id }}{% else %}Sem vínculo{% endif %}</span></div></div>
+            {% if m.observacoes %}<p class="hc-note">{{ m.observacoes }}</p>{% endif %}
+            <div class="hc-entry-footer">Registrado por <strong>{{ m.usuario_responsavel or 'Não informado' }}</strong></div>
+          </li>
+        {% endfor %}
+        </ol>
+        <div class="hc-panel hc-empty" id="hcHistoryEmpty" {% if movimentos %}hidden{% endif %}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM8 3v6m8-6v6M4 11h16m-11 4h6"/></svg><strong id="hcHistoryEmptyTitle">Nenhuma movimentação registrada</strong><p id="hcHistoryEmptyText">As movimentações deste cartão aparecerão aqui.</p></div>
+        <p class="hc-help" id="hcHistoryResult" role="status" aria-live="polite">{{ movimentos|length }} de {{ movimentos|length }} registro(s) exibido(s).</p>
+      </div>
     </div>
-    {% else %}<p>Nenhuma movimentação registrada.</p>{% endfor %}
-  </div>
-</div>
+  </section>
+</main>
+<script>
+(function(){
+  'use strict';
+  const root=document.getElementById('hcHistory');
+  const form=root.querySelector('#hcHistoryFilters');
+  const search=root.querySelector('#hcHistorySearch');
+  const type=root.querySelector('#hcHistoryType');
+  const items=Array.from(root.querySelectorAll('.hc-entry'));
+  function normalize(value){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');}
+  const texts=items.map(item=>normalize(item.textContent));
+  function filter(){
+    const words=normalize(search.value.trim()).split(/\s+/).filter(Boolean);
+    let visible=0;
+    items.forEach((item,index)=>{item.hidden=Boolean((type.value&&item.dataset.type!==type.value)||!words.every(word=>texts[index].includes(word)));if(!item.hidden)visible++;});
+    root.querySelector('#hcHistoryTotal').textContent=visible;
+    root.querySelector('#hcHistoryResult').textContent=visible+' de '+items.length+' registro(s) exibido(s).';
+    root.querySelector('#hcHistoryEmpty').hidden=visible>0;
+    root.querySelector('#hcTimeline').hidden=visible===0;
+    if(items.length){root.querySelector('#hcHistoryEmptyTitle').textContent='Nenhuma movimentação encontrada';root.querySelector('#hcHistoryEmptyText').textContent='Tente outro termo ou limpe os filtros para consultar todo o histórico.';}
+  }
+  search.addEventListener('input',filter);type.addEventListener('change',filter);
+  form.addEventListener('submit',event=>event.preventDefault());
+  form.addEventListener('reset',()=>{search.value='';type.value='';filter();});
+  filter();
+}());
+</script>
 {% endblock %}

@@ -1,276 +1,256 @@
 {% extends 'base.html' %}
-{% set page_title='Reservas' %}
-{% set page_subtitle='Cadastro, pesquisa e controle das reservas' %}
+{% set page_title = 'Reservas' %}
+{% set page_subtitle = 'Organize hospedagens, acompanhe entradas e gerencie saídas.' %}
+{% block extra_css %}
+{{ super() }}
+<style>
+.rp-page{--rp-accent:#60a5fa;--rp-soft:rgba(59,130,246,.09);--rp-line:var(--border,rgba(148,163,184,.18));color:var(--text);font-size:14px;line-height:1.5;min-width:0}
+.rp-page *{box-sizing:border-box}.rp-page [hidden]{display:none!important}
+.rp-panel{background:var(--surface);border:1px solid var(--rp-line);border-radius:20px;margin-bottom:26px;overflow:hidden}
+.rp-head{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 28px;border-bottom:1px solid var(--rp-line)}
+.rp-eyebrow{display:block;font-size:10px;font-weight:700;letter-spacing:1.7px;color:var(--rp-accent);text-transform:uppercase;margin-bottom:5px}
+.rp-page h2{font-size:21px;letter-spacing:-.5px;margin:0;font-weight:700}
+.rp-subtitle{font-size:13px;color:var(--muted);margin:5px 0 0}
+.rp-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rp-line);padding:7px 12px;border-radius:99px;font-size:11px;color:var(--muted);white-space:nowrap}
+.rp-chip:before{content:"";width:6px;height:6px;background:var(--rp-accent);border-radius:50%}
+.rp-create{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:0}
+.rp-fields{padding:28px;min-width:0}
+.rp-fieldset{border:0;padding:0;margin:0 0 25px;min-width:0}
+.rp-fieldset:last-child{margin-bottom:0}
+.rp-fieldset legend{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;margin:0 0 16px;padding:0}
+.rp-step{display:inline-grid;place-items:center;border:1px solid var(--rp-line);background:var(--surface-2);width:26px;height:26px;border-radius:8px;color:var(--rp-accent);font-size:11px}
+.rp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.rp-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.rp-field label,.rp-label{font-size:12px;font-weight:650;color:var(--text)}
+.rp-required{color:var(--rp-accent);margin-left:3px}
+.rp-help{font-size:11px;color:var(--muted);margin:0;line-height:1.6}
+.rp-page input:not([type="hidden"]),.rp-page select,.rp-page textarea{width:100%;min-width:0;min-height:46px;padding:11px 12px;border:1px solid var(--rp-line);border-radius:10px;background:var(--surface-2);color:var(--text);font:inherit;font-size:13px;box-shadow:none}
+.rp-page input::placeholder,.rp-page textarea::placeholder{color:var(--muted)}
+.rp-page input:focus,.rp-page select:focus,.rp-page textarea:focus{outline:2px solid var(--rp-accent);outline-offset:2px}
+.rp-page textarea{resize:vertical;min-height:86px}
+.rp-page input[type="file"]{padding:8px;min-height:44px}
+.rp-page input::file-selector-button{background:var(--rp-soft);color:var(--text);border:1px solid var(--rp-line);border-radius:6px;padding:6px 9px;margin-right:10px;cursor:pointer}
+.rp-summary{border-left:1px solid var(--rp-line);padding:28px;background:linear-gradient(155deg,var(--rp-soft),transparent 80%);display:flex;flex-direction:column;gap:18px}
+.rp-summary h3{font-size:15px;margin:0}
+.rp-summary dl{display:grid;grid-template-columns:1fr auto;gap:14px;margin:0;padding:20px 0;border-bottom:1px solid var(--rp-line);font-size:12px}
+.rp-summary dt{color:var(--muted)}.rp-summary dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.rp-total-label{font-size:11px;color:var(--muted);display:block}
+.rp-total{display:block;font-size:32px;font-weight:750;letter-spacing:-1px;margin-top:4px;overflow-wrap:anywhere}
+.rp-estimate{font-size:11px;color:var(--muted);line-height:1.6;margin:0}
+.rp-summary .rp-btn{width:100%}
+.rp-summary-actions{margin-top:auto;padding-top:10px}
+.rp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:10px 15px;border:1px solid var(--rp-line);border-radius:10px;background:var(--surface-2);color:var(--text);font:inherit;font-size:12px;font-weight:650;text-decoration:none;cursor:pointer;transition:background .15s,border-color .15s}
+.rp-btn:hover{border-color:var(--rp-accent);background:var(--rp-soft)}
+.rp-btn:focus-visible,.rp-page summary:focus-visible{outline:3px solid var(--rp-accent);outline-offset:3px}
+.rp-primary{color:#fff;background:#2563eb;border-color:#2563eb}.rp-primary:hover{background:#1d4ed8;color:#fff}
+.rp-small{min-height:34px;padding:7px 10px;font-size:11px;white-space:nowrap}
+.rp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.rp-warning{border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 14px;background:rgba(245,158,11,.08);color:#fcd34d;font-size:12px;margin:16px 0 0}
+.rp-list-tools{padding:22px 28px}
+.rp-search{display:flex;align-items:flex-end;gap:10px;margin:0}
+.rp-search .rp-field{flex:1}
+.rp-results{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:12px;color:var(--muted)}
+.rp-import{margin-top:18px;border:1px solid var(--rp-line);border-radius:12px;background:var(--surface-2)}
+.rp-import summary{padding:13px 16px;font-size:12px;font-weight:650;cursor:pointer}
+.rp-import-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;border-top:1px solid var(--rp-line);padding:16px}
+.rp-import-form .rp-help{grid-column:1/-1}
+.rp-page .table-wrap{width:100%;overflow:auto;border-top:1px solid var(--rp-line)}
+.rp-page table{width:100%;min-width:1150px;border-collapse:collapse;font-size:12px}
+.rp-page th{padding:15px 18px;text-align:left;background:var(--surface-2);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);white-space:nowrap}
+.rp-page td{padding:17px 18px;border-bottom:1px solid var(--rp-line);color:var(--text);vertical-align:middle}
+.rp-page tbody tr:last-child td{border-bottom:0}.rp-page tbody tr:hover{background:var(--rp-soft)}
+.rp-page td strong{font-size:12px;display:block;min-width:140px;max-width:240px;overflow-wrap:anywhere}
+.rp-page time{display:block;white-space:nowrap;font-size:11px}
+.rp-id{color:var(--muted)!important}.rp-money{white-space:nowrap;font-variant-numeric:tabular-nums}
+.rp-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;white-space:nowrap;font-size:10px;font-weight:650;background:var(--surface-2);color:var(--muted)}
+.rp-badge:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.rp-page .status-reservado{color:#93c5fd;background:rgba(59,130,246,.12)}
+.rp-page .status-hospedado{color:#6ee7b7;background:rgba(16,185,129,.12)}
+.rp-page .status-finalizado{color:#cbd5e1;background:rgba(148,163,184,.12)}
+.rp-page .status-cancelado{color:#fca5a5;background:rgba(239,68,68,.12)}
+.rp-page .acoes-reserva{display:flex;gap:6px;flex-wrap:wrap;min-width:210px}
+.rp-page .sem-resultados{text-align:center;color:var(--muted);padding:44px 20px}
+.rp-table-note{padding:12px 28px;border-top:1px solid var(--rp-line);margin:0;color:var(--muted);font-size:11px}
+.rp-dialog{width:min(580px,calc(100% - 32px));max-height:85vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--rp-line);border-radius:22px;padding:28px;box-shadow:0 25px 80px rgba(0,0,0,.35)}
+.rp-dialog::backdrop{background:rgba(2,6,23,.7);backdrop-filter:blur(4px)}
+.rp-dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+.rp-dialog h3{font-size:20px;letter-spacing:-.4px;margin:7px 0}
+.rp-dialog-close{width:40px;min-width:40px;font-size:22px;padding:0}
+.rp-agenda-list{display:grid;gap:12px;margin:22px 0}
+.rp-agenda-item{border:1px solid var(--rp-line);border-radius:12px;padding:16px;background:var(--surface-2)}
+.rp-agenda-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.rp-agenda-top strong{font-size:13px;overflow-wrap:anywhere}
+.rp-agenda-dates{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;font-size:12px}
+.rp-agenda-dates small{display:block;text-transform:uppercase;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.rp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+html[data-theme="light"] .rp-page{--rp-accent:#2563eb;--rp-soft:rgba(37,99,235,.05)}
+html[data-theme="light"] .rp-page .status-reservado{color:#1d4ed8}
+html[data-theme="light"] .rp-page .status-hospedado{color:#047857}
+html[data-theme="light"] .rp-page .status-finalizado{color:#475569}
+html[data-theme="light"] .rp-page .status-cancelado{color:#b91c1c}
+html[data-theme="light"] .rp-warning{color:#92400e}
+@media(max-width:1050px){.rp-create{grid-template-columns:minmax(0,1fr) 270px}.rp-summary,.rp-fields{padding:22px}}
+@media(max-width:820px){.rp-create{grid-template-columns:1fr}.rp-summary{border-left:0;border-top:1px solid var(--rp-line)}.rp-summary dl{padding-top:0}.rp-summary-actions{margin-top:0}.rp-head{align-items:flex-start}.rp-chip{display:none}}
+@media(max-width:560px){.rp-head,.rp-fields,.rp-summary,.rp-list-tools{padding:20px}.rp-grid{grid-template-columns:1fr}.rp-head{flex-direction:column;gap:14px}.rp-actions{width:100%}.rp-actions .rp-btn{flex:1}.rp-search{flex-wrap:wrap}.rp-search .rp-field{flex-basis:100%}.rp-search>.rp-btn{flex:1}.rp-import-form{grid-template-columns:1fr}.rp-import-form .rp-help{grid-column:auto}.rp-dialog{padding:22px}.rp-agenda-dates{grid-template-columns:1fr}.rp-total{font-size:30px}}
+@media(prefers-reduced-motion:reduce){.rp-btn{transition:none}}
+@media print{.rp-new,.rp-list-tools,.rp-actions,.rp-dialog,.rp-table-note,.rp-page td:last-child,.rp-page th:last-child{display:none!important}.rp-panel{border:0}.rp-page .table-wrap{overflow:visible}.rp-page table{min-width:0;font-size:9px}.rp-page th,.rp-page td{padding:6px}.rp-page td strong{min-width:0}.rp-page{color:black}}
 
+ /* Ajustes leves: campos de busca, filtros e hierarquia visual. */
+ .rp-new .rp-head{background:linear-gradient(110deg,var(--rp-soft),transparent 65%)}
+ .rp-page .rp-fieldset + .rp-fieldset{padding-top:20px;border-top:1px solid var(--rp-line)}
+ .rp-picker-search input[type="search"]{min-height:40px;font-size:12px;background:var(--surface);border-style:dashed}
+ .rp-picker-search input[type="search"]:focus{border-style:solid}
+ .rp-picker-result{min-height:18px;color:var(--rp-accent)}
+ .rp-page select{cursor:pointer}
+ .rp-quick-filters{margin-top:18px;padding:18px;border:1px solid var(--rp-line);border-radius:14px;background:var(--rp-soft)}
+ .rp-quick-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+ .rp-quick-heading strong{font-size:12px}.rp-quick-heading span{font-size:11px;color:var(--muted)}
+ .rp-filter-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto;align-items:end;gap:12px}
+ .rp-filter-grid .rp-btn{min-height:46px}
+ .rp-filter-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+ #rp-filter-count{font-weight:650;color:var(--rp-accent)}
+ .rp-page .rp-btn:disabled{opacity:.5;cursor:default;border-color:var(--rp-line)}
+ .rp-page .rp-btn:disabled:hover{background:var(--surface-2)}
+ @media(max-width:650px){
+ .rp-filter-grid{grid-template-columns:1fr}
+ .rp-quick-heading{align-items:flex-start;flex-direction:column;gap:3px}
+ .rp-quick-filters{padding:15px}
+ }
+
+.rp-edit{color:var(--rp-accent);border-color:rgba(59,130,246,.35)}
+.rp-extend{color:#6ee7b7;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.08)}
+.rp-extend:hover{border-color:#34d399;background:rgba(16,185,129,.16)}
+html[data-theme="light"] .rp-extend{color:#047857}
+
+/* Carregamento das telas de edição e prorrogação. */
+.rp-nav-loading{width:min(390px,calc(100% - 36px));padding:30px;border:1px solid var(--rp-line);border-radius:20px;background:var(--surface,#172033);color:var(--text,#e5edf8);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.rp-nav-loading::backdrop{background:rgba(2,6,23,.58);backdrop-filter:blur(4px)}
+.rp-nav-loading h3{font-size:18px;margin:18px 0 8px}
+.rp-nav-loading p{font-size:13px;color:var(--muted,#94a3b8);line-height:1.6;margin:0 0 20px}
+.rp-nav-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--rp-line);border-top-color:var(--rp-accent,#60a5fa);border-radius:50%;animation:rp-nav-spin .8s linear infinite}
+.rp-btn.rp-loading{opacity:.75;cursor:progress}
+.rp-btn.rp-loading::before{content:"";width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:rp-nav-spin .8s linear infinite}
+@keyframes rp-nav-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.rp-nav-spinner,.rp-btn.rp-loading::before{animation:none}}
+@media print{.rp-nav-loading{display:none!important}}
+</style>
+{% endblock %}
 {% block content %}
 
-<div class="panel">
-    <div class="toolbar">
-        <div>
-            <h2>Nova reserva</h2>
-            <p class="subtitle">
-                Cadastre uma reserva com entrada, saída, valor da diária e cálculo automático.
-            </p>
-        </div>
-    </div>
 
-    <form method="post" class="form-grid">
-
-        <select name="hospede_id" required>
-            <option value="">Selecione o hóspede</option>
-
-            {% for h in hospedes %}
-                <option value="{{ h.id }}">
-                    {{ h.nome }}
-                    {% if h.cpf %} — CPF {{ h.cpf }}{% endif %}
-                </option>
-            {% endfor %}
-        </select>
-
-        <select name="quarto_id" id="quarto_id" required>
-            <option value="">Selecione o quarto</option>
-
-            {% for q in quartos %}
-                {% set lotacao = ocupacoes.get(q.id, {}) %}
-
-                <option
-                    value="{{ q.id }}"
-                    {% if q.status in ['Bloqueado', 'Em manutenção', 'Em limpeza'] %}disabled{% endif %}
-                >
-                    Quarto {{ q.numero }}
-                    — {{ q.categoria }}
-                    — {{ q.status }}
-                    — {{ lotacao.get('vagas', q.capacidade or 0) }} vaga(s)
-                </option>
-            {% endfor %}
-        </select>
-
-        <input
-            type="datetime-local"
-            name="data_entrada"
-            id="data_entrada"
-            required
-        >
-
-        <input
-            type="datetime-local"
-            name="data_saida"
-            id="data_saida"
-            required
-        >
-
-        <input
-            name="valor_diaria"
-            id="valor_diaria"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Valor da diária"
-            required
-        >
-
-        <input
-            name="desconto"
-            id="desconto"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Desconto"
-            value="0"
-        >
-
-        <div class="calc-box">
-            <strong>Resumo automático</strong>
-            <span id="resumo_reserva">
-                Informe entrada, saída e diária.
-            </span>
-        </div>
-
-        <textarea
-            name="observacoes"
-            placeholder="Observações da reserva"
-        ></textarea>
-
-        <button class="btn primary" type="submit">
-            Criar reserva
-        </button>
-
-    </form>
+<div class="rp-page" id="rp-page">
+<section class="rp-panel rp-new" aria-labelledby="rp-create-title">
+ <header class="rp-head"><div><span class="rp-eyebrow">Gestão de hospedagens</span><h2 id="rp-create-title">Nova reserva</h2><p class="rp-subtitle">Defina o hóspede, o período e as condições da hospedagem.</p></div><span class="rp-chip">Campos com * são obrigatórios</span></header>
+ <form method="post" class="rp-create" id="rp-form">
+ {% if csrf_token is defined and csrf_token is callable %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+ <div class="rp-fields">
+ <fieldset class="rp-fieldset"><legend><span class="rp-step">01</span>Hóspede e acomodação</legend>
+ <div class="rp-grid">
+ <div class="rp-field"><label for="hospede_id">Hóspede <span class="rp-required">*</span></label>
+ <div class="rp-picker-search" data-picker-ui hidden>
+ <label for="rp-guest-find" class="rp-sr">Pesquisar hóspede pelo nome ou CPF</label>
+ <input type="search" id="rp-guest-find" placeholder="Digite o nome ou CPF para localizar..." autocomplete="off" aria-controls="hospede_id" aria-describedby="rp-guest-result">
+ </div>
+ <select id="hospede_id"  name="hospede_id" required><option value="">Selecione o hóspede</option>
+ {% for h in hospedes %}<option value="{{ h.id }}">{{ h.nome }}{% if h.cpf %} — CPF {{ h.cpf }}{% endif %}</option>{% endfor %}
+ </select><p class="rp-help rp-picker-result" id="rp-guest-result" role="status" aria-live="polite" hidden></p></div>
+ <div class="rp-field"><label for="quarto_id">Quarto <span class="rp-required">*</span></label>
+ <div class="rp-picker-search" data-picker-ui hidden>
+ <label for="rp-room-find" class="rp-sr">Pesquisar quarto pelo número ou categoria</label>
+ <input type="search" id="rp-room-find" placeholder="Digite o número ou a categoria..." autocomplete="off" aria-controls="quarto_id" aria-describedby="rp-room-result">
+ </div>
+ <select name="quarto_id"  id="quarto_id" aria-describedby="rp-room-help" required><option value="">Selecione o quarto</option>
+ {% for quarto in quartos %}
+ {% set lotacao = (ocupacoes|default({}, true)).get(quarto.id, {}) %}
+ <option value="{{ quarto.id }}" data-numero="{{ quarto.numero }}" {% if quarto.status in ['Bloqueado', 'Em manutenção', 'Em manutenÃ§Ã£o', 'Em limpeza'] %}disabled{% endif %}>Quarto {{ quarto.numero }} — {{ quarto.categoria }} — {{ quarto.status }} — {{ lotacao.get('vagas', quarto.capacidade or 0) }} vaga(s)</option>
+ {% endfor %}
+ </select><p class="rp-help rp-picker-result" id="rp-room-result" role="status" aria-live="polite" hidden></p><p class="rp-help" id="rp-room-help">Vagas e situação informadas pelo sistema. Consulte a agenda para conferir o período.</p>
+ <button type="button" class="rp-btn rp-small" id="rp-view-agenda" hidden>Consultar agenda do quarto</button></div>
+ </div></fieldset>
+ <fieldset class="rp-fieldset"><legend><span class="rp-step">02</span>Período da hospedagem</legend>
+ <div class="rp-grid">
+ <div class="rp-field"><label for="data_entrada">Entrada <span class="rp-required">*</span></label><input type="datetime-local" name="data_entrada" id="data_entrada" required></div>
+ <div class="rp-field"><label for="data_saida">Saída <span class="rp-required">*</span></label><input type="datetime-local" name="data_saida" id="data_saida" required></div>
+ </div></fieldset>
+ <fieldset class="rp-fieldset"><legend><span class="rp-step">03</span>Valores e observações</legend>
+ <div class="rp-grid">
+ <div class="rp-field"><label for="valor_diaria">Diária (R$) <span class="rp-required">*</span></label><input name="valor_diaria" id="valor_diaria" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0,00" required></div>
+ <div class="rp-field"><label for="desconto">Desconto total (R$)</label><input name="desconto" id="desconto" type="number" step="0.01" min="0" inputmode="decimal" value="0" aria-describedby="rp-discount-help"><p class="rp-help" id="rp-discount-help">Aplicado uma vez sobre o valor da hospedagem.</p></div>
+ </div>
+ <div class="rp-field" style="margin-top:16px"><label for="observacoes">Observações <span class="rp-help">(opcional)</span></label><textarea name="observacoes" id="observacoes" placeholder="Pedidos especiais ou informações importantes para a equipe."></textarea></div>
+ </fieldset>
+ </div>
+ <aside class="rp-summary" aria-labelledby="rp-summary-title">
+ <div><span class="rp-eyebrow">Prévia da hospedagem</span><h3 id="rp-summary-title">Resumo da reserva</h3></div>
+ <dl><dt>Diárias estimadas</dt><dd id="rp-nights">—</dd><dt>Valor da diária</dt><dd id="rp-rate">—</dd><dt>Subtotal</dt><dd id="rp-subtotal">—</dd><dt>Desconto</dt><dd id="rp-discount">—</dd></dl>
+ <div><span class="rp-total-label">Total estimado</span><output class="rp-total" id="rp-total">—</output></div>
+ <p class="rp-estimate" id="resumo_reserva" role="status" aria-live="polite">Informe entrada, saída e valor da diária para calcular.</p>
+ <p class="rp-estimate">Estimativa por períodos de 24 horas, arredondados para cima, com mínimo de uma diária. Confira as condições antes de salvar.</p>
+ <div class="rp-summary-actions"><button class="rp-btn rp-primary" type="submit">Criar reserva</button></div>
+ </aside>
+ </form>
+</section>
+<section class="rp-panel" aria-labelledby="rp-list-title">
+<header class="rp-head"><div><span class="rp-eyebrow">Acompanhamento</span><h2 id="rp-list-title">Reservas cadastradas</h2><p class="rp-subtitle">Edite reservas, prorrogue estadias, realize check-in e check-out e emita recibos.</p></div>
+<div class="rp-actions"><a class="rp-btn" href="{{ url_for('exportar', modelo='reservas', tipo='excel') }}">Exportar Excel</a><a class="rp-btn" href="{{ url_for('exportar', modelo='reservas', tipo='pdf') }}">Exportar PDF</a></div></header>
+<div class="rp-list-tools">
+<form method="get" class="rp-search"><div class="rp-field"><label for="rp-search">Pesquisar no sistema por nome ou CPF</label><input type="search" id="rp-search" name="q" value="{{ q or '' }}" placeholder="Nome ou CPF do hóspede" autocomplete="off"></div><button class="rp-btn rp-primary" type="submit">Pesquisar</button>{% if q %}<a class="rp-btn" href="{{ url_for('reservas') }}">Limpar</a>{% endif %}</form>
+<div class="rp-results"><span>{% if q %}Pesquisa: <strong>{{ q }}</strong>{% else %}Reservas retornadas pelo sistema{% endif %}</span><span>{{ dados|length }} registro(s) nesta lista</span></div>
+<div class="rp-quick-filters" id="rp-quick-filters" hidden>
+ <div class="rp-quick-heading"><strong>Filtrar esta lista</strong><span>Resultados enquanto você digita</span></div>
+ <div class="rp-filter-grid">
+ <div class="rp-field"><label for="rp-filter-name">Nome ou CPF</label><input type="search" id="rp-filter-name" placeholder="Ex.: João da Silva" autocomplete="off" aria-controls="rp-reservations-body"></div>
+ <div class="rp-field"><label for="rp-filter-room">Quarto</label><input type="search" id="rp-filter-room" placeholder="Ex.: 101" autocomplete="off" aria-controls="rp-reservations-body"></div>
+ <button type="button" class="rp-btn" id="rp-clear-filters">Limpar filtros</button>
+ </div>
+ <div class="rp-filter-foot"><span id="rp-filter-count" role="status" aria-live="polite"></span><span>Filtros apenas nos registros carregados; não alteram as exportações.</span></div>
+ </div>
+ <details class="rp-import"><summary>Importar reservas de uma planilha</summary>
+<form action="{{ url_for('importar', modelo='reservas') }}" method="post" enctype="multipart/form-data" class="rp-import-form">
+{% if csrf_token is defined and csrf_token is callable %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+<div class="rp-field"><label for="rp-file">Arquivo Excel</label><input id="rp-file" type="file" name="arquivo" accept=".xlsx,.xls" required></div><button class="rp-btn" type="submit">Importar Excel</button><p class="rp-help">Selecione um arquivo .xlsx ou .xls no formato aceito pelo sistema.</p></form></details>
 </div>
-
-<div class="agenda-modal" id="agenda_modal" aria-hidden="true">
-    <div class="agenda-modal__backdrop" data-fechar-agenda></div>
-
-    <section
-        class="agenda-modal__card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="agenda_titulo"
-    >
-        <button
-            type="button"
-            class="agenda-modal__fechar"
-            data-fechar-agenda
-            aria-label="Fechar aviso"
-        >×</button>
-
-        <div class="agenda-modal__icone">📅</div>
-
-        <div class="agenda-modal__cabecalho">
-            <span class="agenda-modal__etiqueta">AGENDA DO QUARTO</span>
-            <h3 id="agenda_titulo">Reserva já programada</h3>
-            <p id="agenda_subtitulo">
-                Confira as datas antes de continuar.
-            </p>
-        </div>
-
-        <div class="agenda-modal__lista" id="agenda_lista"></div>
-
-        <div class="agenda-modal__aviso">
-            <span>ℹ️</span>
-            <p>
-                Você ainda pode selecionar este quarto para outro período.
-                O sistema impedirá datas que entrem em conflito.
-            </p>
-        </div>
-
-        <button type="button" class="btn primary agenda-modal__botao" data-fechar-agenda>
-            Entendi, continuar
-        </button>
-    </section>
-</div>
-
-<div class="panel">
-
-    <div class="toolbar">
-        <div>
-            <h2>Reservas</h2>
-            <p class="subtitle">
-                Controle de reservas, check-in, check-out e recibos.
-            </p>
-        </div>
-
-        <div class="toolbar-actions">
-            <a
-                class="btn"
-                href="{{ url_for('exportar', modelo='reservas', tipo='excel') }}"
-            >
-                Excel
-            </a>
-
-            <a
-                class="btn"
-                href="{{ url_for('exportar', modelo='reservas', tipo='pdf') }}"
-            >
-                PDF
-            </a>
-        </div>
-    </div>
-
-    <form method="get" class="pesquisa-reservas">
-
-        <div class="campo-pesquisa">
-            <span class="icone-pesquisa">🔎</span>
-
-            <input
-                type="text"
-                name="q"
-                value="{{ q or '' }}"
-                placeholder="Pesquisar colaborador por nome ou CPF"
-                autocomplete="off"
-            >
-        </div>
-
-        <button class="btn primary" type="submit">
-            Pesquisar
-        </button>
-
-        {% if q %}
-            <a class="btn" href="{{ url_for('reservas') }}">
-                Limpar
-            </a>
-        {% endif %}
-
-    </form>
-
-    {% if q %}
-        <div class="resultado-pesquisa">
-            Resultado da pesquisa por:
-            <strong>{{ q }}</strong>
-
-            <span>
-                {{ dados|length }} reserva(s) encontrada(s)
-            </span>
-        </div>
-    {% endif %}
-
-    <form
-        action="{{ url_for('importar', modelo='reservas') }}"
-        method="post"
-        enctype="multipart/form-data"
-        class="import"
-    >
-        <input
-            type="file"
-            name="arquivo"
-            accept=".xlsx,.xls"
-        >
-
-        <button class="btn" type="submit">
-            Importar Excel
-        </button>
-    </form>
-
-    <div class="table-wrap">
-        <table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Lista de reservas; role horizontalmente para ver todas as colunas">
+        <table><caption class="rp-sr">Reservas e ações de hospedagem</caption>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Hóspede</th>
-                    <th>CPF</th>
-                    <th>Quarto</th>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>Diária</th>
-                    <th>Desconto</th>
-                    <th>Status</th>
-                    <th>Ações</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Hóspede</th>
+                    <th scope="col">CPF</th>
+                    <th scope="col">Quarto</th>
+                    <th scope="col">Entrada</th>
+                    <th scope="col">Saída</th>
+                    <th scope="col">Diária</th>
+                    <th scope="col">Desconto</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Ações</th>
                 </tr>
             </thead>
-
-            <tbody>
+            <tbody id="rp-reservations-body">
                 {% for r in dados %}
-                <tr>
-                    <td>#{{ r.id }}</td>
-
+                <tr data-reservation-row data-guest="{{ r.hospede.nome }}" data-cpf="{{ r.hospede.cpf or '' }}" data-room="{{ r.quarto.numero }}">
+                    <td class="rp-id">#{{ r.id }}</td>
                     <td>
                         <strong>{{ r.hospede.nome }}</strong>
                     </td>
-
                     <td>
                         {{ r.hospede.cpf or '-' }}
                     </td>
-
                     <td>
                         Quarto {{ r.quarto.numero }}
                     </td>
-
                     <td>
-                        {{ r.data_entrada }}
+                        <time data-date>{{ r.data_entrada }}</time>
                     </td>
-
                     <td>
-                        {{ r.data_saida }}
+                        <time data-date>{{ r.data_saida }}</time>
                     </td>
-
                     <td>
-                        R$ {{ "%.2f"|format(r.valor_diaria or 0) }}
+                        <span class="rp-money" data-money="{{ r.valor_diaria or 0 }}">R$ {{ "%.2f"|format(r.valor_diaria or 0) }}</span>
                     </td>
-
                     <td>
-                        R$ {{ "%.2f"|format(r.desconto or 0) }}
+                        <span class="rp-money" data-money="{{ r.desconto or 0 }}">R$ {{ "%.2f"|format(r.desconto or 0) }}</span>
                     </td>
-
                     <td>
                         {% set status_class = {
                             'Reservado':'status-reservado',
@@ -278,46 +258,42 @@
                             'Finalizado':'status-finalizado',
                             'Cancelado':'status-cancelado'
                         }.get(r.status, 'status-padrao') %}
-
-                        <span class="badge {{ status_class }}">
+                        <span class="rp-badge {{ status_class }}">
                             {{ r.status }}
                         </span>
                     </td>
-
                     <td>
                         <div class="acoes-reserva">
-
+                            {% if r.status in ['Reservado', 'Hospedado'] %}
+                                <a class="rp-btn rp-small rp-edit" data-loading-label="Abrindo edição da reserva…" href="{{ url_for('editar_reserva', id=r.id) }}" aria-label="Editar reserva {{ r.id }} de {{ r.hospede.nome }}">Editar</a>
+                                <a class="rp-btn rp-small rp-extend" data-loading-label="Abrindo prorrogação da estadia…" href="{{ url_for('prorrogar_reserva', id=r.id) }}" aria-label="Prorrogar estadia de {{ r.hospede.nome }}, reserva {{ r.id }}">Prorrogar</a>
+                            {% endif %}
                             {% if r.status == 'Reservado' %}
                                 <a
-                                    class="btn small"
+                                    class="rp-btn rp-small"
                                     href="{{ url_for('checkin', id=r.id) }}"
                                 >
                                     Check-in
                                 </a>
                             {% endif %}
-
                             {% if r.status == 'Hospedado' %}
                                 <a
-                                    class="btn small primary"
+                                    class="rp-btn rp-small rp-primary"
                                     href="{{ url_for('checkout', id=r.id) }}"
                                 >
                                     Check-out
                                 </a>
                             {% endif %}
-
                             <a
-                                class="btn small"
+                                class="rp-btn rp-small"
                                 href="{{ url_for('recibo', id=r.id) }}"
                             >
                                 Recibo
                             </a>
-
                         </div>
                     </td>
                 </tr>
-
                 {% else %}
-
                 <tr>
                     <td
                         colspan="10"
@@ -331,508 +307,318 @@
                         {% endif %}
                     </td>
                 </tr>
-
                 {% endfor %}
+            <tr id="rp-filter-empty" hidden><td colspan="10" class="sem-resultados"><strong style="max-width:none">Nenhuma reserva corresponde aos filtros.</strong>Altere o nome ou quarto, ou clique em “Limpar filtros”.</td></tr>
             </tbody>
         </table>
     </div>
-
+<p class="rp-table-note">Deslize a tabela na horizontal para consultar todas as colunas e ações.</p>
+</section>
+<dialog class="rp-nav-loading" id="rp-nav-loading" aria-labelledby="rp-nav-title" aria-describedby="rp-nav-message">
+    <span class="rp-nav-spinner" aria-hidden="true"></span>
+    <div role="status" aria-live="polite">
+        <h3 id="rp-nav-title">Carregando…</h3>
+        <p id="rp-nav-message">Aguarde enquanto a tela é aberta.</p>
+    </div>
+    <button type="button" class="rp-btn rp-small" id="rp-nav-dismiss">Ocultar aviso</button>
+</dialog>
+<dialog class="rp-dialog" id="agenda_modal" aria-labelledby="agenda_titulo" aria-describedby="agenda_subtitulo">
+ <div class="rp-dialog-head"><div><span class="rp-eyebrow">Agenda do quarto</span><h3 id="agenda_titulo">Reservas programadas</h3></div><button type="button" class="rp-btn rp-dialog-close" data-fechar-agenda aria-label="Fechar agenda" autofocus>×</button></div>
+ <p class="rp-subtitle" id="agenda_subtitulo">Confira as hospedagens informadas para este quarto.</p>
+ <div class="rp-agenda-list" id="agenda_lista"></div>
+ <p class="rp-warning">A agenda é uma consulta. A disponibilidade para as datas escolhidas deve ser confirmada ao salvar a reserva.</p>
+ <button type="button" class="rp-btn rp-primary" style="width:100%;margin-top:18px" data-fechar-agenda>Voltar ao cadastro</button>
+</dialog>
 </div>
-
-<style>
-.subtitle{
-    color:#64748b;
-    font-size:13px;
-    margin-top:4px;
-}
-
-.toolbar-actions{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-}
-
-.pesquisa-reservas{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin:16px 0;
-}
-
-.campo-pesquisa{
-    position:relative;
-    flex:1;
-}
-
-.campo-pesquisa input{
-    width:100%;
-    min-height:44px;
-    padding:11px 14px 11px 42px;
-    border:1px solid #cbd5e1;
-    border-radius:12px;
-    background:#fff;
-    color:#0f172a;
-    outline:none;
-    font-size:14px;
-}
-
-.campo-pesquisa input:focus{
-    border-color:#2563eb;
-    box-shadow:0 0 0 4px rgba(37,99,235,.12);
-}
-
-.icone-pesquisa{
-    position:absolute;
-    left:14px;
-    top:50%;
-    transform:translateY(-50%);
-    pointer-events:none;
-}
-
-.resultado-pesquisa{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    flex-wrap:wrap;
-    margin-bottom:15px;
-    padding:12px 14px;
-    border-radius:11px;
-    background:#eff6ff;
-    border:1px solid #bfdbfe;
-    color:#1e3a8a;
-    font-size:13px;
-}
-
-.resultado-pesquisa span{
-    margin-left:auto;
-    color:#475569;
-}
-
-.table-wrap{
-    overflow-x:auto;
-}
-
-table{
-    width:100%;
-    min-width:1100px;
-    border-collapse:collapse;
-}
-
-th,
-td{
-    padding:12px 10px;
-    border-bottom:1px solid #e2e8f0;
-    text-align:left;
-    font-size:13px;
-}
-
-th{
-    background:#f8fafc;
-    color:#334155;
-    text-transform:uppercase;
-    font-size:11px;
-    letter-spacing:.03em;
-}
-
-td{
-    color:#334155;
-}
-
-.acoes-reserva{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    flex-wrap:wrap;
-}
-
-.badge{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:800;
-}
-
-.status-reservado{
-    background:#dbeafe;
-    color:#1d4ed8;
-}
-
-.status-hospedado{
-    background:#dcfce7;
-    color:#166534;
-}
-
-.status-finalizado{
-    background:#e2e8f0;
-    color:#475569;
-}
-
-.status-cancelado{
-    background:#fee2e2;
-    color:#991b1b;
-}
-
-.status-padrao{
-    background:#f1f5f9;
-    color:#334155;
-}
-
-.sem-resultados{
-    text-align:center;
-    color:#64748b;
-    padding:26px;
-}
-
-.calc-box{
-    background:#f1f5f9;
-    border:1px solid #dbe3ef;
-    border-radius:12px;
-    padding:12px 14px;
-    display:flex;
-    flex-direction:column;
-    gap:5px;
-    color:#0f172a;
-}
-
-.calc-box strong{
-    font-size:13px;
-    font-weight:800;
-}
-
-.calc-box span{
-    font-size:13px;
-    color:#475569;
-}
-
-.agenda-modal{
-    position:fixed;
-    inset:0;
-    z-index:9999;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-}
-
-.agenda-modal.aberto{
-    display:flex;
-}
-
-.agenda-modal__backdrop{
-    position:absolute;
-    inset:0;
-    background:rgba(15,23,42,.68);
-    backdrop-filter:blur(5px);
-}
-
-.agenda-modal__card{
-    position:relative;
-    width:min(560px, 100%);
-    max-height:90vh;
-    overflow-y:auto;
-    border:1px solid rgba(148,163,184,.28);
-    border-radius:22px;
-    padding:28px;
-    background:#fff;
-    box-shadow:0 30px 80px rgba(15,23,42,.28);
-    animation:agendaEntrada .22s ease-out;
-}
-
-@keyframes agendaEntrada{
-    from{opacity:0; transform:translateY(12px) scale(.98)}
-    to{opacity:1; transform:translateY(0) scale(1)}
-}
-
-.agenda-modal__fechar{
-    position:absolute;
-    top:16px;
-    right:16px;
-    width:36px;
-    height:36px;
-    border:0;
-    border-radius:10px;
-    background:#f1f5f9;
-    color:#475569;
-    font-size:24px;
-    line-height:1;
-    cursor:pointer;
-}
-
-.agenda-modal__icone{
-    width:54px;
-    height:54px;
-    display:grid;
-    place-items:center;
-    border-radius:16px;
-    margin-bottom:16px;
-    background:linear-gradient(135deg,#dbeafe,#eff6ff);
-    font-size:27px;
-}
-
-.agenda-modal__etiqueta{
-    color:#2563eb;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:.11em;
-}
-
-.agenda-modal__cabecalho h3{
-    margin:5px 42px 6px 0;
-    color:#0f172a;
-    font-size:22px;
-}
-
-.agenda-modal__cabecalho p{
-    margin:0;
-    color:#64748b;
-    font-size:14px;
-}
-
-.agenda-modal__lista{
-    display:grid;
-    gap:10px;
-    margin:20px 0 16px;
-}
-
-.agenda-item{
-    display:grid;
-    grid-template-columns:1fr auto;
-    gap:10px 16px;
-    padding:15px;
-    border:1px solid #dbeafe;
-    border-radius:14px;
-    background:#f8fbff;
-}
-
-.agenda-item__nome{
-    color:#0f172a;
-    font-size:14px;
-    font-weight:800;
-}
-
-.agenda-item__status{
-    align-self:start;
-    padding:5px 9px;
-    border-radius:999px;
-    background:#dbeafe;
-    color:#1d4ed8;
-    font-size:10px;
-    font-weight:900;
-    text-transform:uppercase;
-}
-
-.agenda-item__datas{
-    grid-column:1 / -1;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    color:#475569;
-    font-size:12px;
-}
-
-.agenda-item__datas strong{
-    display:block;
-    margin-bottom:3px;
-    color:#94a3b8;
-    font-size:10px;
-    text-transform:uppercase;
-}
-
-.agenda-modal__aviso{
-    display:flex;
-    gap:10px;
-    padding:12px 14px;
-    border-radius:12px;
-    background:#fffbeb;
-    color:#92400e;
-    font-size:12px;
-    line-height:1.5;
-}
-
-.agenda-modal__aviso p{margin:0}
-
-.agenda-modal__botao{
-    width:100%;
-    margin-top:18px;
-}
-
-body.dark .agenda-modal__card{
-    background:#111827;
-    border-color:rgba(255,255,255,.1);
-}
-
-body.dark .agenda-modal__cabecalho h3,
-body.dark .agenda-item__nome{color:#f8fafc}
-
-body.dark .agenda-modal__cabecalho p{color:#94a3b8}
-
-body.dark .agenda-item{
-    background:rgba(30,41,59,.8);
-    border-color:rgba(59,130,246,.25);
-}
-
-body.dark .calc-box{
-    background:rgba(15,23,42,.85);
-    border-color:rgba(255,255,255,.08);
-    color:#f8fafc;
-}
-
-body.dark .calc-box span{
-    color:#cbd5e1;
-}
-
-@media(max-width:800px){
-    .pesquisa-reservas{
-        align-items:stretch;
-        flex-direction:column;
-    }
-
-    .pesquisa-reservas .btn{
-        width:100%;
-    }
-
-    .resultado-pesquisa span{
-        width:100%;
-        margin-left:0;
-    }
-}
-</style>
-
+{% endblock %}
+{% block extra_js %}
+{{ super() }}
 <script>
-const agendaQuartos = {{ agenda_quartos|tojson }};
-const seletorQuarto = document.getElementById('quarto_id');
-const agendaModal = document.getElementById('agenda_modal');
-const agendaLista = document.getElementById('agenda_lista');
-const agendaTitulo = document.getElementById('agenda_titulo');
-
-function formatarDataAgenda(valor){
-    const data = new Date(valor);
-    if(Number.isNaN(data.getTime())) return valor;
-
-    return new Intl.DateTimeFormat('pt-BR', {
-        day:'2-digit', month:'2-digit', year:'numeric',
-        hour:'2-digit', minute:'2-digit'
-    }).format(data);
-}
-
-function fecharAgenda(){
-    agendaModal.classList.remove('aberto');
-    agendaModal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-}
-
-function abrirAgenda(quartoId){
-    const reservas = agendaQuartos[String(quartoId)] || [];
-    if(!reservas.length) return;
-
-    const opcao = seletorQuarto.options[seletorQuarto.selectedIndex];
-    const numero = (opcao.textContent.match(/Quarto\s+([^—]+)/) || [,''])[1].trim();
-    agendaTitulo.textContent = 'Quarto ' + numero + ' possui reserva agendada';
-
-    agendaLista.innerHTML = reservas.map(reserva => `
-        <article class="agenda-item">
-            <span class="agenda-item__nome">${escaparHtml(reserva.hospede)}</span>
-            <span class="agenda-item__status">${escaparHtml(reserva.status)}</span>
-            <div class="agenda-item__datas">
-                <span><strong>Entrada</strong>${formatarDataAgenda(reserva.entrada)}</span>
-                <span><strong>Saída</strong>${formatarDataAgenda(reserva.saida)}</span>
-            </div>
-        </article>
-    `).join('');
-
-    agendaModal.classList.add('aberto');
-    agendaModal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-}
-
-function escaparHtml(valor){
-    const elemento = document.createElement('div');
-    elemento.textContent = valor || '';
-    return elemento.innerHTML;
-}
-
-seletorQuarto.addEventListener('change', function(){
-    if(this.value) abrirAgenda(this.value);
-});
-
-document.querySelectorAll('[data-fechar-agenda]').forEach(elemento => {
-    elemento.addEventListener('click', fecharAgenda);
-});
-
-document.addEventListener('keydown', evento => {
-    if(evento.key === 'Escape') fecharAgenda();
-});
-
-function calcularReserva(){
-    const entrada =
-        document.getElementById('data_entrada').value;
-
-    const saida =
-        document.getElementById('data_saida').value;
-
-    const diaria = parseFloat(
-        document.getElementById('valor_diaria').value || 0
-    );
-
-    const desconto = parseFloat(
-        document.getElementById('desconto').value || 0
-    );
-
-    const resumo =
-        document.getElementById('resumo_reserva');
-
-    if(!entrada || !saida || diaria <= 0){
-        resumo.innerText =
-            'Informe entrada, saída e diária.';
-        return;
+(function () {
+    'use strict';
+    const root = document.getElementById('rp-page');
+    if (!root) return;
+    const agendaQuartos = {{ agenda_quartos|default({}, true)|tojson }};
+    const form = root.querySelector('#rp-form');
+    const room = root.querySelector('#quarto_id');
+    const entry = root.querySelector('#data_entrada');
+    const departure = root.querySelector('#data_saida');
+    const rate = root.querySelector('#valor_diaria');
+    const discount = root.querySelector('#desconto');
+    const summary = root.querySelector('#resumo_reserva');
+    const dialog = root.querySelector('#agenda_modal');
+    const list = root.querySelector('#agenda_lista');
+    const viewAgenda = root.querySelector('#rp-view-agenda');
+    const money = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+    const dateFormat = new Intl.DateTimeFormat('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    let previousFocus = null;
+    let previousOverflow = '';
+    function dateValue(value) {
+        if (!value) return null;
+        const text = String(value).trim();
+        // Datas locais do cadastro não recebem conversão artificial de fuso.
+        if (!/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(text)) return null;
+        const parsed = new Date(text.replace(' ', 'T'));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
-
-    const dtEntrada = new Date(entrada);
-    const dtSaida = new Date(saida);
-
-    if(dtSaida <= dtEntrada){
-        resumo.innerText =
-            'A saída precisa ser maior que a entrada.';
-        return;
+    function displayDate(value) {
+        const date = dateValue(value);
+        return date ? dateFormat.format(date) : String(value || 'Não informada');
     }
+    function setText(id, text) { root.querySelector('#' + id).textContent = text; }
+    function calculate() {
+        departure.setCustomValidity('');
+        const start = dateValue(entry.value);
+        const end = dateValue(departure.value);
+        const daily = rate.value === '' ? NaN : Number(rate.value);
+        const reduction = discount.value === '' ? 0 : Number(discount.value);
+        ['rp-nights','rp-subtotal','rp-total'].forEach(id => setText(id, '—'));
+        setText('rp-rate', Number.isFinite(daily) && daily >= 0 ? money.format(daily) : '—');
+        setText('rp-discount', Number.isFinite(reduction) && reduction >= 0 ? money.format(reduction) : '—');
+        if (start && end && end <= start) {
+            departure.setCustomValidity('A saída precisa ser posterior à entrada.');
+            summary.textContent = 'A saída precisa ser posterior à entrada.';
+            return;
+        }
+        if (!start || !end || !Number.isFinite(daily) || daily < 0 || !Number.isFinite(reduction) || reduction < 0) {
+            summary.textContent = 'Informe datas válidas e valores iguais ou maiores que zero.';
+            return;
+        }
+        const nights = Math.max(1, Math.ceil((end - start) / 86400000));
+        // Cálculo em centavos evita resíduos de ponto flutuante nos valores.
+        const dailyCents = Math.round(daily * 100);
+        const reductionCents = Math.round(reduction * 100);
+        const subtotalCents = nights * dailyCents;
+        const totalCents = Math.max(0, subtotalCents - reductionCents);
+        if (![subtotalCents,reductionCents,totalCents].every(Number.isSafeInteger)) {
+            summary.textContent = 'Os valores informados ultrapassam o limite desta estimativa.';
+            return;
+        }
+        setText('rp-nights', String(nights));
+        setText('rp-subtotal', money.format(subtotalCents / 100));
+        setText('rp-total', money.format(totalCents / 100));
+        summary.textContent = reductionCents > subtotalCents
+            ? 'O desconto supera o subtotal. A estimativa fica em R$ 0,00; revise antes de salvar.'
+            : nights + (nights === 1 ? ' diária estimada.' : ' diárias estimadas.') + ' Confira os dados antes de salvar.';
+    }
+    function makeElement(tag, className, value) {
+        const element = document.createElement(tag);
+        element.className = className;
+        if (value !== undefined) element.textContent = String(value ?? '');
+        return element;
+    }
+    function openAgenda() {
+        if (!room.value) return;
+        const raw = agendaQuartos && agendaQuartos[String(room.value)];
+        const reservations = Array.isArray(raw) ? raw : [];
+        const option = room.options[room.selectedIndex];
+        setText('agenda_titulo', 'Agenda · Quarto ' + option.dataset.numero);
+        list.replaceChildren();
+        if (!reservations.length) {
+            list.append(makeElement('p','rp-help','Nenhuma reserva consta na agenda recebida para este quarto.'));
+        }
+        reservations.forEach(reservation => {
+            if (!reservation || typeof reservation !== 'object') return;
+            const item = makeElement('article','rp-agenda-item');
+            const top = makeElement('div','rp-agenda-top');
+            top.append(makeElement('strong','',reservation.hospede || 'Hóspede não informado'),makeElement('span','rp-badge',reservation.status || 'Sem status'));
+            const dates = makeElement('div','rp-agenda-dates');
+            [['Entrada',reservation.entrada],['Saída',reservation.saida]].forEach(([label,value]) => {
+                const cell = makeElement('div','');
+                cell.append(makeElement('small','',label),makeElement('span','',displayDate(value)));
+                dates.append(cell);
+            });
+            item.append(top,dates);
+            list.append(item);
+        });
+        if (!dialog.open) {
+            previousFocus = document.activeElement;
+            previousOverflow = document.body.style.overflow;
+            dialog.showModal();
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    dialog.addEventListener('close', () => {
+        document.body.style.overflow = previousOverflow;
+        if (previousFocus && previousFocus.isConnected) previousFocus.focus();
+    });
+    root.querySelectorAll('[data-fechar-agenda]').forEach(button => button.addEventListener('click', () => dialog.close()));
+    dialog.addEventListener('click', event => {
+        const box = dialog.getBoundingClientRect();
+        if (event.target === dialog && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) dialog.close();
+    });
+    room.addEventListener('change', () => {
+        viewAgenda.hidden = !room.value;
+        const items = agendaQuartos && agendaQuartos[String(room.value)];
+        if (Array.isArray(items) && items.length) openAgenda();
+    });
+    viewAgenda.addEventListener('click',openAgenda);
+    viewAgenda.hidden = !room.value;
+    [entry,departure,rate,discount].forEach(field => {
+        field.addEventListener('input',calculate);
+        field.addEventListener('change',calculate);
+    });
+    form.addEventListener('submit', event => {
+        calculate();
+        if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); }
+    });
+    root.querySelectorAll('[data-date]').forEach(node => {
+        const original = node.textContent.trim();
+        const date = dateValue(original);
+        if (date) { node.textContent = dateFormat.format(date); node.setAttribute('datetime',original.replace(' ','T')); }
+    });
+    root.querySelectorAll('[data-money]').forEach(node => {
+        const value = Number(node.dataset.money);
+        if (Number.isFinite(value)) node.textContent = money.format(value);
+    });
+    calculate();
+}());
 
-    const diffMs = dtSaida - dtEntrada;
-    const horas = diffMs / (1000 * 60 * 60);
-    const diarias = Math.max(
-        1,
-        Math.ceil(horas / 24)
-    );
+// Buscas locais: não exigem novas rotas e preservam os IDs enviados ao servidor.
+(function () {
+    'use strict';
+    const root = document.getElementById('rp-page');
+    if (!root) return;
+    const normalize = value => String(value || '').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const termsMatch = (text, query) => normalize(query).split(/\s+/).filter(Boolean)
+        .every(term => normalize(text).includes(term));
+    const guestMatches = (name, cpf, query) => {
+        const value = normalize(query);
+        if (!value) return true;
+        const digits = value.replace(/\D/g, '');
+        if (digits && /^[\d.\s-]+$/.test(value)) return String(cpf || '').replace(/\D/g, '').includes(digits);
+        return termsMatch(name + ' ' + cpf, value);
+    };
 
-    const total = Math.max(
-        0,
-        (diarias * diaria) - desconto
-    );
+    function searchableSelect(selectId, inputId, resultId) {
+        const select = root.querySelector('#' + selectId);
+        const input = root.querySelector('#' + inputId);
+        const result = root.querySelector('#' + resultId);
+        const original = Array.from(select.options, option => option.cloneNode(true));
+        const placeholder = original[0];
+        const entries = original.slice(1);
+        function matches(option) {
+            const query = input.value.trim();
+            const digits = query.replace(/\D/g, '');
+            if (selectId === 'hospede_id' && digits && /^[\d.\s-]+$/.test(query)) {
+                const cpf = option.textContent.split('— CPF ')[1] || '';
+                return cpf.replace(/\D/g, '').includes(digits);
+            }
+            return termsMatch(option.textContent, query);
+        }
+        function filter() {
+            const selected = select.value;
+            const matching = entries.filter(matches);
+            const selectedOutside = entries.find(option => option.value === selected && !matches(option));
+            const fragment = document.createDocumentFragment();
+            fragment.append(placeholder.cloneNode(true));
+            // A seleção atual permanece disponível mesmo fora da pesquisa.
+            if (selectedOutside) fragment.append(selectedOutside.cloneNode(true));
+            matching.forEach(option => fragment.append(option.cloneNode(true)));
+            select.replaceChildren(fragment);
+            select.value = selected;
+            if (!select.value) select.value = '';
+            const available = matching.filter(option => !option.disabled).length;
+            result.textContent = input.value.trim()
+                ? matching.length + ' resultado(s)' + (selectId === 'quarto_id' ? ' · ' + available + ' selecionável(is)' : '')
+                    + (selectedOutside ? '. Seleção atual mantida fora da pesquisa.' : '. Selecione na lista abaixo.')
+                : 'Digite para filtrar e selecione na lista abaixo.';
+        }
+        input.addEventListener('input', filter);
+        input.addEventListener('search', filter);
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') { event.preventDefault(); select.focus(); }
+            if (event.key === 'Escape') { input.value = ''; filter(); }
+        });
+        select.addEventListener('change', filter);
+        result.hidden = false;
+        input.closest('[data-picker-ui]').hidden = false;
+        filter();
+    }
+    searchableSelect('hospede_id','rp-guest-find','rp-guest-result');
+    searchableSelect('quarto_id','rp-room-find','rp-room-result');
 
-    resumo.innerText =
-        horas.toFixed(1) + ' horas | ' +
-        diarias + ' diária(s) | Total R$ ' +
-        total.toFixed(2);
-}
+    const nameInput = root.querySelector('#rp-filter-name');
+    const roomInput = root.querySelector('#rp-filter-room');
+    const clear = root.querySelector('#rp-clear-filters');
+    const count = root.querySelector('#rp-filter-count');
+    const empty = root.querySelector('#rp-filter-empty');
+    const rows = Array.from(root.querySelectorAll('[data-reservation-row]'));
+    function filterReservations() {
+        let visible = 0;
+        rows.forEach(row => {
+            const match = guestMatches(row.dataset.guest, row.dataset.cpf, nameInput.value)
+                && termsMatch(row.dataset.room, roomInput.value.replace(/^quarto\s+/i, ''));
+            row.hidden = !match;
+            if (match) visible++;
+        });
+        count.textContent = visible + ' de ' + rows.length + ' reserva(s) exibida(s)';
+        empty.hidden = visible > 0 || rows.length === 0;
+        clear.disabled = !nameInput.value && !roomInput.value;
+    }
+    [nameInput, roomInput].forEach(input => {
+        input.addEventListener('input', filterReservations);
+        input.addEventListener('search', filterReservations);
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') event.preventDefault();
+            if (event.key === 'Escape') { input.value = ''; filterReservations(); }
+        });
+    });
+    clear.addEventListener('click', () => {
+        nameInput.value = ''; roomInput.value = '';
+        filterReservations(); nameInput.focus();
+    });
+    root.querySelector('#rp-quick-filters').hidden = false;
+    filterReservations();
+}());
 
-document
-    .getElementById('data_entrada')
-    .addEventListener('change', calcularReserva);
 
-document
-    .getElementById('data_saida')
-    .addEventListener('change', calcularReserva);
-
-document
-    .getElementById('valor_diaria')
-    .addEventListener('input', calcularReserva);
-
-document
-    .getElementById('desconto')
-    .addEventListener('input', calcularReserva);
+// Sinaliza a navegação sem atrasar ou substituir o funcionamento dos links.
+(function () {
+    'use strict';
+    const root = document.getElementById('rp-page');
+    const loading = document.getElementById('rp-nav-loading');
+    if (!root || !loading || typeof loading.showModal !== 'function') return;
+    const title = document.getElementById('rp-nav-title');
+    const message = document.getElementById('rp-nav-message');
+    let current = null;
+    let originalText = '';
+    let timer = null;
+    function resetLoading() {
+        window.clearTimeout(timer);
+        timer = null;
+        if (current) {
+            current.textContent = originalText;
+            current.classList.remove('rp-loading');
+            current.removeAttribute('aria-busy');
+            current = null;
+        }
+        if (loading.open) loading.close();
+    }
+    root.addEventListener('click', function (event) {
+        const link = event.target.closest('a[data-loading-label]');
+        if (!link || event.defaultPrevented || event.button !== 0 ||
+            event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
+            (link.target && link.target !== '_self') || link.hasAttribute('download')) return;
+        if (current) { event.preventDefault(); return; }
+        current = link;
+        originalText = link.textContent;
+        link.textContent = 'Carregando…';
+        link.classList.add('rp-loading');
+        link.setAttribute('aria-busy', 'true');
+        title.textContent = link.dataset.loadingLabel;
+        message.textContent = 'Aguarde enquanto a tela é aberta.';
+        loading.showModal();
+        timer = window.setTimeout(function () {
+            message.textContent = 'A abertura está demorando mais que o esperado. Você pode ocultar este aviso enquanto aguarda.';
+        }, 12000);
+        // A navegação original do link continua normalmente, sem espera artificial.
+    });
+    document.getElementById('rp-nav-dismiss').addEventListener('click', resetLoading);
+    loading.addEventListener('close', resetLoading);
+    window.addEventListener('pageshow', resetLoading);
+    window.addEventListener('pagehide', resetLoading);
+}());
 </script>
-
 {% endblock %}

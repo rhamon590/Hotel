@@ -1,0 +1,28 @@
+<section class="hc-panel" id="fotos">
+  <div class="hc-panel-head"><div><h2>Galeria e aprovação em lote</h2><p>Selecione as fotos, confira as descrições e aprove o conjunto de uma vez. Até 100 fotos por aprovação.</p></div><a class="hc-button" href="{{ url_for('portal_configurar') }}">Adicionar fotos aos quartos →</a></div>
+  <form method="post" action="{{ url_for('hotel_galeria_revisar') }}" class="hc-form" data-hg-review id="hg-review-form">
+    {{ csrf() }}
+    <div class="hg-batch-bar"><div class="hc-actions"><button type="button" class="hc-button" data-hg-select="all">Selecionar todas</button><button type="button" class="hc-button" data-hg-select="pending">Selecionar pendentes</button><button type="button" class="hc-button" data-hg-select="none">Limpar seleção</button></div><strong data-hg-count role="status" aria-live="polite">0 fotos selecionadas</strong></div>
+    <div class="hg-review-scroll">{% set total=namespace(fotos=0) %}
+    {% for q in galeria_quartos() %}{% set imagens=galeria_fotos(q.id,publico=false) %}{% if imagens %}{% set total.fotos=total.fotos+imagens|length %}
+      <section class="hg-room-review" aria-labelledby="hg-room-{{ q.id }}"><div class="hg-section-title"><h3 id="hg-room-{{ q.id }}">Quarto {{ q.numero }} <small>· {{ imagens|length }} foto(s)</small></h3><button type="button" class="hc-button" data-hg-room="{{ q.id }}">Selecionar fotos deste quarto</button></div>
+      <div class="hg-review-grid">{% for f in imagens %}
+        <article class="hg-photo-review" data-hg-card>
+          <label class="hg-pick"><input type="checkbox" name="fotos" value="{{ f.token }}" data-hg-pick data-room="{{ q.id }}" data-pending="{{ '0' if f.autorizada else '1' }}"><span>Selecionar foto {{ loop.index }}</span></label>
+          <img class="hg-review-image" src="{{ url_for('hotel_galeria_foto',quarto_id=q.id,token=f.token) }}" alt="Prévia administrativa da foto {{ loop.index }} do quarto {{ q.numero }}" loading="lazy">
+          <span class="hg-photo-status {{ 'hg-approved' if f.autorizada else 'hg-pending' }}">{{ 'Publicação autorizada' if f.autorizada else 'Pendente · oculta do público' }}</span>
+          <div class="hc-field"><label for="hg-alt-{{ f.token }}">Descrição desta foto</label><input id="hg-alt-{{ f.token }}" name="alt_{{ f.token }}" value="{{ f.alternativo }}" minlength="8" maxlength="200" data-hg-alt-input placeholder="Ex.: duas camas e uma janela ao fundo."><p class="hc-help">Descreva o que aparece na imagem. Obrigatório para aprovar a foto selecionada.</p></div>
+          {% if f.autorizada %}<p class="hc-help">Origem: {{ f.origem }}<br>Revisada por {{ f.responsavel }} · {{ f.data|hc_horario }}</p>{% endif %}
+          <button type="submit" class="hc-button hc-danger" form="hg-remove-{{ f.token }}">Remover foto da galeria</button>
+        </article>
+      {% endfor %}</div></section>
+    {% endif %}{% endfor %}
+    {% if total.fotos == 0 %}<p class="hc-help">Nenhuma foto cadastrada. Adicione imagens na configuração dos quartos e volte aqui para aprovar.</p>{% endif %}</div>
+    <div class="hg-approval-box"><h3>Revisão das fotos selecionadas</h3><p class="hc-help">Use uma origem comum somente se ela valer para todas as imagens selecionadas. Se as origens forem diferentes, aprove em grupos separados.</p>
+      <div class="hc-field"><label for="hg-origin">Origem e referência da autorização/licença do lote</label><input id="hg-origin" name="origem" minlength="5" maxlength="500" placeholder="Ex.: fotos próprias da equipe; autorização arquivada em..."></div>
+      <label class="hc-check"><input type="checkbox" name="direitos" value="1" id="hg-rights"> Confirmo que revisei as imagens e as descrições e que TODAS as fotos selecionadas são próprias ou possuem autorização/licença para publicação.</label>
+      <div class="hc-actions"><button class="hc-button hc-primary" name="acao" value="aprovar" data-hg-approve>Aprovar fotos selecionadas</button><button class="hc-button" name="acao" value="ocultar" data-hg-hide formnovalidate>Ocultar selecionadas do público</button></div><p data-hg-review-status class="hc-help" role="status" aria-live="polite">A aprovação registra o responsável e a data de cada imagem. Guarde os comprovantes da autorização.</p>
+    </div>
+  </form>
+  {% for q in galeria_quartos() %}{% for f in galeria_fotos(q.id,publico=false) %}<form id="hg-remove-{{ f.token }}" method="post" action="{{ url_for('hotel_galeria_remover') }}" data-hg-remove hidden>{{ csrf() }}<input name="quarto_id" type="hidden" value="{{ q.id }}"><input name="foto" type="hidden" value="{{ f.token }}"></form>{% endfor %}{% endfor %}
+</section>
