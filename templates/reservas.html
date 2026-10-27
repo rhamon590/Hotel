@@ -162,7 +162,7 @@ html[data-theme="light"] .rp-extend{color:#047857}
  <select name="quarto_id"  id="quarto_id" aria-describedby="rp-room-help" required><option value="">Selecione o quarto</option>
  {% for quarto in quartos %}
  {% set lotacao = (ocupacoes|default({}, true)).get(quarto.id, {}) %}
- <option value="{{ quarto.id }}" data-numero="{{ quarto.numero }}" {% if quarto.status in ['Bloqueado', 'Em manutenção', 'Em manutenÃ§Ã£o', 'Em limpeza'] %}disabled{% endif %}>Quarto {{ quarto.numero }} — {{ quarto.categoria }} — {{ quarto.status }} — {{ lotacao.get('vagas', quarto.capacidade or 0) }} vaga(s)</option>
+ <option value="{{ quarto.id }}" data-numero="{{ quarto.numero }}" {% if quarto.status in ['Bloqueado', 'Em manutenção', 'Em manutenÃ§Ã£o', 'Em limpeza'] %}disabled{% endif %}>Quarto {{ quarto.numero }} — {{ quarto.categoria }}{% if quarto.classificacao == 'Feminino' %} · Feminino{% endif %} — {{ quarto.status }} — {{ lotacao.get('vagas', quarto.capacidade or 0) }} vaga(s)</option>
  {% endfor %}
  </select><p class="rp-help rp-picker-result" id="rp-room-result" role="status" aria-live="polite" hidden></p><p class="rp-help" id="rp-room-help">Vagas e situação informadas pelo sistema. Consulte a agenda para conferir o período.</p>
  <button type="button" class="rp-btn rp-small" id="rp-view-agenda" hidden>Consultar agenda do quarto</button></div>

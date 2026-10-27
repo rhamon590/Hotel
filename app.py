@@ -96,6 +96,7 @@ class Quarto(db.Model):
     numero = db.Column(db.String(20), unique=True, nullable=False)
     andar = db.Column(db.String(20))
     categoria = db.Column(db.String(80), default='Standard')
+    classificacao = db.Column(db.String(20), nullable=False, default='Geral')
     capacidade = db.Column(db.Integer, default=1)
     valor_diaria = db.Column(db.Float, default=0)
     status = db.Column(db.String(40), default='Livre')
@@ -798,7 +799,15 @@ def hospedes():
 @permissao_necessaria('quartos')
 def quartos():
     if request.method == 'POST':
-        q = Quarto(numero=request.form.get('numero'), andar=request.form.get('andar'), categoria=request.form.get('categoria'), capacidade=int(request.form.get('capacidade') or 1), valor_diaria=float(request.form.get('valor_diaria') or 0), status=request.form.get('status'), descricao=request.form.get('descricao'), amenidades=request.form.get('amenidades'))
+        classificacao = (request.form.get('classificacao') or 'Geral').strip()
+        if classificacao not in ('Geral', 'Feminino'):
+            flash('Selecione uma classificacao de quarto valida.', 'danger')
+            return redirect(url_for('quartos'))
+        if (classificacao == 'Feminino' and
+                Quarto.query.filter_by(classificacao='Feminino').count() >= 2):
+            flash('Ja existem dois quartos femininos. Altere um deles para Geral antes.', 'warning')
+            return redirect(url_for('quartos'))
+        q = Quarto(classificacao=classificacao, numero=request.form.get('numero'), andar=request.form.get('andar'), categoria=request.form.get('categoria'), capacidade=int(request.form.get('capacidade') or 1), valor_diaria=float(request.form.get('valor_diaria') or 0), status=request.form.get('status'), descricao=request.form.get('descricao'), amenidades=request.form.get('amenidades'))
         db.session.add(q); db.session.commit(); auditar('Criou quarto','quartos',q.id,q.numero); flash('Quarto salvo.', 'success'); return redirect(url_for('quartos'))
     dados = Quarto.query.order_by(Quarto.numero).all()
 
@@ -816,31 +825,104 @@ def quartos():
     )
 
 
+@app.route('/quartos/<int:id>/classificacao', methods=['POST'])
+@login_required
+@permissao_necessaria('quartos')
+def quarto_classificacao(id):
+    quarto = Quarto.query.get_or_404(id)
+    nova = (request.form.get('classificacao') or '').strip()
+    if nova not in ('Geral', 'Feminino'):
+        flash('Classificacao invalida.', 'danger')
+        return redirect(url_for('quartos'))
+
+    anterior = quarto.classificacao or 'Geral'
+    if nova == anterior:
+        flash(f'Quarto {quarto.numero} ja esta classificado como {nova}.', 'info')
+        return redirect(url_for('quartos'))
+    if (nova == 'Feminino' and
+            Quarto.query.filter_by(classificacao='Feminino').count() >= 2):
+        flash('O limite de 2 quartos femininos foi atingido. Libere um dos existentes.', 'warning')
+        return redirect(url_for('quartos'))
+    try:
+        quarto.classificacao = nova
+        db.session.commit()
+        auditar('Alterou classificacao do quarto', 'quartos', quarto.id,
+                f'Quarto {quarto.numero}: {anterior} -> {nova}')
+    except Exception:
+        db.session.rollback()
+        app.logger.exception('Nao foi possivel alterar a classificacao do quarto')
+        flash('Nao foi possivel salvar a classificacao.', 'danger')
+        return redirect(url_for('quartos'))
+    flash(f'Quarto {quarto.numero} classificado como {nova}.', 'success')
+    return redirect(url_for('quartos'))
+
+
 @app.route('/quarto_capacidade/<int:id>', methods=['POST'])
 @login_required
 @permissao_necessaria('quartos')
 def quarto_capacidade(id):
+    """Permite aumentar/diminuir vagas sem invalidar reservas existentes."""
     quarto = Quarto.query.get_or_404(id)
     capacidade = request.form.get('capacidade', type=int)
     anterior = max(int(quarto.capacidade or 0), 0)
 
     if capacidade is None or capacidade < 1:
-        flash('Informe uma capacidade válida, com pelo menos 1 pessoa.', 'danger')
-        return redirect(url_for('quartos'))
-    if capacidade < anterior:
-        flash('Este campo permite aumentar a capacidade. Informe um valor igual ou maior que o atual.', 'warning')
+        flash('Informe a capacidade com pelo menos 1 pessoa.', 'danger')
         return redirect(url_for('quartos'))
     if capacidade == anterior:
         flash('A capacidade do quarto já está com esse valor.', 'info')
         return redirect(url_for('quartos'))
 
+    # Considera o pico real de reservas simultâneas, inclusive futuras.
+    # Eventos de saída são processados antes das entradas no mesmo horário.
+    eventos = []
+    sem_periodo = 0
+    reservas_ativas = Reserva.query.filter(
+        Reserva.quarto_id == quarto.id,
+        Reserva.status.in_(['Reservado', 'Hospedado'])
+    ).all()
+    for reserva in reservas_ativas:
+        try:
+            entrada = datetime.fromisoformat(reserva.data_entrada)
+            saida = datetime.fromisoformat(reserva.data_saida)
+            if saida <= entrada:
+                raise ValueError('Período inválido')
+        except (TypeError, ValueError):
+            # Não ignorar uma reserva ativa se suas datas estiverem inconsistentes.
+            sem_periodo += 1
+            continue
+        eventos.append((entrada, 1))
+        eventos.append((saida, -1))
+
+    simultaneas = 0
+    pico_reservas = 0
+    for _, variacao in sorted(eventos, key=lambda item: (item[0], item[1])):
+        simultaneas += variacao
+        pico_reservas = max(pico_reservas, simultaneas)
+
+    # Hóspedes marcados como hospedados contam como presentes até o checkout.
+    ocupacao_agora = lotacao_quarto(quarto)['comprometidas']
+    minimo_seguro = max(1, ocupacao_agora, pico_reservas + sem_periodo)
+    if capacidade < minimo_seguro:
+        flash(
+            f'Não é possível reduzir para {capacidade} pessoa(s): '
+            f'este quarto precisa de pelo menos {minimo_seguro} vaga(s) '
+            'para respeitar as hospedagens e reservas já registradas.',
+            'warning'
+        )
+        return redirect(url_for('quartos'))
+
     try:
         quarto.capacidade = capacidade
         atualizar_status_quarto(quarto)
-        auditar(
-            'Aumentou capacidade do quarto', 'quartos', quarto.id,
-            f'Quarto {quarto.numero}: {anterior} → {capacidade} pessoas.'
-        )
+        db.session.add(Auditoria(
+            usuario=session.get('usuario', 'sistema'),
+            acao='Alterou capacidade do quarto',
+            tabela='quartos',
+            registro=str(quarto.id),
+            detalhes=f'Quarto {quarto.numero}: {anterior} → {capacidade} pessoas.',
+            ip=request.remote_addr
+        ))
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -851,7 +933,7 @@ def quarto_capacidade(id):
     lotacao = lotacao_quarto(quarto)
     flash(
         f'Quarto {quarto.numero}: capacidade atualizada de {anterior} para '
-        f'{capacidade} pessoas. Vagas disponíveis: {lotacao["vagas"]}.',
+        f'{capacidade} pessoa(s). Vagas atuais disponíveis: {lotacao["vagas"]}.',
         'success'
     )
     return redirect(url_for('quartos'))
@@ -1434,36 +1516,32 @@ def quarto_detalhes(id):
 @permissao_necessaria('quartos')
 def quarto_historico(quarto_id):
     quarto = Quarto.query.get_or_404(quarto_id)
+    reservas = (Reserva.query.filter_by(quarto_id=quarto.id)
+                .order_by(Reserva.id.desc()).all())
 
-    reservas = Reserva.query.filter_by(quarto_id=quarto.id).order_by(Reserva.id.desc()).all()
+    def formatar_data(valor):
+        if not valor:
+            return '-'
+        if hasattr(valor, 'strftime'):
+            return valor.strftime('%d/%m/%Y %H:%M')
+        try:
+            return datetime.fromisoformat(str(valor)).strftime('%d/%m/%Y %H:%M')
+        except (TypeError, ValueError):
+            return str(valor)
 
-    historico = []
+    historico = [
+        {
+            'id': reserva.id,
+            'hospede': reserva.hospede.nome if reserva.hospede else 'Nao informado',
+            'entrada': formatar_data(reserva.data_entrada),
+            'saida': formatar_data(reserva.data_saida),
+            'diaria': f'{(reserva.valor_diaria or 0):.2f}',
+            'status': reserva.status or '-',
+        }
+        for reserva in reservas
+    ]
+    return jsonify({'quarto': quarto.numero, 'historico': historico})
 
-    for r in reservas:
-        nome_hospede = '-'
-
-        if hasattr(r, 'hospede') and r.hospede:
-            nome_hospede = r.hospede.nome
-        elif hasattr(r, 'hospede_nome'):
-            nome_hospede = r.hospede_nome
-
-        entrada = getattr(r, 'entrada', None) or getattr(r, 'checkin', None)
-        saida = getattr(r, 'saida', None) or getattr(r, 'checkout', None)
-
-        diaria = getattr(r, 'diaria', None) or getattr(r, 'valor_diaria', None)
-
-        historico.append({
-            'hospede': nome_hospede,
-            'entrada': entrada.strftime('%d/%m/%Y %H:%M') if entrada else '-',
-            'saida': saida.strftime('%d/%m/%Y %H:%M') if saida else '-',
-            'diaria': f'{diaria:.2f}' if diaria else '0.00',
-            'status': getattr(r, 'status', '-') or '-'
-        })
-
-    return jsonify({
-        'quarto': quarto.numero,
-        'historico': historico
-    })
 
 @app.route('/bloquear_quarto/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -2364,6 +2442,13 @@ def importar(modelo):
                         ignorados += 1
                         continue
                     chaves_sem_cpf.add(chave)
+            if modelo == 'quartos':
+                classificacao_importada = (dados.get('classificacao') or 'Geral')
+                if classificacao_importada not in ('Geral', 'Feminino'):
+                    raise ValueError('Classificacao invalida na planilha de quartos')
+                if (classificacao_importada == 'Feminino' and
+                        Quarto.query.filter_by(classificacao='Feminino').count() >= 2):
+                    raise ValueError('Limite de dois quartos femininos excedido na importacao')
             db.session.add(cls(**dados))
             importados += 1
         # Uma transacao: se houver falha no commit, NENHUM registro da planilha eh salvo.
@@ -3080,6 +3165,20 @@ def seed():
 
 def executar_migracoes_simples():
     """Adiciona colunas novas sem apagar ou recriar o banco existente."""
+    # Migracao aditiva: preserva a tabela e todas as reservas existentes.
+    colunas_quarto = {
+        linha[1] for linha in db.session.execute(
+            db.text('PRAGMA table_info(quarto)')
+        ).fetchall()
+    }
+    if 'classificacao' not in colunas_quarto:
+        db.session.execute(db.text(
+            "ALTER TABLE quarto ADD COLUMN classificacao VARCHAR(20) NOT NULL DEFAULT 'Geral'"
+        ))
+    db.session.execute(db.text(
+        "UPDATE quarto SET classificacao = 'Geral' WHERE classificacao IS NULL"
+    ))
+    db.session.commit()
     colunas_cartao = {
         linha[1]
         for linha in db.session.execute(db.text('PRAGMA table_info(cartao)')).fetchall()
