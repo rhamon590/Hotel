@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% set page_title = 'Permissões individuais' %}
+{% set page_subtitle = 'Controle de acesso por usuário' %}
+{% block extra_css %}
+{{ super() }}
+<style>
+.hp-perms{max-width:1200px;margin:0 auto;color:var(--text)}
+.hp-perms *{box-sizing:border-box}
+.hp-perms-hero{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:linear-gradient(120deg,#101f38,#194064);color:#fff;border:1px solid #3b5675;padding:27px;border-radius:18px;margin-bottom:20px}
+.hp-perms-kicker{color:#93c5fd;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+.hp-perms h2{font-size:26px;margin:8px 0}.hp-perms-hero p{font-size:13px;color:#ced8e5;margin:6px 0 0}
+.hp-perms-pill{border:1px solid #ffffff50;border-radius:99px;padding:7px 11px;font-size:12px;font-weight:700}
+.hp-perms-note{border:1px solid var(--border);border-radius:14px;padding:16px 19px;background:var(--surface);font-size:13px;color:var(--muted);margin-bottom:22px}
+.hp-perms-note strong{color:var(--text)}.hp-perms-groups{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.hp-perms-group{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.hp-perms-group h3{font-size:14px;letter-spacing:.02em;padding:16px 20px;margin:0;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.hp-perms-option{display:flex;align-items:center;gap:13px;min-height:74px;padding:13px 19px;cursor:pointer;transition:background .14s;border-bottom:1px solid var(--border)}
+.hp-perms-option:last-child{border-bottom:0}.hp-perms-option:hover{background:var(--surface-2)}.hp-perms-option:focus-within{outline:2px solid #60a5fa;outline-offset:-2px}
+.hp-perms-option input{width:20px;height:20px;flex-shrink:0;accent-color:#2563eb;cursor:pointer}.hp-perms-option span{display:block;min-width:0}
+.hp-perms-option strong{display:block;font-size:13px}.hp-perms-option small{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.hp-perms-actions{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);padding:18px;border-radius:15px;margin-top:20px}
+.hp-perms-actions .hp-perms-buttons{display:flex;gap:9px;flex-wrap:wrap}.hp-perms-actions button,.hp-perms-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:43px;border-radius:10px;padding:10px 15px;border:1px solid var(--border);font:inherit;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer;color:var(--text);background:var(--surface-2)}
+.hp-perms-actions button.primary{background:#2563eb;color:#fff;border-color:#2563eb}.hp-perms-actions button:hover,.hp-perms-actions a:hover{filter:brightness(1.08)}
+.hp-perms-actions p{margin:0;font-size:12px;color:var(--muted)}
+@media(max-width:740px){.hp-perms-groups{grid-template-columns:1fr}.hp-perms-hero{padding:19px}.hp-perms-actions{align-items:stretch;flex-direction:column}.hp-perms-actions .hp-perms-buttons>*{flex:1}}
+</style>
+{% endblock %}
+{% block content %}
+<main class="hp-perms">
+ <section class="hp-perms-hero">
+  <div><div class="hp-perms-kicker">Hotel PRO · Administração</div><h2>{{ usuario.nome }}</h2><p>Login: <strong>{{ usuario.usuario }}</strong> · Perfil: <strong>{{ usuario.perfil }}</strong></p></div>
+  <span class="hp-perms-pill">{{ 'Configuração personalizada' if personalizado else 'Padrão do perfil' }}</span>
+ </section>
+ <div class="hp-perms-note"><strong>Como funciona:</strong> selecione os módulos que esta pessoa poderá acessar. A alteração entra em vigor na próxima requisição, inclusive se ela já estiver conectada. Desmarcar todos os módulos mantém apenas o painel inicial. O acesso a <strong>Usuários e Permissões</strong> é reservado aos administradores e não pode ser delegado por esta tela.</div>
+ <form method="post" action="{{ url_for('usuario_permissoes', usuario_id=usuario.id) }}" id="hpPermForm">
+  {% if csrf_token is defined %}<input type="hidden" name="hotel_csrf" value="{{ csrf_token() }}">{% endif %}
+  <div class="hp-perms-groups">
+   {% for grupo in ['Operação','Recepção','Gestão','Administração'] %}
+   <section class="hp-perms-group" aria-label="{{ grupo }}">
+    <h3>{{ grupo }}</h3>
+    {% for chave, detalhes in modulos.items() %}{% if detalhes[2] == grupo %}
+    <label class="hp-perms-option" for="mod-{{ chave }}">
+     <input type="checkbox" id="mod-{{ chave }}" name="modulos" value="{{ chave }}" {% if chave in atuais %}checked{% endif %}>
+     <span><strong>{{ detalhes[0] }}</strong><small>{{ detalhes[1] }}</small></span>
+    </label>
+    {% endif %}{% endfor %}
+   </section>
+   {% endfor %}
+  </div>
+  <div class="hp-perms-actions">
+   <p><strong id="hpPermCount">{{ atuais|length }}</strong> módulo(s) selecionado(s)</p>
+   <div class="hp-perms-buttons"><a href="{{ url_for('usuarios') }}">Voltar</a><button type="submit" name="acao" value="restaurar" onclick="return confirm('Restaurar os acessos do perfil e descartar as permissões individuais?')">Restaurar perfil</button><button type="submit" class="primary" name="acao" value="salvar">Salvar permissões</button></div>
+  </div>
+ </form>
+</main>
+<script>
+(function(){'use strict';const form=document.getElementById('hpPermForm');const count=document.getElementById('hpPermCount');if(!form)return;function refresh(){count.textContent=form.querySelectorAll('input[name="modulos"]:checked').length;}form.addEventListener('change',refresh);refresh();})();
+</script>
+{% endblock %}

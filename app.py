@@ -860,6 +860,7 @@ def quarto_capacidade(id):
 @app.route('/quartos/excluir-todos', methods=['POST'])
 @login_required
 @admin_required
+@permissao_necessaria('quartos')
 def excluir_todos_quartos():
     """Exclui todos os quartos e os registros operacionais vinculados."""
     try:
@@ -1382,7 +1383,7 @@ def checkout(id):
 
 @app.route('/consumos', methods=['GET','POST'])
 @login_required
-@permissao_necessaria('reservas')
+@permissao_necessaria('consumos')
 def consumos():
     if request.method == 'POST':
         c = Consumo(reserva_id=int(request.form.get('reserva_id')), produto=request.form.get('produto'), quantidade=int(request.form.get('quantidade') or 1), valor_unitario=float(request.form.get('valor_unitario') or 0), setor=request.form.get('setor'))
@@ -3109,6 +3110,9 @@ def executar_migracoes_simples():
     )
     db.session.commit()
 
+
+from hotel_permissoes import registrar_controle_acesso
+registrar_controle_acesso(globals())
 
 from reservas_edicao import registrar_edicao_reservas
 registrar_edicao_reservas(globals())

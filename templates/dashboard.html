@@ -86,12 +86,12 @@ html[data-theme="light"] .hp-slate{--hp-accent:#475569}
 {% if cards is defined and cards is not none %}
 <p class="hp-section-label" id="hp-overview">Panorama da operação</p>
 <section class="hp-metrics" aria-labelledby="hp-overview">
-<article class="hp-metric "><span class="hp-metric-label">Total de quartos</span><strong>{{ cards.quartos if cards.quartos is defined and cards.quartos is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Estrutura cadastrada</span></article>
-<article class="hp-metric hp-green"><span class="hp-metric-label">Quartos livres</span><strong>{{ cards.livres if cards.livres is defined and cards.livres is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Disponibilidade</span></article>
-<article class="hp-metric hp-orange"><span class="hp-metric-label">Quartos ocupados</span><strong>{{ cards.ocupados if cards.ocupados is defined and cards.ocupados is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Em hospedagem</span></article>
-<article class="hp-metric "><span class="hp-metric-label">Reservas</span><strong>{{ cards.reservas if cards.reservas is defined and cards.reservas is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Reservas registradas</span></article>
-<article class="hp-metric hp-green"><span class="hp-metric-label">Check-ins hoje</span><strong>{{ cards.checkins if cards.checkins is defined and cards.checkins is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Entradas do dia</span></article>
-<article class="hp-metric hp-orange"><span class="hp-metric-label">Check-outs hoje</span><strong>{{ cards.checkouts if cards.checkouts is defined and cards.checkouts is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Saídas do dia</span></article>
+{% if tem_acesso('quartos') %}<article class="hp-metric "><span class="hp-metric-label">Total de quartos</span><strong>{{ cards.quartos if cards.quartos is defined and cards.quartos is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Estrutura cadastrada</span></article>{% endif %}
+{% if tem_acesso('quartos') %}<article class="hp-metric hp-green"><span class="hp-metric-label">Quartos livres</span><strong>{{ cards.livres if cards.livres is defined and cards.livres is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Disponibilidade</span></article>{% endif %}
+{% if tem_acesso('quartos') %}<article class="hp-metric hp-orange"><span class="hp-metric-label">Quartos ocupados</span><strong>{{ cards.ocupados if cards.ocupados is defined and cards.ocupados is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Em hospedagem</span></article>{% endif %}
+{% if tem_acesso('reservas') %}<article class="hp-metric "><span class="hp-metric-label">Reservas</span><strong>{{ cards.reservas if cards.reservas is defined and cards.reservas is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Reservas registradas</span></article>{% endif %}
+{% if tem_acesso('reservas') %}<article class="hp-metric hp-green"><span class="hp-metric-label">Check-ins hoje</span><strong>{{ cards.checkins if cards.checkins is defined and cards.checkins is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Entradas do dia</span></article>{% endif %}
+{% if tem_acesso('reservas') %}<article class="hp-metric hp-orange"><span class="hp-metric-label">Check-outs hoje</span><strong>{{ cards.checkouts if cards.checkouts is defined and cards.checkouts is not none else '—' }}</strong><span class="hp-metric-foot"><i class="hp-dot" aria-hidden="true"></i>Saídas do dia</span></article>{% endif %}
 </section>
 {% endif %}
 <section class="hp-panel" aria-labelledby="hp-modules-title">
@@ -107,84 +107,125 @@ html[data-theme="light"] .hp-slate{--hp-accent:#475569}
 <button type="button" class="hp-filter" data-filter="administracao" aria-pressed="false">Administração</button>
 </div><span class="hp-count" id="hp-result-count" role="status" aria-live="polite"></span></div>
  <div class="hp-grid" id="hp-modules-grid">
-{% if perfil in ['administrador', 'rh'] %}
+
+{% if tem_acesso('hospedes') %}
 <a class="hp-module hp-blue" href="{{ url_for('hospedes') }}" data-module data-category="operacao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="hp-tag">Operação</span></div>
  <h3>Hóspedes</h3><p>Cadastre hóspedes e consulte CPF, telefone, empresa, endereço e histórico.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('quartos') %}
 <a class="hp-module hp-blue" href="{{ url_for('quartos') }}" data-module data-category="operacao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v3m18-3v3M3 10V4m18 14H3v-8h15a3 3 0 0 1 3 3v5Z"/><path d="M7 10V7h5v3"/></svg></span><span class="hp-tag">Operação</span></div>
  <h3>Quartos</h3><p>Controle disponibilidade, categoria, capacidade, diária e situação dos quartos.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('reservas') %}
 <a class="hp-module hp-blue" href="{{ url_for('reservas') }}" data-module data-category="operacao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18m-13 5h3"/></svg></span><span class="hp-tag">Operação</span></div>
  <h3>Reservas</h3><p>Registre reservas, entradas, saídas, valores, descontos e status da hospedagem.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('governanca') %}
 <a class="hp-module hp-teal" href="{{ url_for('limpeza') }}" data-module data-category="operacao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 3-4 10m-4-1 8 3-2 6H2l4-9Zm12-5v6m-3-3h6"/></svg></span><span class="hp-tag">Operação</span></div>
  <h3>Governança</h3><p>Controle limpeza, responsáveis, checklist, inspeção e liberação dos quartos.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
 {% endif %}
-{% if perfil in ['administrador', 'porteiro'] %}
+
+
+{% if tem_acesso('calendario') %}
 <a class="hp-module hp-teal" href="{{ url_for('calendario') }}" data-module data-category="recepcao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18m-13 5h3"/></svg></span><span class="hp-tag">Recepção</span></div>
  <h3>Calendário</h3><p>Visualize as reservas por período e acompanhe entradas e saídas dos quartos.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('cartoes') %}
 <a class="hp-module hp-teal" href="{{ url_for('cartoes') }}" data-module data-category="recepcao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 10h20M6 15h4"/></svg></span><span class="hp-tag">Recepção</span></div>
  <h3>Controle de cartões</h3><p>Cadastre, entregue e receba cartões com rastreabilidade completa das movimentações.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
 {% endif %}
-{% if perfil == 'administrador' %}
+
+
+{% if tem_acesso('manutencao') %}
 <a class="hp-module hp-amber" href="{{ url_for('manutencao') }}" data-module data-category="gestao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18a2.1 2.1 0 0 0 3 3l5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-3-3 3-3Z"/></svg></span><span class="hp-tag">Gestão</span></div>
  <h3>Manutenção</h3><p>Registre problemas, prioridade, responsáveis, custos e andamento dos serviços.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('funcionarios') %}
 <a class="hp-module hp-violet" href="{{ url_for('funcionarios') }}" data-module data-category="gestao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V3h8v4M3 12a22 22 0 0 0 18 0m-9 0v4"/></svg></span><span class="hp-tag">Gestão</span></div>
  <h3>Funcionários</h3><p>Gerencie funcionários, cargos, setores, contatos e situação cadastral.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('empresas') %}
 <a class="hp-module hp-violet" href="{{ url_for('empresas') }}" data-module data-category="gestao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V3h12v18M16 9h4v12M2 21h20M8 7h4M8 11h4M8 15h4m0 6v-3"/></svg></span><span class="hp-tag">Gestão</span></div>
  <h3>Empresas e agências</h3><p>Cadastre empresas parceiras, contatos, CNPJ e tarifas especiais.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('relatorios') %}
 <a class="hp-module hp-violet" href="{{ url_for('relatorios') }}" data-module data-category="gestao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18M7 16v-4m5 4V7m5 9v-6"/></svg></span><span class="hp-tag">Gestão</span></div>
  <h3>Relatórios</h3><p>Consulte resultados financeiros, despesas, consumos e dados gerenciais.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('auditoria') %}
 <a class="hp-module hp-slate" href="{{ url_for('auditoria') }}" data-module data-category="administracao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span><span class="hp-tag">Administração</span></div>
  <h3>Auditoria</h3><p>Consulte ações dos usuários, registros alterados, datas, detalhes e IP.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('usuarios') %}
 <a class="hp-module hp-slate" href="{{ url_for('usuarios') }}" data-module data-category="administracao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg></span><span class="hp-tag">Administração</span></div>
  <h3>Usuários</h3><p>Crie contas, defina perfis de acesso e controle permissões do sistema.</p>
  <span class="hp-module-bottom">Acessar módulo<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
+{% endif %}
+{% if tem_acesso('backup') %}
 <a class="hp-module hp-slate" href="{{ url_for('backup') }}" data-module data-category="administracao">
  <div class="hp-module-top"><span class="hp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13l3 3v13H4V4Z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/></svg></span><span class="hp-tag">Administração</span></div>
  <h3>Backup</h3><p>Gere uma cópia de segurança do banco de dados do sistema.</p>
  <span class="hp-module-bottom">Gerar backup<span class="hp-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></span>
 </a>
 {% endif %}
+
+
+{% if tem_acesso('estoque') %}
+<a class="hp-module hp-violet" href="{{ url_for('produtos') }}" data-module data-category="gestao">
+ <div class="hp-module-top"><span class="hp-icon" aria-hidden="true">▣</span><span class="hp-tag">Gestão</span></div>
+ <h3>Estoque</h3><p>Controle produtos, quantidades disponíveis e reposição do hotel.</p>
+ <span class="hp-module-bottom">Acessar módulo <span class="hp-arrow">→</span></span>
+</a>
+{% endif %}
+{% if tem_acesso('consumos') %}
+<a class="hp-module hp-teal" href="{{ url_for('consumos') }}" data-module data-category="operacao">
+ <div class="hp-module-top"><span class="hp-icon" aria-hidden="true">▤</span><span class="hp-tag">Operação</span></div>
+ <h3>Consumos</h3><p>Registre e consulte os consumos vinculados a reservas e hospedagens.</p>
+ <span class="hp-module-bottom">Acessar módulo <span class="hp-arrow">→</span></span>
+</a>
+{% endif %}
  </div>
  <div class="hp-empty" id="hp-no-results" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><h3>Nenhum módulo encontrado</h3><p>Tente outro termo ou selecione uma área diferente.</p><button type="button" class="hp-reset" id="hp-reset">Limpar filtros</button></div>
- {% if perfil not in ['administrador', 'rh', 'porteiro'] %}
+ {% if not tem_algum_modulo %}
  <div class="hp-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg><h3>Nenhum módulo liberado</h3><p>Solicite ao administrador a revisão do seu perfil de acesso.</p></div>
  {% endif %}
 </section>
-<footer class="hp-footer"><span>HOTEL PRO · Gestão hoteleira</span><span>Módulos disponíveis conforme seu perfil de acesso.</span></footer>
+<footer class="hp-footer"><span>HOTEL PRO · Gestão hoteleira</span><span>Módulos disponíveis conforme as permissões da sua conta.</span></footer>
 </div>
 {% endblock %}
 
